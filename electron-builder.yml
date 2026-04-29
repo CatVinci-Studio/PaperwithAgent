@@ -15,7 +15,7 @@ mac:
   category: public.app-category.productivity
   target:
     - target: dmg
-      arch: [universal]       # one dmg for Intel + Apple Silicon
+      arch: [x64, arm64]      # separate Intel + Apple Silicon dmgs (universal blocked by @napi-rs native modules)
   identity: null              # unsigned for now; users right-click → Open
   gatekeeperAssess: false
 

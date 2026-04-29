@@ -2,11 +2,48 @@ import { useState, useEffect } from 'react'
 import { CheckCircle, XCircle, Loader, Wifi } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/ipc'
+import { useUIStore } from '@/store/ui'
+import { SettingRow } from '@/components/ui/setting-row'
 import { SettingSection } from '@/components/ui/setting-section'
+import { SettingSegmented } from '@/components/ui/setting-segmented'
 import { cn } from '@/lib/utils'
 import type { AgentProfile } from '@shared/types'
 
-export function AgentTab() {
+export function GeneralTab() {
+  return (
+    <div className="space-y-6">
+      <BasicSection />
+      <ProviderSection />
+    </div>
+  )
+}
+
+// ── Basic ───────────────────────────────────────────────────────────────────
+
+function BasicSection() {
+  const { theme, toggleTheme } = useUIStore()
+
+  return (
+    <SettingSection title="Basic" description="Adjust how the interface looks.">
+      <SettingRow label="Color scheme" description="Affects all surfaces and accent treatment.">
+        <SettingSegmented<'dark' | 'light'>
+          value={theme}
+          onValueChange={(t) => {
+            if (theme !== t) toggleTheme()
+          }}
+          options={[
+            { value: 'dark', label: 'Dark' },
+            { value: 'light', label: 'Light' },
+          ]}
+        />
+      </SettingRow>
+    </SettingSection>
+  )
+}
+
+// ── Provider ────────────────────────────────────────────────────────────────
+
+function ProviderSection() {
   const { data: profiles, refetch } = useQuery({
     queryKey: ['agent', 'profiles'],
     queryFn: () => api.agent.getProfiles(),
@@ -56,10 +93,10 @@ export function AgentTab() {
   }
 
   return (
-    <div className="space-y-6">
-      <SettingSection title="Provider" description="Pick a provider profile and ensure its API key is saved.">
+    <SettingSection title="Model provider" description="Pick a provider profile and configure its API key.">
+      <div className="space-y-4 pt-2">
         {profiles && profiles.length > 0 && (
-          <div className="space-y-1.5 pt-2">
+          <div className="space-y-1.5">
             {profiles.map((p: AgentProfile) => {
               const active = selectedProfile === p.name
               return (
@@ -99,11 +136,21 @@ export function AgentTab() {
             })}
           </div>
         )}
-      </SettingSection>
 
-      {selectedProfile && (
-        <SettingSection title="API Key" description={`Stored securely for the "${selectedProfile}" profile.`}>
-          <div className="space-y-3 pt-2">
+        {selectedProfile && (
+          <div className="space-y-3 pt-2 border-t border-[var(--border-color)]">
+            <div className="flex items-center justify-between">
+              <label className="text-[11.5px] font-medium text-[var(--text-secondary)]">
+                API Key — <span className="text-[var(--text-primary)]">{selectedProfile}</span>
+              </label>
+              <button
+                onClick={() => handleSetActive(selectedProfile)}
+                className="text-[10.5px] font-medium text-[var(--text-muted)] hover:text-[var(--accent-color)] transition-colors"
+              >
+                Set as active profile
+              </button>
+            </div>
+
             <div className="flex gap-2">
               <input
                 type="password"
@@ -168,16 +215,9 @@ export function AgentTab() {
                 </span>
               )}
             </div>
-
-            <button
-              onClick={() => handleSetActive(selectedProfile)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-[12px] font-medium border border-[var(--border-color)] text-[var(--text-secondary)] hover:border-[var(--border-focus)] hover:text-[var(--text-primary)] transition-all duration-150 active:scale-[0.98]"
-            >
-              Set as active profile
-            </button>
           </div>
-        </SettingSection>
-      )}
-    </div>
+        )}
+      </div>
+    </SettingSection>
   )
 }

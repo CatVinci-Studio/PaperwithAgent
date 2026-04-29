@@ -1,14 +1,13 @@
 import { useState } from 'react'
-import { X, Bot, Table2, Library, Palette } from 'lucide-react'
+import { X, Settings2, Table2, Library } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useUIStore } from '@/store/ui'
-import { AgentTab } from './tabs/AgentTab'
+import { GeneralTab } from './tabs/GeneralTab'
 import { SchemaTab } from './tabs/SchemaTab'
 import { LibraryTab } from './tabs/LibraryTab'
-import { AppearanceTab } from './tabs/AppearanceTab'
 import { cn } from '@/lib/utils'
 
-type SettingsTab = 'agent' | 'schema' | 'library' | 'appearance'
+type SettingsTab = 'general' | 'schema' | 'library'
 
 interface TabMeta {
   id: SettingsTab
@@ -19,10 +18,10 @@ interface TabMeta {
 
 const TABS: TabMeta[] = [
   {
-    id: 'agent',
-    label: 'AI Agent',
-    icon: Bot,
-    description: 'Provider profiles and API keys.',
+    id: 'general',
+    label: 'General',
+    icon: Settings2,
+    description: 'Theme and model provider.',
   },
   {
     id: 'schema',
@@ -36,17 +35,11 @@ const TABS: TabMeta[] = [
     icon: Library,
     description: 'Manage and switch paper library folders.',
   },
-  {
-    id: 'appearance',
-    label: 'Appearance',
-    icon: Palette,
-    description: 'Theme and visual preferences.',
-  },
 ]
 
 export function SettingsModal() {
   const { settingsOpen, setSettingsOpen } = useUIStore()
-  const [tab, setTab] = useState<SettingsTab>('agent')
+  const [tab, setTab] = useState<SettingsTab>('general')
 
   if (!settingsOpen) return null
 
@@ -113,10 +106,9 @@ export function SettingsModal() {
               <p className="text-[12px] text-[var(--text-muted)] mt-0.5">{current.description}</p>
             </header>
             <div className="px-6 py-5">
-              {tab === 'agent' && <AgentTab />}
+              {tab === 'general' && <GeneralTab />}
               {tab === 'schema' && <SchemaTab />}
               {tab === 'library' && <LibraryTab />}
-              {tab === 'appearance' && <AppearanceTab />}
             </div>
           </div>
         </div>

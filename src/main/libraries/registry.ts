@@ -95,7 +95,11 @@ export class LibraryRegistry {
     return this.state.entries.length === 0
   }
 
-  async add(entry: Omit<LibraryEntry, 'id'>): Promise<LibraryEntry> {
+  async add(
+    entry:
+      | Omit<LocalLibraryEntry, 'id'>
+      | Omit<S3LibraryEntry, 'id'>
+  ): Promise<LibraryEntry> {
     const created = { ...entry, id: randomUUID() } as LibraryEntry
     this.state.entries.push(created)
     await this.save()

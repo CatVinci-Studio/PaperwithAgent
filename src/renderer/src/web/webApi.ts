@@ -1,8 +1,12 @@
 import type { IApi } from '@/lib/ipc'
-import type { LibraryInfo, S3LibraryInfo } from '@shared/types'
+import type { LibraryInfo, S3LibraryInfo, AgentConfig, AgentProfile } from '@shared/types'
+import { PROVIDER_DEFINITIONS } from '@shared/providers'
+import { createProvider } from '@shared/agent/providers'
 import { WebS3, type S3Creds } from './s3client'
 import { WebLibrary } from './webLibrary'
 import { clearCreds, loadCreds, saveCreds } from './credentials'
+import { hasApiKey, loadApiKey, saveApiKey } from './apiKeys'
+import { WebAgent } from './webAgent'
 
 /**
  * Web build adapter for IApi. Read-only — every write op resolves with a
@@ -15,6 +19,21 @@ let lib: WebLibrary | null = null
 let info: LibraryInfo | null = null
 
 const switchedListeners = new Set<(info: LibraryInfo) => void>()
+
+const ACTIVE_PROFILE_LS = 'verko:active-profile'
+
+function getActiveProfileId(): string {
+  return localStorage.getItem(ACTIVE_PROFILE_LS) || PROVIDER_DEFINITIONS[0].id
+}
+
+function setActiveProfileId(id: string): void {
+  localStorage.setItem(ACTIVE_PROFILE_LS, id)
+}
+
+const agent = new WebAgent(
+  () => lib,
+  (providerId: string) => loadApiKey(providerId),
+)
 
 function notSupported(): Promise<never> {
   return Promise.reject(new Error('This action is only available in the desktop app.'))
@@ -148,20 +167,61 @@ export const webApi: IApi = {
   },
 
   agent: {
-    send: () => Promise.reject(new Error('The agent is only available in the desktop app.')),
-    abort: () => Promise.resolve(),
-    getConfig: () => Promise.resolve(null),
-    setProfile: notSupported, updateProfile: notSupported,
-    saveKey: () => Promise.reject(new Error('Web build does not support agent yet')), testKey: () => Promise.resolve(false),
-    getProfiles: () => Promise.resolve([]),
-    onEvent: () => () => {},
+    send: async (message, attachments, paperId, language, conversationId) => {
+      return agent.send(message, attachments, paperId, language, conversationId, getActiveProfileId())
+    },
+    abort: async (conversationId) => { agent.abort(conversationId) },
+    getConfig: async (): Promise<AgentConfig> => ({
+      defaultProfile: getActiveProfileId(),
+      profiles: PROVIDER_DEFINITIONS.map((d) => ({
+        name: d.id,
+        protocol: d.protocol,
+        baseUrl: d.defaults.baseUrl,
+        model: d.defaults.model,
+      })),
+      maxTurns: 10,
+      temperature: 0.3,
+      showToolCalls: true,
+    }),
+    setProfile: async (id: string) => { setActiveProfileId(id) },
+    updateProfile: async () => {
+      // Models / baseUrls are catalog-driven in the web build.
+    },
+    saveKey: async (profile, key, remember) => { saveApiKey(profile, key, remember) },
+    testKey: async (profile) => {
+      const def = PROVIDER_DEFINITIONS.find((d) => d.id === profile)
+      if (!def) return false
+      const apiKey = loadApiKey(profile)
+      if (!apiKey) return false
+      try {
+        const provider = createProvider({
+          protocol: def.protocol,
+          baseUrl: def.defaults.baseUrl,
+          apiKey,
+          model: def.defaults.model,
+        })
+        return await provider.testConnection()
+      } catch {
+        return false
+      }
+    },
+    getProfiles: async (): Promise<AgentProfile[]> =>
+      PROVIDER_DEFINITIONS.map((d) => ({
+        name: d.id,
+        protocol: d.protocol,
+        baseUrl: d.defaults.baseUrl,
+        model: d.defaults.model,
+        hasKey: hasApiKey(d.id),
+      })),
+    onEvent: (cb) => agent.subscribe(cb),
   },
 
   conversations: {
-    list:   () => Promise.resolve([]),
-    get:    () => Promise.reject(new Error('No conversations in web build')),
-    create: () => Promise.reject(new Error('No conversations in web build')),
-    rename: notSupported, delete: notSupported,
+    list:   async () => agent.listConversations(),
+    get:    async (id: string) => agent.getConversation(id),
+    create: async (title?: string) => agent.createConversation(title),
+    rename: async (id: string, title: string) => agent.renameConversation(id, title),
+    delete: async (id: string) => agent.deleteConversation(id),
   },
 
   pdf: {

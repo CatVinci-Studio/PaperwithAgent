@@ -1,11 +1,11 @@
 import type { AppState } from '../ipc/index'
 import type { AgentEvent, ChatContentPart, ChatMessage, Language, PaperId } from '@shared/types'
 import { getActiveProfile, getConfig } from './config'
-import { TOOL_DEFINITIONS } from './tools'
-import { runAgentLoop } from './loop'
-import { buildSystemPrompt } from './prompt'
+import { TOOL_DEFINITIONS, dispatchTool } from './tools'
+import { runAgentLoop } from '@shared/agent/loop'
+import { buildSystemPrompt } from '@shared/agent/prompt'
 import { ConversationStore } from './conversations'
-import { createProvider, type NormalizedMessage } from './providers'
+import { createProvider, type NormalizedMessage } from '@shared/agent/providers'
 
 /**
  * Multi-conversation agent gateway.
@@ -104,7 +104,8 @@ export class AgentSession {
       tools: TOOL_DEFINITIONS,
       maxTurns: config.maxTurns,
       temperature: config.temperature,
-      ctx: { library: this.appState.library, manager: this.appState.manager! },
+      dispatchTool: (name, args) =>
+        dispatchTool(name, args, { library: this.appState.library, manager: this.appState.manager! }),
       onEvent,
       onMessage: (msg) => { void this.store.append(convId!, normalizedToChat(msg)) },
       abortSignal: ctrl.signal,

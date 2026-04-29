@@ -15,6 +15,7 @@ export class AnthropicProtocol implements ProviderProtocol {
     this.client = new Anthropic({
       apiKey: config.apiKey,
       baseURL: config.baseUrl || undefined,
+      dangerouslyAllowBrowser: typeof window !== 'undefined',
     })
   }
 

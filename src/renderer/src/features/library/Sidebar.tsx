@@ -12,8 +12,6 @@ import { confirmDialog, promptDialog } from '@/store/dialogs'
 import { cn } from '@/lib/utils'
 import { useTranslation } from 'react-i18next'
 
-declare const __WEB_BUILD__: boolean | undefined
-const isWeb = typeof __WEB_BUILD__ !== 'undefined' && __WEB_BUILD__
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -78,7 +76,7 @@ export function Sidebar() {
   const refreshConversations = useAgentStore((s) => s.refreshConversations)
 
   React.useEffect(() => {
-    if (!isWeb) refreshConversations().catch(() => {})
+    refreshConversations().catch(() => {})
   }, [refreshConversations])
 
   const [collectionsExpanded, setCollectionsExpanded] = useState(true)
@@ -226,25 +224,23 @@ export function Sidebar() {
       <div className="flex-1 overflow-y-auto py-1.5">
 
         {/* ── Agent section ───────────────────────────────────────────────── */}
-        {!isWeb && (
-          <SectionHeader
-            icon={Bot}
-            label="Agent"
-            expanded={agentOpen}
-            onToggle={() => setAgentOpen(!agentOpen)}
-            actions={
-              <button
-                onClick={(e) => { e.stopPropagation(); handleNewConversation() }}
-                title={t('agent.conversations.new')}
-                className="p-1 rounded text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] transition-colors"
-              >
-                <Plus size={10} />
-              </button>
-            }
-          />
-        )}
+        <SectionHeader
+          icon={Bot}
+          label="Agent"
+          expanded={agentOpen}
+          onToggle={() => setAgentOpen(!agentOpen)}
+          actions={
+            <button
+              onClick={(e) => { e.stopPropagation(); handleNewConversation() }}
+              title={t('agent.conversations.new')}
+              className="p-1 rounded text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] transition-colors"
+            >
+              <Plus size={10} />
+            </button>
+          }
+        />
 
-        {!isWeb && agentOpen && (
+        {agentOpen && (
           <div className="mx-1 mb-1 space-y-0.5">
             {conversations.length === 0 && (
               <button
@@ -287,7 +283,7 @@ export function Sidebar() {
         )}
 
         {/* Divider */}
-        {!isWeb && <div className="h-px bg-[var(--border-color)] mx-2 my-1" />}
+        <div className="h-px bg-[var(--border-color)] mx-2 my-1" />
 
         {/* ── Collections section ─────────────────────────────────────────── */}
         <SectionHeader

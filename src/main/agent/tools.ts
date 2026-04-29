@@ -1,4 +1,4 @@
-import type { ToolDef } from './providers'
+import type { ToolDef } from '@shared/agent/providers'
 import type { Library } from '@main/paperdb/store'
 import type { LibraryManager } from '@main/paperdb/manager'
 import type { PaperDraft, PaperPatch, Filter } from '@shared/types'

@@ -1,7 +1,4 @@
-import type { AgentEvent } from '@shared/types'
-import type { Library } from '@main/paperdb/store'
-import type { LibraryManager } from '@main/paperdb/manager'
-import { dispatchTool } from './tools'
+import type { AgentEvent } from '../types'
 import type { NormalizedMessage, ProviderProtocol, ToolDef } from './providers'
 
 export interface RunAgentLoopOptions {
@@ -12,22 +9,27 @@ export interface RunAgentLoopOptions {
   tools: ToolDef[]
   maxTurns: number
   temperature: number
-  ctx: { library: Library; manager: LibraryManager }
+  /** Tool dispatcher — must close over its own context (Library, manager, etc). */
+  dispatchTool: (name: string, args: Record<string, unknown>) => Promise<string>
   onEvent: (event: AgentEvent) => void
-  onMessage: (msg: NormalizedMessage) => void  // persistence hook
+  /** Called as each finalized assistant / tool message is appended. */
+  onMessage: (msg: NormalizedMessage) => void
   abortSignal: AbortSignal
 }
 
 /**
- * Drive a single user turn through the provider until the model says it is done.
- * Each iteration: stream a response → if tool calls, execute them → loop.
+ * Provider-agnostic, runtime-agnostic agent loop. Drive a single user turn
+ * through the provider until the model says it is done.
  *
- * `onEvent` streams to the renderer. `onMessage` persists each finalized message
- * so that history survives crashes mid-turn (the loop may execute many tool calls
- * before the model writes its final reply).
+ * Each iteration: stream a response → execute any tool calls → loop.
+ * `onEvent` streams to the renderer; `onMessage` persists each finalized
+ * message so history survives crashes mid-turn.
  */
 export async function runAgentLoop(opts: RunAgentLoopOptions): Promise<void> {
-  const { provider, systemPrompt, messages, tools, maxTurns, temperature, ctx, onEvent, onMessage, abortSignal } = opts
+  const {
+    provider, systemPrompt, messages, tools, maxTurns, temperature,
+    dispatchTool, onEvent, onMessage, abortSignal,
+  } = opts
 
   for (let turn = 0; turn < maxTurns; turn++) {
     if (abortSignal.aborted) {
@@ -72,7 +74,6 @@ export async function runAgentLoop(opts: RunAgentLoopOptions): Promise<void> {
       return
     }
 
-    // Persist the assistant turn (text + any tool_use calls).
     const assistantMsg: NormalizedMessage = {
       role: 'assistant',
       content: assistantText ? [{ type: 'text', text: assistantText }] : [],
@@ -86,7 +87,6 @@ export async function runAgentLoop(opts: RunAgentLoopOptions): Promise<void> {
       return
     }
 
-    // Execute every tool call, append a tool-role message per result.
     for (const tc of toolCalls) {
       let parsed: Record<string, unknown> = {}
       try { parsed = JSON.parse(tc.arguments || '{}') } catch { /* keep {} */ }
@@ -94,7 +94,7 @@ export async function runAgentLoop(opts: RunAgentLoopOptions): Promise<void> {
       onEvent({ type: 'tool_start', name: tc.name, args: parsed })
       let result: string
       try {
-        result = await dispatchTool(tc.name, parsed, ctx)
+        result = await dispatchTool(tc.name, parsed)
       } catch (e) {
         result = JSON.stringify({ error: e instanceof Error ? e.message : String(e) })
       }
@@ -109,7 +109,6 @@ export async function runAgentLoop(opts: RunAgentLoopOptions): Promise<void> {
       messages.push(toolMsg)
       onMessage(toolMsg)
     }
-    // Loop continues for the next turn.
   }
 
   onEvent({ type: 'error', message: `Agent exceeded maximum turns (${maxTurns}). Stopping.` })

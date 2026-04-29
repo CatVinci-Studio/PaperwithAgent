@@ -2,7 +2,7 @@ import type { IpcMain, BrowserWindow } from 'electron'
 import type { AgentEvent, AgentEventEnvelope, ChatContentPart, Language, ProfilePatch } from '@shared/types'
 import { getConfig, setActiveProfile, updateProfile, getProfiles } from '../agent/config'
 import { saveKey, loadKey } from '../agent/auth'
-import { createProvider } from '../agent/providers'
+import { createProvider } from '@shared/agent/providers'
 
 export interface AgentSession {
   send(

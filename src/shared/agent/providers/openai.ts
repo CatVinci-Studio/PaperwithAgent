@@ -21,6 +21,9 @@ export class OpenAIProtocol implements ProviderProtocol {
     this.client = new OpenAI({
       baseURL: config.baseUrl || 'https://api.openai.com/v1',
       apiKey: config.apiKey,
+      // Web build: the SDK refuses to run from a browser unless this is set.
+      // The user's key stays in their own browser; nothing routes through us.
+      dangerouslyAllowBrowser: typeof window !== 'undefined',
     })
   }
 

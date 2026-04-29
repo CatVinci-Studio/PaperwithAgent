@@ -15,6 +15,9 @@ import { Button } from './components/ui/button'
 import { api } from './lib/ipc'
 import { useAgentEvents } from './features/agent/useAgent'
 
+declare const __WEB_BUILD__: boolean | undefined
+const isWeb = typeof __WEB_BUILD__ !== 'undefined' && __WEB_BUILD__
+
 export default function App() {
   const { refreshAll, status, setStatus } = useLibraryStore()
   const setActiveView = useUIStore((s) => s.setActiveView)
@@ -40,7 +43,7 @@ export default function App() {
         return
       }
       setStatus('ready')
-      setActiveView('agent')
+      setActiveView(isWeb ? 'library' : 'agent')
       await refreshAll()
     })().catch(() => setStatus('none', { reason: 'empty' }))
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -50,7 +53,7 @@ export default function App() {
   useEffect(() => {
     const unsubSwitch = api.libraries.onSwitched(() => {
       setStatus('ready')
-      setActiveView('agent')
+      setActiveView(isWeb ? 'library' : 'agent')
       refreshAll()
     })
     const unsubNone = api.libraries.onNone((payload) => {

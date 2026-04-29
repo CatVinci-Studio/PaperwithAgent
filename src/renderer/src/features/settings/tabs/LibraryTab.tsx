@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Check, Cloud, FolderOpen, FolderPlus } from 'lucide-react'
+import { Check, Cloud, Download, FolderOpen, FolderPlus, Upload } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useLibraryStore } from '@/store/library'
 import { api } from '@/lib/ipc'
@@ -79,6 +79,46 @@ export function LibraryTab() {
     }
   }
 
+  const handleExport = async (lib: LibraryInfo) => {
+    if (busy) return
+    setBusy(true)
+    try {
+      const saved = await api.libraries.exportZip(lib.id)
+      if (saved) {
+        await confirmDialog({
+          title: t('settings.libraries.exportDone.title'),
+          message: t('settings.libraries.exportDone.message', { path: saved }),
+          confirmLabel: t('common.ok'),
+        })
+      }
+    } catch (e) {
+      await confirmDialog({
+        title: t('settings.libraries.exportError'),
+        message: e instanceof Error ? e.message : String(e),
+        confirmLabel: t('common.ok'),
+      })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleImport = async () => {
+    if (busy) return
+    setBusy(true)
+    try {
+      const info = await api.libraries.importZip()
+      if (info) await refreshLibraries()
+    } catch (e) {
+      await confirmDialog({
+        title: t('settings.libraries.importError'),
+        message: e instanceof Error ? e.message : String(e),
+        confirmLabel: t('common.ok'),
+      })
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const handleCreateNew = async () => {
     if (busy) return
     const path = await api.libraries.pickFolder()
@@ -132,23 +172,35 @@ export function LibraryTab() {
                 {t('settings.libraries.papers', { count: lib.paperCount })}
               </div>
             </div>
-            {lib.active ? (
-              <div className="flex items-center gap-1.5 shrink-0 px-2.5 py-1 rounded-full bg-[var(--accent-color)]/10 border border-[var(--accent-color)]/25">
-                <Check size={10} className="text-[var(--accent-color)]" />
-                <span className="text-[10.5px] text-[var(--accent-color)] font-medium">
-                  {t('settings.libraries.active')}
-                </span>
-              </div>
-            ) : (
+            <div className="flex items-center gap-2 shrink-0">
               <Button
-                onClick={() => switchLibrary(lib.id)}
-                variant="outline"
-                size="sm"
-                className="rounded-[8px] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--border-focus)]"
+                onClick={() => handleExport(lib)}
+                variant="ghost"
+                size="icon-sm"
+                disabled={busy}
+                title={t('settings.libraries.export')}
+                className="h-7 w-7 rounded-[6px] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
               >
-                {t('settings.libraries.switch')}
+                <Download size={12} />
               </Button>
-            )}
+              {lib.active ? (
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--accent-color)]/10 border border-[var(--accent-color)]/25">
+                  <Check size={10} className="text-[var(--accent-color)]" />
+                  <span className="text-[10.5px] text-[var(--accent-color)] font-medium">
+                    {t('settings.libraries.active')}
+                  </span>
+                </div>
+              ) : (
+                <Button
+                  onClick={() => switchLibrary(lib.id)}
+                  variant="outline"
+                  size="sm"
+                  className="rounded-[8px] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--border-focus)]"
+                >
+                  {t('settings.libraries.switch')}
+                </Button>
+              )}
+            </div>
           </div>
         ))}
 
@@ -169,6 +221,12 @@ export function LibraryTab() {
             icon={<Cloud size={14} />}
             label={t('welcome.actions.connectS3.title')}
             onClick={() => setMode('s3')}
+            disabled={busy}
+          />
+          <AddChoice
+            icon={<Upload size={14} />}
+            label={t('settings.libraries.import')}
+            onClick={handleImport}
             disabled={busy}
           />
         </div>

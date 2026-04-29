@@ -1,57 +1,20 @@
 import { promises as fs } from 'fs'
 import mammoth from 'mammoth'
-import TurndownService from 'turndown'
 import type { Library } from '@main/paperdb/store'
-
-// ── web_fetch ──────────────────────────────────────────────────────────────
-
-const turndown = new TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced' })
-turndown.remove(['script', 'style', 'noscript', 'iframe'])
-
-export async function webFetch(url: string): Promise<string> {
-  if (!/^https?:\/\//i.test(url)) {
-    return JSON.stringify({ error: 'URL must start with http:// or https://' })
-  }
-  try {
-    const res = await fetch(url, {
-      headers: { 'User-Agent': 'Verko/0.1 (mailto:leonardoshen@icloud.com)' },
-    })
-    if (!res.ok) {
-      return JSON.stringify({ error: `Fetch failed: ${res.status} ${res.statusText}` })
-    }
-    const ct = res.headers.get('content-type') ?? ''
-    const text = await res.text()
-    if (ct.includes('text/html')) {
-      const md = turndown.turndown(text)
-      return JSON.stringify({ url, contentType: ct, markdown: md.slice(0, 50_000) })
-    }
-    if (ct.includes('json')) {
-      return JSON.stringify({ url, contentType: ct, body: text.slice(0, 50_000) })
-    }
-    return JSON.stringify({ url, contentType: ct, text: text.slice(0, 50_000) })
-  } catch (e) {
-    return JSON.stringify({ error: e instanceof Error ? e.message : String(e) })
-  }
-}
-
-// ── view_pdf_page ──────────────────────────────────────────────────────────
+import { turndown } from './web'
 
 interface PdfPageImage {
   type: 'image'
   mimeType: 'image/png'
-  data: string  // base64
+  data: string
   page: number
   totalPages: number
 }
 
 /**
  * Rasterize a single PDF page to a PNG image. Used by vision-capable
- * models to "look at" a paper without forcing OCR. Output is a
- * base64-encoded PNG, capped at ~1200px on the long edge.
- *
- * NOTE: Image-rendering needs a canvas implementation. In the main process
- * we use `@napi-rs/canvas` if installed; otherwise we fall back to text
- * extraction (already covered by extract_pdf_text) and report the limitation.
+ * models to "look at" a paper without forcing OCR. Output is base64-encoded
+ * PNG, capped at ~1200px on the long edge.
  */
 export async function viewPdfPage(
   library: Library,
@@ -106,13 +69,9 @@ export async function viewPdfPage(
   }
 }
 
-// ── read_document ──────────────────────────────────────────────────────────
-
 /**
- * Best-effort document → markdown converter. Inspired by markitdown but
- * using JS-native libraries to keep the bundle Electron-friendly.
- *
- * Supported: .pdf (text-only), .docx, .html, .md, .txt, .json
+ * Best-effort document → markdown converter. Supports .pdf (text-only),
+ * .docx, .html, .md, .txt, .json.
  */
 export async function readDocument(absPath: string): Promise<string> {
   let buf: Buffer

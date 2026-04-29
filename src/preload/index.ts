@@ -23,6 +23,8 @@ const api = {
     probeLocal:  (path: string)                                => api.invoke('libraries:probeLocal', path),
     probeS3:     (cfg: IpcChannels['libraries:probeS3']['args'][0]) => api.invoke('libraries:probeS3', cfg),
     hasNone:     ()                                            => api.invoke('libraries:hasNone'),
+    exportZip:   (id: string)                                  => api.invoke('libraries:exportZip', id),
+    importZip:   ()                                            => api.invoke('libraries:importZip'),
     onSwitched: (cb: (info: LibraryInfo) => void): UnsubFn => {
       const listener = (_: Electron.IpcRendererEvent, info: LibraryInfo) => cb(info)
       ipcRenderer.on('library:switched', listener)

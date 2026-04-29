@@ -5,20 +5,7 @@ import { TOOL_DEFINITIONS } from './tools'
 import { runAgentLoop } from './loop'
 import { buildSystemPrompt } from './prompt'
 import { ConversationStore } from './conversations'
-import { createProvider, type NormalizedMessage, type ToolDef } from './providers'
-
-const TOOL_DEFS_NORMALIZED: ToolDef[] = TOOL_DEFINITIONS.map((t) => {
-  // OpenAI's typing widened ChatCompletionTool to a discriminated union, but
-  // every tool we author is `type: 'function'` — narrow back.
-  const fnTool = t as Extract<typeof t, { type: 'function' }>
-  return {
-    name: fnTool.function.name,
-    description: fnTool.function.description ?? '',
-    parameters: (fnTool.function.parameters as Record<string, unknown> | undefined) ?? {
-      type: 'object', properties: {},
-    },
-  }
-})
+import { createProvider, type NormalizedMessage } from './providers'
 
 /**
  * Multi-conversation agent gateway.
@@ -114,7 +101,7 @@ export class AgentSession {
       provider,
       systemPrompt,
       messages,
-      tools: TOOL_DEFS_NORMALIZED,
+      tools: TOOL_DEFINITIONS,
       maxTurns: config.maxTurns,
       temperature: config.temperature,
       ctx: { library: this.appState.library, manager: this.appState.manager! },

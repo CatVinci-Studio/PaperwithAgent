@@ -1,11 +1,14 @@
 import { dialog } from 'electron'
 import type { IpcMain, BrowserWindow } from 'electron'
 import { stat } from 'fs/promises'
-import { join } from 'path'
+import { basename, join } from 'path'
 import type { LibraryManager } from '../paperdb/manager'
 import { S3Backend } from '../paperdb/backendS3'
 import { BackendAuthError, BackendNetworkError } from '../paperdb/backend'
-import type { NewLibraryInput, NewS3LibraryInput, ProbeResult } from '@shared/types'
+import { LocalBackend } from '../paperdb/backendLocal'
+import { Library } from '../paperdb/store'
+import { exportLibraryZip, importLibraryZip } from '../paperdb/zip'
+import type { LibraryInfo, NewLibraryInput, NewS3LibraryInput, ProbeResult } from '@shared/types'
 
 export function registerLibraryHandlers(
   ipc: IpcMain,
@@ -82,6 +85,59 @@ export function registerLibraryHandlers(
     } catch {
       return { status: 'uninitialized' }
     }
+  })
+
+  ipc.handle('libraries:exportZip', async (_, id: string): Promise<string | null> => {
+    const win = getWindow()
+    const entry = manager.registry.get(id)
+    if (!entry) throw new Error(`Library "${id}" not found`)
+
+    const res = await dialog.showSaveDialog(win!, {
+      title: 'Export library',
+      defaultPath: `${entry.name.replace(/[^\w-]+/g, '_')}.zip`,
+      filters: [{ name: 'Zip archive', extensions: ['zip'] }],
+    })
+    if (res.canceled || !res.filePath) return null
+
+    // Open the library (caches it) so we can read every file via its backend.
+    await manager.open(id)
+    const lib = manager.active
+    await exportLibraryZip(lib, res.filePath)
+    return res.filePath
+  })
+
+  ipc.handle('libraries:importZip', async (): Promise<LibraryInfo | null> => {
+    const win = getWindow()
+    const pick = await dialog.showOpenDialog(win!, {
+      title: 'Import library archive',
+      filters: [{ name: 'Zip archive', extensions: ['zip'] }],
+      properties: ['openFile'],
+    })
+    if (pick.canceled || pick.filePaths.length === 0) return null
+    const zipPath = pick.filePaths[0]
+
+    const dest = await dialog.showOpenDialog(win!, {
+      title: 'Choose destination folder (must be empty)',
+      properties: ['openDirectory', 'createDirectory'],
+    })
+    if (dest.canceled || dest.filePaths.length === 0) return null
+    const targetDir = dest.filePaths[0]
+
+    await importLibraryZip(zipPath, targetDir)
+
+    // Validate by opening then register.
+    const be = new LocalBackend(targetDir)
+    await be.ensureRoot()
+    await Library.open(be) // throws if schema.md is missing or malformed
+
+    const info = await manager.add({
+      kind: 'local',
+      name: basename(targetDir),
+      path: targetDir,
+      initialize: false,
+    })
+    getWindow()?.webContents.send('library:switched', info)
+    return info
   })
 
   ipc.handle(

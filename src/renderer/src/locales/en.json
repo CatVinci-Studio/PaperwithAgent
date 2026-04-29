@@ -96,12 +96,21 @@
         "description": "Point to an existing folder. Verko will index it on first open.",
         "displayName": "Display name",
         "absolutePath": "Absolute path"
-      }
+      },
+      "export": "Export to .zip",
+      "import": "Import from .zip",
+      "exportDone": {
+        "title": "Library exported",
+        "message": "Saved to {{path}}"
+      },
+      "exportError": "Export failed",
+      "importError": "Import failed"
     }
   },
   "welcome": {
     "title": "Welcome to Verko",
     "subtitle": "Pick or create a paper library to get started. A library is a folder of Markdown files (local) or an S3-compatible bucket (online).",
+    "webNote": "Web build is read-only. Install the desktop app to edit, run the agent, or use local libraries.",
     "actions": {
       "openExisting": {
         "title": "Open existing folder",

@@ -11,6 +11,9 @@ import { api } from '@/lib/ipc'
 import { confirmDialog, promptDialog } from '@/store/dialogs'
 import { cn } from '@/lib/utils'
 import { useTranslation } from 'react-i18next'
+
+declare const __WEB_BUILD__: boolean | undefined
+const isWeb = typeof __WEB_BUILD__ !== 'undefined' && __WEB_BUILD__
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -200,14 +203,16 @@ export function Sidebar() {
       <div className="flex-1 overflow-y-auto py-1.5">
 
         {/* ── Agent section ───────────────────────────────────────────────── */}
-        <SectionHeader
-          icon={Bot}
-          label="Agent"
-          expanded={agentOpen}
-          onToggle={() => setAgentOpen(!agentOpen)}
-        />
+        {!isWeb && (
+          <SectionHeader
+            icon={Bot}
+            label="Agent"
+            expanded={agentOpen}
+            onToggle={() => setAgentOpen(!agentOpen)}
+          />
+        )}
 
-        {agentOpen && (
+        {!isWeb && agentOpen && (
           <button
             onClick={() => setActiveView('agent')}
             className={cn(
@@ -237,7 +242,7 @@ export function Sidebar() {
         )}
 
         {/* Divider */}
-        <div className="h-px bg-[var(--border-color)] mx-2 my-1" />
+        {!isWeb && <div className="h-px bg-[var(--border-color)] mx-2 my-1" />}
 
         {/* ── Collections section ─────────────────────────────────────────── */}
         <SectionHeader

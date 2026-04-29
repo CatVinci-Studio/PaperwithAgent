@@ -282,6 +282,8 @@ export interface IpcChannels {
   'libraries:probeLocal': { args: [string];                      ret: ProbeResult } // path
   'libraries:probeS3':    { args: [Omit<NewS3LibraryInput, 'kind' | 'name' | 'initialize'>]; ret: ProbeResult }
   'libraries:hasNone':    { args: [];                            ret: boolean }
+  'libraries:exportZip':  { args: [string];                      ret: string | null } // libraryId → savedPath (null = cancelled)
+  'libraries:importZip':  { args: [];                            ret: LibraryInfo | null } // null = cancelled
 
   // Collections (within active library)
   'collections:list':    { args: [];                        ret: CollectionInfo[] }

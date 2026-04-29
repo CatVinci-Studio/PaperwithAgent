@@ -95,12 +95,21 @@
         "description": "指向一个已存在的文件夹,Verko 会在首次打开时建立索引。",
         "displayName": "显示名称",
         "absolutePath": "绝对路径"
-      }
+      },
+      "export": "导出为 .zip",
+      "import": "从 .zip 导入",
+      "exportDone": {
+        "title": "知识库已导出",
+        "message": "已保存至 {{path}}"
+      },
+      "exportError": "导出失败",
+      "importError": "导入失败"
     }
   },
   "welcome": {
     "title": "欢迎使用 Verko",
     "subtitle": "选择一个已有的知识库,或新建一个。知识库可以是本地的 Markdown 文件夹,也可以是 S3 兼容的对象存储。",
+    "webNote": "网页版仅支持只读访问。安装桌面应用即可编辑、使用 Agent 以及本地知识库。",
     "actions": {
       "openExisting": {
         "title": "打开已有文件夹",

@@ -21,12 +21,12 @@ Agent-first academic paper management desktop app. Built with Electron + React 1
 ```
 src/
   main/             # Electron main process (Node.js)
-    paperdb/        # Library, schema, CSV, search, import, ID generation; backend/ has Local + S3 implementations
+    paperdb/        # Library, schema, CSV, search, import, ID generation; zip.ts (export/import); Local + S3 backends
     libraries/      # registry.ts (libraries.json) + credentials.ts (safeStorage)
     agent/          # AgentSession + multi-conversation registry, tool loop, tools, auth, config, prompt (EN/ZH)
       providers/    #   protocol adapters: openai.ts, anthropic.ts, gemini.ts (createProvider() picks one)
       conversations.ts # per-conversation JSON files in userData
-      newTools.ts   #   web_fetch, view_pdf_page, read_document
+      tools/        #   web.ts (web_fetch) + documents.ts (view_pdf_page, read_document)
     ipc/            # IPC handler registration (thin wrappers over paperdb/agent/conversations)
     index.ts        # App entry, LibraryManager init, IPC registration
     __tests__/      # Vitest specs for main-process modules
@@ -52,6 +52,8 @@ src/
       common/       # App-specific shared bits: TitleBar, ChipStatus, ChipTag
     lib/            # ipc.ts (window.api wrapper + web stub), utils.ts (cn, formatYear,
                     # formatAuthors, debounce), i18n.ts (i18next config)
+    web/            # Web-build only: webApi (IApi adapter), webLibrary (read-only S3
+                    # paper store), s3client (browser AWS SDK), credentials (IndexedDB)
     locales/        # en.json + zh.json — UI translations
     styles/         # globals.css (CSS variables for dark/light theme)
     css.d.ts        # ambient declaration so `import './styles/globals.css'` typechecks

@@ -19,6 +19,8 @@ export interface IApi {
     probeLocal(path: string): Promise<ProbeResult>
     probeS3(cfg: Omit<NewS3LibraryInput, 'kind' | 'name' | 'initialize'>): Promise<ProbeResult>
     hasNone(): Promise<boolean>
+    exportZip(id: string): Promise<string | null>
+    importZip(): Promise<LibraryInfo | null>
     onSwitched(cb: (info: LibraryInfo) => void): UnsubFn
     onNone(cb: (payload: LibraryNonePayload) => void): UnsubFn
   }
@@ -183,6 +185,8 @@ const webStub: IApi = {
     probeLocal: () => Promise.resolve({ status: 'ready' }),
     probeS3: () => Promise.resolve({ status: 'ready' }),
     hasNone: () => Promise.resolve(false),
+    exportZip: () => Promise.resolve(null),
+    importZip: () => Promise.resolve(null),
     onSwitched: () => () => {},
     onNone: () => () => {},
   },
@@ -259,4 +263,15 @@ const webStub: IApi = {
   },
 }
 
-export const api: IApi = (window as { api?: IApi }).api ?? webStub
+import { webApi } from '@/web/webApi'
+
+declare const __WEB_BUILD__: boolean | undefined
+
+function pickApi(): IApi {
+  const electronApi = (window as { api?: IApi }).api
+  if (electronApi) return electronApi
+  if (typeof __WEB_BUILD__ !== 'undefined' && __WEB_BUILD__) return webApi
+  return webStub
+}
+
+export const api: IApi = pickApi()

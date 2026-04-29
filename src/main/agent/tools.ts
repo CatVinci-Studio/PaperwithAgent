@@ -1,4 +1,4 @@
-import OpenAI from 'openai'
+import type { ToolDef } from './providers'
 import type { Library } from '@main/paperdb/store'
 import type { LibraryManager } from '@main/paperdb/manager'
 import type { PaperDraft, PaperPatch, Filter } from '@shared/types'
@@ -8,332 +8,269 @@ export interface ToolContext {
   manager: LibraryManager
 }
 
-export const TOOL_DEFINITIONS: OpenAI.Chat.ChatCompletionTool[] = [
+export const TOOL_DEFINITIONS: ToolDef[] = [
   {
-    type: 'function',
-    function: {
-      name: 'read_library_csv',
-      description:
-        'Read the entire papers.csv index for the active library. Use this first to get an overview of all papers and their metadata.',
-      parameters: { type: 'object', properties: {}, required: [] }
+    name: 'read_library_csv',
+    description:
+      'Read the entire papers.csv index for the active library. Use this first to get an overview of all papers and their metadata.',
+    parameters: { type: 'object', properties: {}, required: [] }
+  },
+  {
+    name: 'read_paper',
+    description:
+      'Read the full markdown content (including frontmatter and notes) of a specific paper.',
+    parameters: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Paper ID' }
+      },
+      required: ['id']
     }
   },
   {
-    type: 'function',
-    function: {
-      name: 'read_paper',
-      description:
-        'Read the full markdown content (including frontmatter and notes) of a specific paper.',
-      parameters: {
-        type: 'object',
-        properties: {
-          id: { type: 'string', description: 'Paper ID' }
+    name: 'list_paper_ids',
+    description: 'List all paper IDs in the active library by scanning the papers directory.',
+    parameters: { type: 'object', properties: {}, required: [] }
+  },
+  {
+    name: 'extract_pdf_text',
+    description:
+      'Extract text content from a PDF file associated with a paper. Returns the first 50 pages of text.',
+    parameters: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Paper ID whose PDF should be extracted' }
+      },
+      required: ['id']
+    }
+  },
+  {
+    name: 'add_paper',
+    description: 'Add a new paper to the active library.',
+    parameters: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', description: 'Paper title' },
+        authors: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'List of author names'
         },
-        required: ['id']
-      }
-    }
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'list_paper_ids',
-      description: 'List all paper IDs in the active library by scanning the papers directory.',
-      parameters: { type: 'object', properties: {}, required: [] }
-    }
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'extract_pdf_text',
-      description:
-        'Extract text content from a PDF file associated with a paper. Returns the first 50 pages of text.',
-      parameters: {
-        type: 'object',
-        properties: {
-          id: { type: 'string', description: 'Paper ID whose PDF should be extracted' }
+        year: { type: 'number', description: 'Publication year' },
+        venue: { type: 'string', description: 'Journal or conference name' },
+        doi: { type: 'string', description: 'DOI identifier' },
+        url: { type: 'string', description: 'URL to the paper' },
+        tags: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Tags for categorization'
         },
-        required: ['id']
-      }
-    }
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'add_paper',
-      description: 'Add a new paper to the active library.',
-      parameters: {
-        type: 'object',
-        properties: {
-          title: { type: 'string', description: 'Paper title' },
-          authors: {
-            type: 'array',
-            items: { type: 'string' },
-            description: 'List of author names'
-          },
-          year: { type: 'number', description: 'Publication year' },
-          venue: { type: 'string', description: 'Journal or conference name' },
-          doi: { type: 'string', description: 'DOI identifier' },
-          url: { type: 'string', description: 'URL to the paper' },
-          tags: {
-            type: 'array',
-            items: { type: 'string' },
-            description: 'Tags for categorization'
-          },
-          status: {
-            type: 'string',
-            enum: ['unread', 'reading', 'read', 'archived'],
-            description: 'Reading status'
-          },
-          markdown: { type: 'string', description: 'Initial notes in markdown format' }
+        status: {
+          type: 'string',
+          enum: ['unread', 'reading', 'read', 'archived'],
+          description: 'Reading status'
         },
-        required: ['title']
-      }
+        markdown: { type: 'string', description: 'Initial notes in markdown format' }
+      },
+      required: ['title']
     }
   },
   {
-    type: 'function',
-    function: {
-      name: 'update_paper',
-      description: 'Update metadata fields of an existing paper.',
-      parameters: {
-        type: 'object',
-        properties: {
-          id: { type: 'string', description: 'Paper ID to update' },
-          title: { type: 'string', description: 'New title' },
-          authors: { type: 'array', items: { type: 'string' }, description: 'New author list' },
-          year: { type: 'number', description: 'New publication year' },
-          venue: { type: 'string', description: 'New venue' },
-          doi: { type: 'string', description: 'New DOI' },
-          url: { type: 'string', description: 'New URL' },
-          tags: { type: 'array', items: { type: 'string' }, description: 'New tags' },
-          status: {
-            type: 'string',
-            enum: ['unread', 'reading', 'read', 'archived'],
-            description: 'New reading status'
-          },
-          rating: { type: 'number', description: 'Rating 0-5' },
-          markdown: { type: 'string', description: 'Replace the full markdown body' }
+    name: 'update_paper',
+    description: 'Update metadata fields of an existing paper.',
+    parameters: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Paper ID to update' },
+        title: { type: 'string', description: 'New title' },
+        authors: { type: 'array', items: { type: 'string' }, description: 'New author list' },
+        year: { type: 'number', description: 'New publication year' },
+        venue: { type: 'string', description: 'New venue' },
+        doi: { type: 'string', description: 'New DOI' },
+        url: { type: 'string', description: 'New URL' },
+        tags: { type: 'array', items: { type: 'string' }, description: 'New tags' },
+        status: {
+          type: 'string',
+          enum: ['unread', 'reading', 'read', 'archived'],
+          description: 'New reading status'
         },
-        required: ['id']
-      }
+        rating: { type: 'number', description: 'Rating 0-5' },
+        markdown: { type: 'string', description: 'Replace the full markdown body' }
+      },
+      required: ['id']
     }
   },
   {
-    type: 'function',
-    function: {
-      name: 'append_note',
-      description:
-        'Append text to a specific section of a paper\'s notes. Prefer this over update_paper for adding notes.',
-      parameters: {
-        type: 'object',
-        properties: {
-          id: { type: 'string', description: 'Paper ID' },
-          section: { type: 'string', description: 'Section heading to append to (e.g. "Notes")' },
-          text: { type: 'string', description: 'Text to append' }
+    name: 'append_note',
+    description:
+      'Append text to a specific section of a paper\'s notes. Prefer this over update_paper for adding notes.',
+    parameters: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Paper ID' },
+        section: { type: 'string', description: 'Section heading to append to (e.g. "Notes")' },
+        text: { type: 'string', description: 'Text to append' }
+      },
+      required: ['id', 'section', 'text']
+    }
+  },
+  {
+    name: 'import_doi',
+    description: 'Import a paper by its DOI, fetching metadata automatically.',
+    parameters: {
+      type: 'object',
+      properties: {
+        doi: { type: 'string', description: 'DOI string, e.g. "10.1145/3290605.3300747"' }
+      },
+      required: ['doi']
+    }
+  },
+  {
+    name: 'search_papers',
+    description: 'Full-text search across papers in the active library.',
+    parameters: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Search query' },
+        status: {
+          type: 'array',
+          items: { type: 'string', enum: ['unread', 'reading', 'read', 'archived'] },
+          description: 'Filter by reading status'
         },
-        required: ['id', 'section', 'text']
-      }
+        tags: { type: 'array', items: { type: 'string' }, description: 'Filter by tags' },
+        yearFrom: { type: 'number', description: 'Minimum publication year' },
+        yearTo: { type: 'number', description: 'Maximum publication year' }
+      },
+      required: ['query']
     }
   },
   {
-    type: 'function',
-    function: {
-      name: 'import_doi',
-      description: 'Import a paper by its DOI, fetching metadata automatically.',
-      parameters: {
-        type: 'object',
-        properties: {
-          doi: { type: 'string', description: 'DOI string, e.g. "10.1145/3290605.3300747"' }
-        },
-        required: ['doi']
-      }
-    }
+    name: 'list_libraries',
+    description: 'List all registered libraries with their metadata.',
+    parameters: { type: 'object', properties: {}, required: [] }
   },
   {
-    type: 'function',
-    function: {
-      name: 'search_papers',
-      description: 'Full-text search across papers in the active library.',
-      parameters: {
-        type: 'object',
-        properties: {
-          query: { type: 'string', description: 'Search query' },
-          status: {
-            type: 'array',
-            items: { type: 'string', enum: ['unread', 'reading', 'read', 'archived'] },
-            description: 'Filter by reading status'
-          },
-          tags: { type: 'array', items: { type: 'string' }, description: 'Filter by tags' },
-          yearFrom: { type: 'number', description: 'Minimum publication year' },
-          yearTo: { type: 'number', description: 'Maximum publication year' }
-        },
-        required: ['query']
-      }
-    }
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'list_libraries',
-      description: 'List all registered libraries with their metadata.',
-      parameters: { type: 'object', properties: {}, required: [] }
-    }
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'switch_library',
-      description: 'Switch to a different library by name.',
-      parameters: {
-        type: 'object',
-        properties: {
-          name: { type: 'string', description: 'Library name to switch to' }
-        },
-        required: ['name']
-      }
+    name: 'switch_library',
+    description: 'Switch to a different library by name.',
+    parameters: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Library name to switch to' }
+      },
+      required: ['name']
     }
   },
 
   // ── Collection management ─────────────────────────────────────────────────
   {
-    type: 'function',
-    function: {
-      name: 'list_collections',
-      description: 'List all collections in the active library with their paper counts.',
-      parameters: { type: 'object', properties: {}, required: [] }
+    name: 'list_collections',
+    description: 'List all collections in the active library with their paper counts.',
+    parameters: { type: 'object', properties: {}, required: [] }
+  },
+  {
+    name: 'create_collection',
+    description: 'Create a new empty collection in the active library.',
+    parameters: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Collection name' }
+      },
+      required: ['name']
     }
   },
   {
-    type: 'function',
-    function: {
-      name: 'create_collection',
-      description: 'Create a new empty collection in the active library.',
-      parameters: {
-        type: 'object',
-        properties: {
-          name: { type: 'string', description: 'Collection name' }
-        },
-        required: ['name']
-      }
+    name: 'add_to_collection',
+    description: 'Add a paper to a collection. Creates the collection if it does not exist.',
+    parameters: {
+      type: 'object',
+      properties: {
+        id:   { type: 'string', description: 'Paper ID' },
+        name: { type: 'string', description: 'Collection name' }
+      },
+      required: ['id', 'name']
     }
   },
   {
-    type: 'function',
-    function: {
-      name: 'add_to_collection',
-      description: 'Add a paper to a collection. Creates the collection if it does not exist.',
-      parameters: {
-        type: 'object',
-        properties: {
-          id:   { type: 'string', description: 'Paper ID' },
-          name: { type: 'string', description: 'Collection name' }
-        },
-        required: ['id', 'name']
-      }
-    }
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'remove_from_collection',
-      description: 'Remove a paper from a collection.',
-      parameters: {
-        type: 'object',
-        properties: {
-          id:   { type: 'string', description: 'Paper ID' },
-          name: { type: 'string', description: 'Collection name' }
-        },
-        required: ['id', 'name']
-      }
+    name: 'remove_from_collection',
+    description: 'Remove a paper from a collection.',
+    parameters: {
+      type: 'object',
+      properties: {
+        id:   { type: 'string', description: 'Paper ID' },
+        name: { type: 'string', description: 'Collection name' }
+      },
+      required: ['id', 'name']
     }
   },
 
   // ── Raw file access (scoped to library root) ──────────────────────────────
   {
-    type: 'function',
-    function: {
-      name: 'read_file',
-      description:
-        'Read any file within the active library directory. Path is relative to the library root. ' +
-        'Use this to read schema.md, collections.json, or any paper markdown file directly.',
-      parameters: {
-        type: 'object',
-        properties: {
-          path: { type: 'string', description: 'Relative path from library root, e.g. "schema.md" or "papers/2024-ho-ddpm.md"' }
-        },
-        required: ['path']
-      }
+    name: 'read_file',
+    description:
+      'Read any file within the active library directory. Path is relative to the library root. ' +
+      'Use this to read schema.md, collections.json, or any paper markdown file directly.',
+    parameters: {
+      type: 'object',
+      properties: {
+        path: { type: 'string', description: 'Relative path from library root, e.g. "schema.md" or "papers/2024-ho-ddpm.md"' }
+      },
+      required: ['path']
     }
   },
   {
-    type: 'function',
-    function: {
-      name: 'write_file',
-      description:
-        'Write content to a file within the active library directory. Path is relative to the library root. ' +
-        'Use this to create or modify markdown notes, or write structured data. ' +
-        'WARNING: Prefer update_paper / append_note for paper files to keep the index in sync.',
-      parameters: {
-        type: 'object',
-        properties: {
-          path:    { type: 'string', description: 'Relative path from library root' },
-          content: { type: 'string', description: 'Full file content to write' }
-        },
-        required: ['path', 'content']
-      }
+    name: 'write_file',
+    description:
+      'Write content to a file within the active library directory. Path is relative to the library root. ' +
+      'Use this to create or modify markdown notes, or write structured data. ' +
+      'WARNING: Prefer update_paper / append_note for paper files to keep the index in sync.',
+    parameters: {
+      type: 'object',
+      properties: {
+        path:    { type: 'string', description: 'Relative path from library root' },
+        content: { type: 'string', description: 'Full file content to write' }
+      },
+      required: ['path', 'content']
     }
   },
   {
-    type: 'function',
-    function: {
-      name: 'web_fetch',
-      description: 'Fetch a URL and return its contents. HTML pages are converted to Markdown. Useful for reading the abstract or related work pointed to by a paper.',
-      parameters: {
-        type: 'object',
-        properties: { url: { type: 'string', description: 'Absolute http(s) URL.' } },
-        required: ['url']
-      }
+    name: 'web_fetch',
+    description: 'Fetch a URL and return its contents. HTML pages are converted to Markdown. Useful for reading the abstract or related work pointed to by a paper.',
+    parameters: {
+      type: 'object',
+      properties: { url: { type: 'string', description: 'Absolute http(s) URL.' } },
+      required: ['url']
     }
   },
   {
-    type: 'function',
-    function: {
-      name: 'view_pdf_page',
-      description: "Rasterize a single page of a paper's PDF to a PNG image. Returns a base64-encoded image so vision-capable models can read figures, equations, and tables. Use this when text extraction is insufficient.",
-      parameters: {
-        type: 'object',
-        properties: {
-          id: { type: 'string', description: 'Paper ID.' },
-          page: { type: 'number', description: '1-based page number.' }
-        },
-        required: ['id', 'page']
-      }
+    name: 'view_pdf_page',
+    description: "Rasterize a single page of a paper's PDF to a PNG image. Returns a base64-encoded image so vision-capable models can read figures, equations, and tables. Use this when text extraction is insufficient.",
+    parameters: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Paper ID.' },
+        page: { type: 'number', description: '1-based page number.' }
+      },
+      required: ['id', 'page']
     }
   },
   {
-    type: 'function',
-    function: {
-      name: 'read_document',
-      description: 'Convert a document file into markdown. Supports .pdf, .docx, .html, .md, .txt, .json. The path must be inside the library root.',
-      parameters: {
-        type: 'object',
-        properties: { path: { type: 'string', description: 'Relative path from the library root.' } },
-        required: ['path']
-      }
+    name: 'read_document',
+    description: 'Convert a document file into markdown. Supports .pdf, .docx, .html, .md, .txt, .json. The path must be inside the library root.',
+    parameters: {
+      type: 'object',
+      properties: { path: { type: 'string', description: 'Relative path from the library root.' } },
+      required: ['path']
     }
   },
   {
-    type: 'function',
-    function: {
-      name: 'list_files',
-      description: 'List files and folders within the active library directory.',
-      parameters: {
-        type: 'object',
-        properties: {
-          path: { type: 'string', description: 'Relative path from library root. Omit or use "." for the root.' }
-        },
-        required: []
-      }
+    name: 'list_files',
+    description: 'List files and folders within the active library directory.',
+    parameters: {
+      type: 'object',
+      properties: {
+        path: { type: 'string', description: 'Relative path from library root. Omit or use "." for the root.' }
+      },
+      required: []
     }
   }
 ]
@@ -632,12 +569,12 @@ export async function dispatchTool(
     }
 
     case 'web_fetch': {
-      const { webFetch } = await import('./newTools')
+      const { webFetch } = await import('./tools/web')
       return webFetch(args['url'] as string)
     }
 
     case 'view_pdf_page': {
-      const { viewPdfPage } = await import('./newTools')
+      const { viewPdfPage } = await import('./tools/documents')
       const result = await viewPdfPage(library, args['id'] as string, (args['page'] as number) ?? 1)
       if (typeof result === 'string') return result  // error JSON string
       // Image result — pack as JSON so the model sees a structured response.
@@ -664,7 +601,7 @@ export async function dispatchTool(
       })()
       if (rel == null) return JSON.stringify({ error: 'Path is outside the library directory.' })
       const { join } = await import('path')
-      const { readDocument } = await import('./newTools')
+      const { readDocument } = await import('./tools/documents')
       return readDocument(join(localBase, rel))
     }
 

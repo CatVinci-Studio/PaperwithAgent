@@ -8,6 +8,9 @@ import { api } from '@/lib/ipc'
 import { Button } from '@/components/ui/button'
 import { S3ConnectForm } from './S3ConnectForm'
 
+declare const __WEB_BUILD__: boolean | undefined
+const isWeb = typeof __WEB_BUILD__ !== 'undefined' && __WEB_BUILD__
+
 export function WelcomeScreen() {
   const { t } = useTranslation()
   const { noneReason, refreshAll } = useLibraryStore()
@@ -127,20 +130,24 @@ export function WelcomeScreen() {
         )}
 
         <div className="grid gap-2.5">
-          <Choice
-            icon={<FolderOpen size={16} />}
-            title={t('welcome.actions.openExisting.title')}
-            description={t('welcome.actions.openExisting.description')}
-            onClick={handleOpenExisting}
-            disabled={busy}
-          />
-          <Choice
-            icon={<FolderPlus size={16} />}
-            title={t('welcome.actions.createLocal.title')}
-            description={t('welcome.actions.createLocal.description')}
-            onClick={handleCreateNew}
-            disabled={busy}
-          />
+          {!isWeb && (
+            <>
+              <Choice
+                icon={<FolderOpen size={16} />}
+                title={t('welcome.actions.openExisting.title')}
+                description={t('welcome.actions.openExisting.description')}
+                onClick={handleOpenExisting}
+                disabled={busy}
+              />
+              <Choice
+                icon={<FolderPlus size={16} />}
+                title={t('welcome.actions.createLocal.title')}
+                description={t('welcome.actions.createLocal.description')}
+                onClick={handleCreateNew}
+                disabled={busy}
+              />
+            </>
+          )}
           <Choice
             icon={<Cloud size={16} />}
             title={t('welcome.actions.connectS3.title')}
@@ -149,6 +156,11 @@ export function WelcomeScreen() {
             disabled={busy}
           />
         </div>
+        {isWeb && (
+          <p className="text-[11px] text-[var(--text-muted)] text-center mt-2">
+            {t('welcome.webNote')}
+          </p>
+        )}
       </div>
     </div>
   )

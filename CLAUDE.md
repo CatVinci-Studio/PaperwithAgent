@@ -12,7 +12,7 @@ Agent-first academic paper management desktop app. Built with Electron + React 1
 - **Search**: MiniSearch (in-memory full-text)
 - **Agent**: OpenAI-compatible streaming API via `openai` SDK v4
 - **Tests**: Vitest 3 (main process: node env, renderer: happy-dom)
-- **Package manager**: pnpm
+- **Package manager**: npm
 
 ## Repository Layout
 ```
@@ -47,7 +47,7 @@ Each library is a folder:
 Paper IDs are generated as `{year}-{lastname}-{titleword}` (e.g. `2017-vaswani-attention`).
 
 ## IPC Pattern
-`IpcChannels` in `shared/types.ts` is the single source of truth for all IPC channel names, argument types, and return types. The preload exposes `window.api` which renderer code imports via `src/renderer/src/lib/ipc.ts`. In web preview mode (`pnpm dev:web`) that file falls back to a mock stub with sample data.
+`IpcChannels` in `shared/types.ts` is the single source of truth for all IPC channel names, argument types, and return types. The preload exposes `window.api` which renderer code imports via `src/renderer/src/lib/ipc.ts`. In web preview mode (`npm run dev:web`) that file falls back to a mock stub with sample data.
 
 ## Theme System
 Colors live entirely in CSS variables defined in `globals.css`. Two themes:
@@ -58,12 +58,12 @@ Theme is toggled by adding/removing the `light` class on `<html>`. Preference is
 
 ## Commands
 ```bash
-pnpm dev          # Start full Electron app (main + renderer)
-pnpm dev:web      # Renderer-only web preview at localhost:5173
-pnpm test         # Run main-process unit tests (Vitest, node env)
-pnpm typecheck    # TypeScript check (both tsconfig.node.json + tsconfig.web.json)
-pnpm build        # Production build
-pnpm dist:mac     # Build + package macOS DMG
+npm run dev       # Start full Electron app (main + renderer)
+npm run dev:web   # Renderer-only web preview at localhost:5173
+npm test          # Run main-process unit tests (Vitest, node env)
+npm run typecheck # TypeScript check (both tsconfig.node.json + tsconfig.web.json)
+npm run build     # Production build
+npm run dist:mac  # Build + package macOS DMG
 ```
 
 ## Testing

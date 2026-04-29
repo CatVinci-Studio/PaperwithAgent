@@ -37,7 +37,7 @@ export async function runAgentLoop(opts: RunAgentLoopOptions): Promise<void> {
     let assistantTextContent = ''
 
     try {
-      const stream = client.beta.chat.completions.stream(
+      const stream = client.chat.completions.stream(
         {
           model,
           messages,

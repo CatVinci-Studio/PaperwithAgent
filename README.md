@@ -47,22 +47,22 @@ Download the latest installer for your platform from [Releases](https://github.c
 
 ### Build from source
 
-**Prerequisites:** Node.js 20+, pnpm 9+
+**Prerequisites:** Node.js 20+, npm 10+
 
 ```bash
 git clone https://github.com/CatVinci-Studio/PaperwithAgent.git
 cd PaperwithAgent
-pnpm install
-pnpm dev          # Start in dev mode (Electron)
+npm install
+npm run dev       # Start in dev mode (Electron)
 ```
 
 **Production build:**
 
 ```bash
-pnpm build        # Compile renderer + main process
-pnpm dist:mac     # Package macOS DMG
-pnpm dist:win     # Package Windows installer
-pnpm dist:linux   # Package Linux AppImage
+npm run build       # Compile renderer + main process
+npm run dist:mac    # Package macOS DMG
+npm run dist:win    # Package Windows installer
+npm run dist:linux  # Package Linux AppImage
 ```
 
 ---

@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- module exports a column-def builder, not React components; Fast Refresh boundary check doesn't apply */
 import type { ColumnDef } from '@tanstack/react-table'
 import { Star, FileText } from 'lucide-react'
 import type { PaperRef, Column } from '@shared/types'

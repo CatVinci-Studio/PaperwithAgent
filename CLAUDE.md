@@ -14,7 +14,7 @@ Agent-first academic paper management desktop app. Built with Electron + React 1
 - **Agent**: OpenAI-compatible streaming API via `openai` SDK v6
 - **Tests**: Vitest 4 (main process only, node env)
 - **Package manager**: npm
-- **Style enforcement**: `.editorconfig` + TypeScript strict mode (`noUnusedLocals`, `noUnusedParameters` on)
+- **Style enforcement**: `.editorconfig` (indent / EOL) + TypeScript strict mode (`noUnusedLocals`, `noUnusedParameters` on) + ESLint 10 flat config (`eslint.config.js` — JS/TS recommended + `react-hooks/{rules-of-hooks,exhaustive-deps}` + `react-refresh/only-export-components`)
 
 ## Repository Layout
 ```
@@ -125,6 +125,8 @@ npm run dev          # Start full Electron app (main + renderer)
 npm run dev:web      # Renderer-only web preview at http://localhost:5173
 npm test             # Run main-process unit tests (Vitest, node env)
 npm run typecheck    # tsc --noEmit on tsconfig.node.json + tsconfig.web.json
+npm run lint         # ESLint over src/
+npm run lint:fix     # ESLint with --fix
 npm run build        # Production build (electron-vite)
 npm run dist:mac     # Build + package macOS DMG (electron-builder)
 npm run dist:win     # Build + package Windows installer

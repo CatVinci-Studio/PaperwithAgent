@@ -29,20 +29,23 @@ export default function App() {
   // Subscribe to agent IPC events at the top level
   useAgentEvents()
 
-  // Initial data load
+  // Initial data load. Zustand actions are stable; mount-only is intentional.
   useEffect(() => {
     refreshLibraries().then(() =>
       Promise.all([refreshPapers(), refreshSchema(), refreshCollections()])
     )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Listen for library switch events
+  // Listen for library switch events. Subscription should outlive the
+  // component lifecycle within this mount; do not re-bind on action change.
   useEffect(() => {
     const unsub = api.libraries.onSwitched(() => {
       refreshLibraries()
       refreshPapers()
     })
     return unsub
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Global keyboard shortcuts

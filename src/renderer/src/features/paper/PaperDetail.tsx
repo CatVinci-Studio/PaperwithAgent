@@ -34,10 +34,13 @@ export function PaperDetail() {
   const [tagDraft, setTagDraft] = useState('')
   const [markdownValue, setMarkdownValue] = useState('')
 
+  // Reload editor only when the active paper id changes; the rest of `paper`
+  // updates after every save and would cause editor flicker if depended on.
   React.useEffect(() => {
     if (paper) {
       setMarkdownValue(paper.markdown ?? '')
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paper?.id])
 
   const handleClose = () => {

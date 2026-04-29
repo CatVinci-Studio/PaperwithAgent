@@ -133,7 +133,7 @@ export async function runAgentLoop(opts: RunAgentLoopOptions): Promise<void> {
 
       // Execute each tool and collect results
       for (const tc of toolCalls) {
-        let parsedArgs: Record<string, unknown> = {}
+        let parsedArgs: Record<string, unknown>
         try {
           parsedArgs = JSON.parse(tc.args) as Record<string, unknown>
         } catch {

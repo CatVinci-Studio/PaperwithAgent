@@ -493,7 +493,10 @@ export async function dispatchTool(
     case 'switch_library': {
       const libName = args['name'] as string
       try {
-        await manager.switch(libName)
+        const all = await manager.list()
+        const target = all.find((l) => l.name === libName)
+        if (!target) return JSON.stringify({ success: false, error: `Library "${libName}" not found` })
+        await manager.open(target.id)
         return JSON.stringify({ success: true, active: libName })
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e)

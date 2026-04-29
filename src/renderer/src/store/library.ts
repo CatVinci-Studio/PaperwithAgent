@@ -2,9 +2,13 @@ import { create } from 'zustand'
 import type { LibraryInfo, PaperRef, Filter, Schema, CollectionInfo } from '@shared/types'
 import { api } from '@/lib/ipc'
 
+export type LibraryStatus = 'loading' | 'ready' | 'none'
+
 interface LibraryStore {
   libraries: LibraryInfo[]
   activeLibrary: LibraryInfo | null
+  status: LibraryStatus
+  noneReason?: { reason: 'empty' | 'last-failed'; message?: string }
   papers: PaperRef[]
   schema: Schema | null
   collections: CollectionInfo[]
@@ -16,17 +20,21 @@ interface LibraryStore {
 
   setSelected: (id: string | null) => void
   setFilter: (f: Partial<Filter>) => void
+  setStatus: (s: LibraryStatus, reason?: { reason: 'empty' | 'last-failed'; message?: string }) => void
   refreshPapers: () => Promise<void>
   refreshLibraries: () => Promise<void>
   refreshSchema: () => Promise<void>
   refreshCollections: () => Promise<void>
-  switchLibrary: (name: string) => Promise<void>
+  refreshAll: () => Promise<void>
+  switchLibrary: (id: string) => Promise<void>
   switchCollection: (name: string | null) => void
 }
 
 export const useLibraryStore = create<LibraryStore>((set, get) => ({
   libraries: [],
   activeLibrary: null,
+  status: 'loading',
+  noneReason: undefined,
   papers: [],
   schema: null,
   collections: [],
@@ -37,6 +45,8 @@ export const useLibraryStore = create<LibraryStore>((set, get) => ({
   isLoadingLibraries: false,
 
   setSelected: (id) => set({ selectedId: id }),
+
+  setStatus: (s, reason) => set({ status: s, noneReason: reason }),
 
   setFilter: (f) => {
     set(state => ({ filter: { ...state.filter, ...f } }))
@@ -87,12 +97,16 @@ export const useLibraryStore = create<LibraryStore>((set, get) => ({
     get().refreshPapers()
   },
 
-  switchLibrary: async (name) => {
-    await api.libraries.switch(name)
+  refreshAll: async () => {
     await get().refreshLibraries()
     await get().refreshCollections()
-    await get().refreshPapers()
     await get().refreshSchema()
-    set({ selectedId: null, activeCollection: null })
+    await get().refreshPapers()
+  },
+
+  switchLibrary: async (id) => {
+    await api.libraries.open(id)
+    set({ status: 'ready', noneReason: undefined, selectedId: null, activeCollection: null })
+    await get().refreshAll()
   },
 }))

@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { IpcChannels, AgentEvent } from '@shared/types'
+import type { IpcChannels, AgentEvent, LibraryInfo, LibraryNonePayload } from '@shared/types'
 
 type UnsubFn = () => void
 
@@ -21,17 +21,25 @@ const api = {
 
   // ── Shortcuts / convenience ──────────────────────────────────────────────
   libraries: {
-    list:    ()                                 => api.invoke('libraries:list'),
-    switch:  (name: string)                     => api.invoke('libraries:switch', name),
-    add:     (name: string, path: string)       => api.invoke('libraries:add', name, path),
-    create:  (name: string, path: string)       => api.invoke('libraries:create', name, path),
-    remove:  (name: string)                     => api.invoke('libraries:remove', name),
-    rename:  (oldName: string, newName: string) => api.invoke('libraries:rename', oldName, newName),
-    onSwitched: (cb: (info: import('@shared/types').LibraryInfo) => void) => {
-      const listener = (_: Electron.IpcRendererEvent, info: import('@shared/types').LibraryInfo) => cb(info)
+    list:        ()                                            => api.invoke('libraries:list'),
+    open:        (id: string)                                  => api.invoke('libraries:open', id),
+    add:         (input: IpcChannels['libraries:add']['args'][0]) => api.invoke('libraries:add', input),
+    remove:      (id: string)                                  => api.invoke('libraries:remove', id),
+    rename:      (id: string, name: string)                    => api.invoke('libraries:rename', id, name),
+    pickFolder:  ()                                            => api.invoke('libraries:pickFolder'),
+    probeLocal:  (path: string)                                => api.invoke('libraries:probeLocal', path),
+    probeS3:     (cfg: IpcChannels['libraries:probeS3']['args'][0]) => api.invoke('libraries:probeS3', cfg),
+    hasNone:     ()                                            => api.invoke('libraries:hasNone'),
+    onSwitched: (cb: (info: LibraryInfo) => void): UnsubFn => {
+      const listener = (_: Electron.IpcRendererEvent, info: LibraryInfo) => cb(info)
       ipcRenderer.on('library:switched', listener)
       return () => ipcRenderer.removeListener('library:switched', listener)
-    }
+    },
+    onNone: (cb: (payload: LibraryNonePayload) => void): UnsubFn => {
+      const listener = (_: Electron.IpcRendererEvent, payload: LibraryNonePayload) => cb(payload)
+      ipcRenderer.on('library:none', listener)
+      return () => ipcRenderer.removeListener('library:none', listener)
+    },
   },
 
   papers: {

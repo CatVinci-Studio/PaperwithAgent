@@ -155,29 +155,81 @@ export interface CollectionInfo {
 
 // ─── Library management ──────────────────────────────────────────────────────
 
-export interface LibraryInfo {
-  name: string        // display name, unique key
-  path: string        // absolute path to library root
+export type LibraryKind = 'local' | 's3'
+
+export interface LibraryInfoBase {
+  id: string
+  name: string
+  kind: LibraryKind
   active: boolean
   paperCount: number
-  createdAt: string
+  lastOpenedAt?: number
 }
 
-export interface LibraryConfig {
-  libraries: Omit<LibraryInfo, 'active' | 'paperCount'>[]
-  active: string      // name of active library
+export interface LocalLibraryInfo extends LibraryInfoBase {
+  kind: 'local'
+  path: string
+}
+
+export interface S3LibraryInfo extends LibraryInfoBase {
+  kind: 's3'
+  endpoint?: string
+  region: string
+  bucket: string
+  prefix?: string
+}
+
+export type LibraryInfo = LocalLibraryInfo | S3LibraryInfo
+
+/** Form-shape input for adding a new library. Credentials never live in the registry. */
+export interface NewLocalLibraryInput {
+  kind: 'local'
+  name: string
+  path: string
+  initialize?: boolean
+}
+
+export interface NewS3LibraryInput {
+  kind: 's3'
+  name: string
+  endpoint?: string
+  region: string
+  bucket: string
+  prefix?: string
+  forcePathStyle?: boolean
+  accessKeyId: string
+  secretAccessKey: string
+  initialize?: boolean
+}
+
+export type NewLibraryInput = NewLocalLibraryInput | NewS3LibraryInput
+
+export type ProbeStatus = 'ready' | 'uninitialized' | 'error'
+
+export interface ProbeResult {
+  status: ProbeStatus
+  message?: string
+}
+
+/** State shipped to the renderer when no library is currently open. */
+export interface LibraryNonePayload {
+  reason: 'empty' | 'last-failed'
+  message?: string
 }
 
 // ─── IPC channel map (main ↔ renderer) ───────────────────────────────────────
 
 export interface IpcChannels {
-  // Libraries (multi-library management)
-  'libraries:list':     { args: [];                         ret: LibraryInfo[] }
-  'libraries:switch':   { args: [string];                   ret: void }         // name
-  'libraries:add':      { args: [string, string];           ret: LibraryInfo }  // name, path
-  'libraries:create':   { args: [string, string];           ret: LibraryInfo }  // name, path (mkdir)
-  'libraries:remove':   { args: [string];                   ret: void }         // name (unregisters, no delete)
-  'libraries:rename':   { args: [string, string];           ret: void }         // oldName, newName
+  // Libraries (multi-library management — new entry-based API)
+  'libraries:list':     { args: [];                              ret: LibraryInfo[] }
+  'libraries:open':     { args: [string];                        ret: LibraryInfo } // id
+  'libraries:add':      { args: [NewLibraryInput];               ret: LibraryInfo }
+  'libraries:remove':   { args: [string];                        ret: void }        // id (unregisters, no delete)
+  'libraries:rename':   { args: [string, string];                ret: void }        // id, newName
+  'libraries:pickFolder': { args: [];                            ret: string | null }
+  'libraries:probeLocal': { args: [string];                      ret: ProbeResult } // path
+  'libraries:probeS3':    { args: [Omit<NewS3LibraryInput, 'kind' | 'name' | 'initialize'>]; ret: ProbeResult }
+  'libraries:hasNone':    { args: [];                            ret: boolean }
 
   // Collections (within active library)
   'collections:list':    { args: [];                        ret: CollectionInfo[] }

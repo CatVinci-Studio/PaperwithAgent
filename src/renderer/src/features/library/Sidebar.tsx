@@ -146,7 +146,7 @@ export function Sidebar() {
       confirmLabel: t('common.add'),
     })
     if (!result) return
-    try { await api.libraries.add(result.name, result.path); await refreshLibraries() }
+    try { await api.libraries.add({ kind: 'local', name: result.name, path: result.path, initialize: true }); await refreshLibraries() }
     catch (e) { console.error(e) }
   }
 
@@ -172,7 +172,7 @@ export function Sidebar() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-52">
             {libraries.map(lib => (
-              <DropdownMenuItem key={lib.name} onClick={() => switchLibrary(lib.name)} className="flex items-center gap-2">
+              <DropdownMenuItem key={lib.id} onClick={() => switchLibrary(lib.id)} className="flex items-center gap-2">
                 {lib.active && <Check size={11} className="text-[var(--accent-color)] shrink-0" />}
                 <span className={lib.active ? '' : 'ml-[15px]'}>{lib.name}</span>
                 <span className="ml-auto text-[10px] text-[var(--text-muted)]">{lib.paperCount}</span>

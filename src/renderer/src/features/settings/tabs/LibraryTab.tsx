@@ -34,12 +34,15 @@ export function LibraryTab() {
     })
     if (!result) return
     try {
-      await api.libraries.add(result.name, result.path)
+      await api.libraries.add({ kind: 'local', name: result.name, path: result.path, initialize: true })
       await refreshLibraries()
     } catch (e) {
       console.error(e)
     }
   }
+
+  const summarize = (lib: LibraryInfo): string =>
+    lib.kind === 'local' ? lib.path : `${lib.bucket}${lib.prefix ? '/' + lib.prefix : ''} (${lib.region})`
 
   return (
     <SettingSection
@@ -49,7 +52,7 @@ export function LibraryTab() {
       <div className="space-y-2 pt-2">
         {libraries.map((lib: LibraryInfo) => (
           <div
-            key={lib.name}
+            key={lib.id}
             className={cn(
               'flex items-center gap-3 px-4 py-3 rounded-[12px] border transition-colors',
               lib.active
@@ -59,7 +62,7 @@ export function LibraryTab() {
           >
             <div className="flex-1 min-w-0">
               <div className="text-[12.5px] font-medium text-[var(--text-primary)]">{lib.name}</div>
-              <div className="text-[11px] text-[var(--text-muted)] truncate mt-0.5">{lib.path}</div>
+              <div className="text-[11px] text-[var(--text-muted)] truncate mt-0.5">{summarize(lib)}</div>
               <div className="text-[10.5px] text-[var(--text-muted)] mt-0.5">
                 {t('settings.libraries.papers', { count: lib.paperCount })}
               </div>
@@ -73,7 +76,7 @@ export function LibraryTab() {
               </div>
             ) : (
               <Button
-                onClick={() => switchLibrary(lib.name)}
+                onClick={() => switchLibrary(lib.id)}
                 variant="outline"
                 size="sm"
                 className="rounded-[8px] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--border-focus)]"

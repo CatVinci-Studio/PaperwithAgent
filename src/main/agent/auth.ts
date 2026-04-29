@@ -29,10 +29,3 @@ export function hasKey(profile: string): boolean {
   const keys = store.get('keys')
   return profile in keys && keys[profile].length > 0
 }
-
-export function deleteKey(profile: string): void {
-  const keys = store.get('keys')
-  const updated = { ...keys }
-  delete updated[profile]
-  store.set('keys', updated)
-}

@@ -19,27 +19,17 @@ export function setActiveProfile(name: string): void {
   store.set('config', { ...config, defaultProfile: name })
 }
 
-export function addProfile(profile: Omit<AgentProfile, 'hasKey'>): void {
+/** Patch a provider profile's editable fields (baseUrl, model). */
+export function updateProfile(
+  name: string,
+  patch: Partial<Pick<AgentProfile, 'baseUrl' | 'model'>>,
+): void {
   const config = store.get('config')
-  const existing = config.profiles.find((p) => p.name === profile.name)
-  if (existing) throw new Error(`Profile "${profile.name}" already exists`)
-  store.set('config', {
-    ...config,
-    profiles: [...config.profiles, profile]
-  })
-}
-
-export function removeProfile(name: string): void {
-  const config = store.get('config')
-  store.set('config', {
-    ...config,
-    profiles: config.profiles.filter((p) => p.name !== name)
-  })
-}
-
-export function updateConfig(patch: Partial<AgentConfig>): void {
-  const config = store.get('config')
-  store.set('config', { ...config, ...patch })
+  const idx = config.profiles.findIndex((p) => p.name === name)
+  if (idx === -1) throw new Error(`Profile "${name}" not found`)
+  const updated = [...config.profiles]
+  updated[idx] = { ...updated[idx], ...patch }
+  store.set('config', { ...config, profiles: updated })
 }
 
 export function getProfiles(): AgentProfile[] {

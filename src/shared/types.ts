@@ -112,8 +112,6 @@ export interface SearchHit {
 
 // ─── Agent ───────────────────────────────────────────────────────────────────
 
-export type AgentEventType = 'text' | 'tool_start' | 'tool_result' | 'error' | 'done'
-
 export interface AgentTextEvent    { type: 'text';        delta: string }
 export interface AgentToolStart    { type: 'tool_start';  name: string; args: unknown }
 export interface AgentToolResult   { type: 'tool_result'; name: string; result: unknown }
@@ -134,6 +132,12 @@ export interface AgentProfile {
   hasKey: boolean
 }
 
+/** Editable fields of a provider profile. `name` and `hasKey` are not patchable. */
+export type ProfilePatch = Partial<Pick<AgentProfile, 'baseUrl' | 'model'>>
+
+/** Supported UI languages — also used to pick the system prompt template. */
+export type Language = 'en' | 'zh'
+
 export interface AgentConfig {
   defaultProfile: string
   profiles: Omit<AgentProfile, 'hasKey'>[]
@@ -151,29 +155,81 @@ export interface CollectionInfo {
 
 // ─── Library management ──────────────────────────────────────────────────────
 
-export interface LibraryInfo {
-  name: string        // display name, unique key
-  path: string        // absolute path to library root
+export type LibraryKind = 'local' | 's3'
+
+export interface LibraryInfoBase {
+  id: string
+  name: string
+  kind: LibraryKind
   active: boolean
   paperCount: number
-  createdAt: string
+  lastOpenedAt?: number
 }
 
-export interface LibraryConfig {
-  libraries: Omit<LibraryInfo, 'active' | 'paperCount'>[]
-  active: string      // name of active library
+export interface LocalLibraryInfo extends LibraryInfoBase {
+  kind: 'local'
+  path: string
+}
+
+export interface S3LibraryInfo extends LibraryInfoBase {
+  kind: 's3'
+  endpoint?: string
+  region: string
+  bucket: string
+  prefix?: string
+}
+
+export type LibraryInfo = LocalLibraryInfo | S3LibraryInfo
+
+/** Form-shape input for adding a new library. Credentials never live in the registry. */
+export interface NewLocalLibraryInput {
+  kind: 'local'
+  name: string
+  path: string
+  initialize?: boolean
+}
+
+export interface NewS3LibraryInput {
+  kind: 's3'
+  name: string
+  endpoint?: string
+  region: string
+  bucket: string
+  prefix?: string
+  forcePathStyle?: boolean
+  accessKeyId: string
+  secretAccessKey: string
+  initialize?: boolean
+}
+
+export type NewLibraryInput = NewLocalLibraryInput | NewS3LibraryInput
+
+export type ProbeStatus = 'ready' | 'uninitialized' | 'error'
+
+export interface ProbeResult {
+  status: ProbeStatus
+  message?: string
+}
+
+/** State shipped to the renderer when no library is currently open. */
+export interface LibraryNonePayload {
+  reason: 'empty' | 'last-failed'
+  message?: string
 }
 
 // ─── IPC channel map (main ↔ renderer) ───────────────────────────────────────
 
 export interface IpcChannels {
-  // Libraries (multi-library management)
-  'libraries:list':     { args: [];                         ret: LibraryInfo[] }
-  'libraries:switch':   { args: [string];                   ret: void }         // name
-  'libraries:add':      { args: [string, string];           ret: LibraryInfo }  // name, path
-  'libraries:create':   { args: [string, string];           ret: LibraryInfo }  // name, path (mkdir)
-  'libraries:remove':   { args: [string];                   ret: void }         // name (unregisters, no delete)
-  'libraries:rename':   { args: [string, string];           ret: void }         // oldName, newName
+  // Libraries (multi-library management — new entry-based API)
+  'libraries:list':     { args: [];                              ret: LibraryInfo[] }
+  'libraries:open':     { args: [string];                        ret: LibraryInfo } // id
+  'libraries:add':      { args: [NewLibraryInput];               ret: LibraryInfo }
+  'libraries:remove':   { args: [string];                        ret: void }        // id (unregisters, no delete)
+  'libraries:rename':   { args: [string, string];                ret: void }        // id, newName
+  'libraries:pickFolder': { args: [];                            ret: string | null }
+  'libraries:probeLocal': { args: [string];                      ret: ProbeResult } // path
+  'libraries:probeS3':    { args: [Omit<NewS3LibraryInput, 'kind' | 'name' | 'initialize'>]; ret: ProbeResult }
+  'libraries:hasNone':    { args: [];                            ret: boolean }
 
   // Collections (within active library)
   'collections:list':    { args: [];                        ret: CollectionInfo[] }
@@ -200,20 +256,15 @@ export interface IpcChannels {
   'schema:renameColumn': { args: [string, string];          ret: void }
 
   // Agent
-  'agent:send':          { args: [string, PaperId?];        ret: void }
+  'agent:send':          { args: [string, PaperId?, Language?]; ret: void }
   'agent:abort':         { args: [];                        ret: void }
   'agent:getConfig':     { args: [];                        ret: AgentConfig }
   'agent:setProfile':    { args: [string];                  ret: void }
+  'agent:updateProfile': { args: [string, ProfilePatch];    ret: void }
   'agent:saveKey':       { args: [string, string];          ret: void }
   'agent:testKey':       { args: [string];                  ret: boolean }
   'agent:getProfiles':   { args: [];                        ret: AgentProfile[] }
 
   // PDF
   'pdf:getPath':         { args: [PaperId];                 ret: string | null }
-}
-
-// Streaming events (main → renderer via ipcRenderer.on)
-export interface IpcEvents {
-  'agent:event':      AgentEvent
-  'library:switched': LibraryInfo   // broadcast when active library changes
 }

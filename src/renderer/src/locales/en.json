@@ -1,0 +1,260 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "remove": "Remove",
+    "rename": "Rename",
+    "create": "Create",
+    "add": "Add",
+    "open": "Open",
+    "ok": "OK",
+    "loading": "Loading…",
+    "settings": "Settings",
+    "close": "Close"
+  },
+  "titlebar": {
+    "appName": "Verko",
+    "askAgent": "Ask Agent (⌘K)",
+    "settings": "Settings (⌘,)"
+  },
+  "settings": {
+    "title": "Settings",
+    "tabs": {
+      "general": "General",
+      "schema": "Schema",
+      "library": "Libraries"
+    },
+    "tabDescriptions": {
+      "general": "Theme, language, and model provider.",
+      "schema": "Custom columns on top of the core paper schema.",
+      "library": "Manage and switch paper library folders."
+    },
+    "basic": {
+      "title": "Basic",
+      "description": "Adjust how the interface looks.",
+      "colorScheme": "Color scheme",
+      "colorSchemeHint": "System tracks the OS preference automatically.",
+      "system": "System",
+      "dark": "Dark",
+      "light": "Light",
+      "language": "Language",
+      "languageHint": "Affects the interface and the agent's system prompt."
+    },
+    "provider": {
+      "title": "Model provider",
+      "description": "Pick a provider, then configure its API key. Clicking a provider switches the active one.",
+      "current": "Current",
+      "baseUrl": "Base URL",
+      "model": "Model",
+      "apiKey": "API Key",
+      "testConnection": "Test connection",
+      "connected": "Connected",
+      "failed": "Failed",
+      "keySaved": "API key saved",
+      "labels": {
+        "openai": "OpenAI",
+        "qwen": "Qwen",
+        "deepseek": "DeepSeek",
+        "custom": "Custom"
+      }
+    },
+    "schema": {
+      "customColumns": {
+        "title": "Custom columns",
+        "description": "Extra fields you've added on top of the core paper schema. They appear in the library view and CSV index.",
+        "empty": "No custom columns yet.",
+        "removeConfirmTitle": "Remove column \"{{name}}\"?",
+        "removeConfirmMessage": "Existing papers keep their data in the Markdown frontmatter, but the column will no longer appear in the library view or CSV index."
+      },
+      "addColumn": {
+        "title": "Add column",
+        "description": "New columns become available immediately on every paper.",
+        "namePlaceholder": "Column name…"
+      },
+      "types": {
+        "text": "Text",
+        "number": "Number",
+        "date": "Date",
+        "bool": "Boolean",
+        "select": "Select",
+        "multiselect": "Multi-select",
+        "tags": "Tags",
+        "url": "URL"
+      }
+    },
+    "libraries": {
+      "title": "Libraries",
+      "description": "Each library is a self-contained folder of papers, attachments, and schema.",
+      "switch": "Switch",
+      "active": "Active",
+      "papers": "{{count}} papers",
+      "papers_one": "{{count}} paper",
+      "addExisting": "Add existing library",
+      "addDialog": {
+        "title": "Add library",
+        "description": "Point to an existing folder. Verko will index it on first open.",
+        "displayName": "Display name",
+        "absolutePath": "Absolute path"
+      }
+    }
+  },
+  "welcome": {
+    "title": "Welcome to Verko",
+    "subtitle": "Pick or create a paper library to get started. A library is a folder of Markdown files (local) or an S3-compatible bucket (online).",
+    "actions": {
+      "openExisting": {
+        "title": "Open existing folder",
+        "description": "Choose a folder that already contains a Verko library, or one you'd like to convert."
+      },
+      "createLocal": {
+        "title": "Create new local library",
+        "description": "Pick an empty folder. Verko will scaffold the layout."
+      },
+      "connectS3": {
+        "title": "Connect S3 library",
+        "description": "Use an AWS S3, Cloudflare R2, Backblaze B2, or MinIO bucket as the storage backend."
+      }
+    },
+    "namePrompt": {
+      "title": "Name this library",
+      "description": "Used in the sidebar and library switcher. You can rename it later.",
+      "label": "Display name"
+    },
+    "initPrompt": {
+      "title": "Initialize this folder?",
+      "message": "This folder isn't a Verko library yet. We'll create papers/, attachments/, and schema.md inside it. Existing files won't be touched.",
+      "confirm": "Initialize"
+    },
+    "lastFailed": {
+      "title": "Couldn't reopen the last library"
+    },
+    "errors": {
+      "openTitle": "Couldn't open this library",
+      "unknown": "Unknown error"
+    },
+    "s3": {
+      "title": "Connect S3 library",
+      "description": "Verko writes one Markdown file per paper into the bucket. Credentials are stored encrypted on this machine.",
+      "connect": "Connect",
+      "fields": {
+        "preset": "Provider",
+        "name": "Display name",
+        "endpoint": "Endpoint",
+        "endpointHint": "Leave empty for AWS S3. Required for R2, B2, MinIO.",
+        "region": "Region",
+        "bucket": "Bucket",
+        "prefix": "Prefix (optional)",
+        "prefixHint": "Use this if multiple libraries share a bucket.",
+        "accessKeyId": "Access key ID",
+        "secretAccessKey": "Secret access key",
+        "forcePathStyle": "Force path-style URLs (MinIO and similar)"
+      },
+      "initPrompt": {
+        "title": "Initialize this bucket?",
+        "message": "The bucket is reachable but has no schema.md. We'll write schema.md and an empty papers.csv to set it up as a Verko library."
+      },
+      "errors": {
+        "missingTitle": "Missing fields",
+        "missing": "Bucket, access key, and secret key are required.",
+        "probeTitle": "Couldn't reach the bucket"
+      }
+    }
+  },
+  "library": {
+    "filterPlaceholder": "Filter papers…",
+    "newPaper": "New paper",
+    "importDoi": "Import DOI",
+    "papers": "{{count}} papers",
+    "papers_one": "{{count}} paper",
+    "showHidden": "Show hidden columns",
+    "deletePaper": {
+      "title": "Delete paper?",
+      "message": "This removes the Markdown file and any attachments. The action cannot be undone.",
+      "confirmLabel": "Delete"
+    },
+    "importDialog": {
+      "title": "Import paper",
+      "description": "Enter a DOI (e.g. 10.1145/...) or an arXiv URL.",
+      "field": "DOI or arXiv URL",
+      "confirmLabel": "Import"
+    },
+    "newColumn": {
+      "title": "New column",
+      "description": "Add a custom column to the schema. It appears in this view and the CSV index.",
+      "name": "Column name",
+      "type": "Type (text / number / date / bool / select / tags / url)",
+      "create": "Create"
+    },
+    "header": {
+      "title": "Title",
+      "authors": "Authors",
+      "year": "Year",
+      "status": "Status",
+      "tags": "Tags",
+      "hide": "Hide column",
+      "newColumn": "New column"
+    }
+  },
+  "agent": {
+    "title": "Agent",
+    "emptyTitle": "Agent",
+    "emptyDescription": "Ask anything about your research library.",
+    "placeholder": "Ask about your papers… (⌘↵ to send)",
+    "send": "Send (⌘↵)",
+    "stop": "Stop",
+    "clear": "Clear conversation",
+    "shortcutHint": "⌘↵ send · ↵ newline",
+    "suggestions": [
+      "Summarize the key contributions of the papers I've read",
+      "What are the main themes across my library?",
+      "Find papers related to transformer architecture",
+      "Add notes on the paper I'm currently reading"
+    ],
+    "tool": {
+      "input": "Input",
+      "output": "Output"
+    }
+  },
+  "paper": {
+    "untitled": "Untitled",
+    "noAuthors": "No authors",
+    "authorsPlaceholder": "Author 1, Author 2...",
+    "tagPlaceholder": "tag...",
+    "addTag": "tag",
+    "noNotes": "No notes yet. Switch to Edit to add content.",
+    "tabs": {
+      "read": "Read",
+      "edit": "Edit",
+      "pdf": "PDF"
+    },
+    "actions": {
+      "askAgent": "Ask agent about this paper (⌘.)",
+      "close": "Close",
+      "editTitle": "Click to edit title",
+      "editAuthors": "Click to edit authors",
+      "editYear": "Click to edit year"
+    }
+  },
+  "command": {
+    "label": "Agent",
+    "placeholder": "Ask anything about your papers…",
+    "send": "Send (↵)",
+    "shortcutHintBase": "↵ send · ⇧↵ newline",
+    "shortcutHintWithPaper": " · ⇥ add paper as context",
+    "papersHeading": "Papers — tab to add as context",
+    "suggestions": [
+      "Summarize the key contributions of the attention paper",
+      "What papers in my library discuss diffusion models?",
+      "Compare the methods in these two papers"
+    ]
+  },
+  "sidebar": {
+    "collectionNew": "New collection",
+    "collectionRename": "Rename \"{{name}}\"",
+    "collectionDelete": {
+      "title": "Delete collection \"{{name}}\"?",
+      "message": "Papers in this collection will not be deleted, only the collection grouping."
+    }
+  }
+}

@@ -1,6 +1,8 @@
-import { readFile, writeFile } from 'fs/promises'
-import { join } from 'path'
+import matter from 'gray-matter'
 import type { Schema, Column } from '@shared/types'
+import type { StorageBackend } from './backend'
+
+export const SCHEMA_REL = 'schema.md'
 
 export const DEFAULT_SCHEMA: Schema = {
   version: 1,
@@ -31,22 +33,33 @@ export const DEFAULT_SCHEMA: Schema = {
   ] satisfies Column[],
 }
 
-/**
- * Load schema.json from the library root.
- * Falls back to DEFAULT_SCHEMA if the file does not exist or is malformed.
- */
-export async function loadSchema(root: string): Promise<Schema> {
-  const schemaPath = join(root, 'schema.json')
+const SCHEMA_BODY = `# Schema
+
+Column definitions for this library. The frontmatter above describes
+the shape every paper's YAML header is expected to follow:
+
+- \`columns[].name\`  — frontmatter key
+- \`columns[].type\`  — text / number / date / bool / select / multiselect / tags / url
+- \`columns[].inCsv\` — whether this column is projected into \`papers.csv\`
+
+Use this body to leave notes on why specific columns exist; it isn't
+parsed.
+`
+
+/** Load `schema.md` from the backend, or DEFAULT_SCHEMA if missing. */
+export async function loadSchema(backend: StorageBackend): Promise<Schema> {
+  if (!(await backend.exists(SCHEMA_REL))) return structuredClone(DEFAULT_SCHEMA)
   try {
-    const raw = await readFile(schemaPath, 'utf-8')
-    return JSON.parse(raw) as Schema
+    const raw = (await backend.readFile(SCHEMA_REL)).toString('utf-8')
+    const { data } = matter(raw)
+    return data as Schema
   } catch {
     return structuredClone(DEFAULT_SCHEMA)
   }
 }
 
-/** Persist schema to schema.json in the library root. */
-export async function saveSchema(root: string, schema: Schema): Promise<void> {
-  const schemaPath = join(root, 'schema.json')
-  await writeFile(schemaPath, JSON.stringify(schema, null, 2), 'utf-8')
+/** Persist schema as `schema.md` (YAML frontmatter + notes body). */
+export async function saveSchema(backend: StorageBackend, schema: Schema): Promise<void> {
+  const md = matter.stringify(SCHEMA_BODY, schema as unknown as Record<string, unknown>)
+  await backend.writeFile(SCHEMA_REL, md)
 }

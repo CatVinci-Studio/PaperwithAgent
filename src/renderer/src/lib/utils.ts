@@ -5,18 +5,8 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function formatDate(iso: string): string {
-  const d = new Date(iso)
-  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
-}
-
 export function formatYear(year?: number): string {
   return year ? String(year) : '—'
-}
-
-export function truncate(str: string, max: number): string {
-  if (str.length <= max) return str
-  return str.slice(0, max - 1) + '…'
 }
 
 export function formatAuthors(authors: string[], max = 2): string {

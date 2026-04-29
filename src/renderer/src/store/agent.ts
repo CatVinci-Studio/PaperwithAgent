@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { AgentEvent } from '@shared/types'
 import { api } from '@/lib/ipc'
+import { getCurrentLanguage } from '@/lib/i18n'
 
 export interface ToolCall {
   id: string
@@ -56,7 +57,7 @@ export const useAgentStore = create<AgentStore>((set, get) => ({
     }))
 
     try {
-      await api.agent.send(message, paperId)
+      await api.agent.send(message, paperId, getCurrentLanguage())
     } catch (e) {
       set(s => ({
         isStreaming: false,

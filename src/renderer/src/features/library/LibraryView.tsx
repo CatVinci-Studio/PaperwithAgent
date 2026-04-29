@@ -1,75 +1,112 @@
-import React from 'react'
+import { useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Plus, Upload, Type, Hash, Calendar, CircleDot, Tag, ChevronUp, ChevronDown } from 'lucide-react'
+import {
+  getCoreRowModel,
+  getSortedRowModel,
+  useReactTable,
+  type SortingState,
+} from '@tanstack/react-table'
+import { Plus, Upload, Eye } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useLibraryStore } from '@/store/library'
 import { useUIStore } from '@/store/ui'
 import { api } from '@/lib/ipc'
+import { confirmDialog, promptDialog } from '@/store/dialogs'
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { FilterBar } from './FilterBar'
 import { PaperRow } from './PaperRow'
-import { cn } from '@/lib/utils'
-import type { PaperRef, Column } from '@shared/types'
+import { ColumnHeader } from './ColumnHeader'
+import { buildColumns } from './columns'
+import { useColumnPersistence } from './useColumnPersistence'
+import type { Column, ColumnType, PaperRef } from '@shared/types'
 
-type SortKey = string
-type SortDir = 'asc' | 'desc'
-
-const CORE_COLS = new Set(['id', 'title', 'authors', 'year', 'status', 'tags',
-  'pdf', 'doi', 'url', 'added_at', 'updated_at'])
-
-const TYPE_ICON: Record<string, React.ReactNode> = {
-  text:   <Type size={11} />,
-  number: <Hash size={11} />,
-  date:   <Calendar size={11} />,
-  select: <CircleDot size={11} />,
-  tags:   <Tag size={11} />,
-  url:    <Type size={11} />,
-}
-
-function sortPapers(papers: PaperRef[], key: SortKey, dir: SortDir): PaperRef[] {
-  return [...papers].sort((a, b) => {
-    const av = a[key] as string | number | undefined
-    const bv = b[key] as string | number | undefined
-    if (av == null) return 1
-    if (bv == null) return -1
-    if (av < bv) return dir === 'asc' ? -1 : 1
-    if (av > bv) return dir === 'asc' ? 1 : -1
-    return 0
-  })
-}
+const CORE_COLS = new Set(['id', 'title', 'authors', 'year', 'status', 'tags', 'rating', 'added_at', 'updated_at', 'doi', 'url', 'venue', 'pdf'])
 
 export function LibraryView() {
-  const { papers, schema, selectedId, setSelected, refreshPapers, isLoadingPapers, collections, activeCollection, refreshCollections } = useLibraryStore()
+  const { t } = useTranslation()
+  const {
+    papers,
+    schema,
+    selectedId,
+    setSelected,
+    refreshPapers,
+    isLoadingPapers,
+    collections,
+    activeCollection,
+    refreshCollections,
+    libraries,
+  } = useLibraryStore()
   const { setActiveView } = useUIStore()
   const queryClient = useQueryClient()
 
-  const [sortKey, setSortKey] = React.useState<SortKey>('added_at')
-  const [sortDir, setSortDir] = React.useState<SortDir>('desc')
+  const activeLibraryName = libraries.find((l) => l.active)?.name ?? null
 
-  const extraCols: Column[] = React.useMemo(
-    () => (schema?.columns ?? []).filter(c => c.inCsv && !CORE_COLS.has(c.name)),
+  const extraCols: Column[] = useMemo(
+    () => schema?.columns.filter((c) => !CORE_COLS.has(c.name)) ?? [],
     [schema]
   )
 
-  const sortedPapers = React.useMemo(
-    () => sortPapers(papers, sortKey, sortDir),
-    [papers, sortKey, sortDir]
-  )
+  // Re-key on i18n.language so column header labels update when the user
+  // switches languages — buildColumns reads strings via t() at construction time.
+  const columns = useMemo(() => buildColumns(extraCols, t), [extraCols, t])
 
-  const handleSort = (key: SortKey) => {
-    setSortKey(key)
-    setSortDir(prev => sortKey === key ? (prev === 'asc' ? 'desc' : 'asc') : 'desc')
-  }
+  const [sorting, setSorting] = useState<SortingState>([{ id: 'added_at', desc: true }])
+  const { sizing, setSizing, visibility, setVisibility } = useColumnPersistence(activeLibraryName)
 
   const handleSelect = (id: string) => {
     setSelected(id)
     setActiveView('paper')
   }
 
+  const handleInlineUpdate = async (id: string, patch: Parameters<typeof api.papers.update>[1]) => {
+    try {
+      await api.papers.update(id, patch)
+      await refreshPapers()
+      queryClient.invalidateQueries({ queryKey: ['papers'] })
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  const table = useReactTable({
+    data: papers,
+    columns,
+    state: { sorting, columnVisibility: visibility, columnSizing: sizing },
+    onSortingChange: setSorting,
+    onColumnVisibilityChange: setVisibility,
+    onColumnSizingChange: setSizing,
+    enableColumnResizing: true,
+    columnResizeMode: 'onChange',
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    meta: {
+      open: handleSelect,
+      update: handleInlineUpdate,
+    },
+  })
+
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Delete this paper?')) return
+    const ok = await confirmDialog({
+      title: t('library.deletePaper.title'),
+      message: t('library.deletePaper.message'),
+      confirmLabel: t('library.deletePaper.confirmLabel'),
+      danger: true,
+    })
+    if (!ok) return
     await api.papers.delete(id)
     queryClient.invalidateQueries({ queryKey: ['papers'] })
     refreshPapers()
-    if (selectedId === id) { setSelected(null); setActiveView('library') }
+    if (selectedId === id) {
+      setSelected(null)
+      setActiveView('library')
+    }
   }
 
   const handleNewPaper = async () => {
@@ -102,130 +139,163 @@ export function LibraryView() {
   }
 
   const handleImportDoi = async () => {
-    const doi = window.prompt('Enter DOI or arXiv URL:')
-    if (!doi) return
+    const result = await promptDialog({
+      title: t('library.importDialog.title'),
+      description: t('library.importDialog.description'),
+      fields: [
+        { name: 'doi', label: t('library.importDialog.field'), placeholder: '10.1145/...', required: true },
+      ],
+      confirmLabel: t('library.importDialog.confirmLabel'),
+    })
+    if (!result) return
     try {
-      await api.papers.importDoi(doi.trim())
+      await api.papers.importDoi(result.doi.trim())
       refreshPapers()
     } catch (e) {
       console.error(e)
     }
   }
 
-  const ColHeader = ({ label, col, type, align = 'left' }: {
-    label: string
-    col?: SortKey
-    type?: string
-    align?: 'left' | 'right'
-  }) => {
-    const active = col && sortKey === col
-    return (
-      <button
-        className={cn(
-          'flex items-center gap-1 text-[11px] font-medium transition-colors group/col',
-          align === 'right' && 'flex-row-reverse',
-          active ? 'text-[var(--text-secondary)]' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]',
-          !col && 'cursor-default'
-        )}
-        onClick={col ? () => handleSort(col) : undefined}
-      >
-        <span className="opacity-60">{type && TYPE_ICON[type]}</span>
-        {label}
-        {active && (
-          sortDir === 'asc'
-            ? <ChevronUp size={10} />
-            : <ChevronDown size={10} />
-        )}
-      </button>
-    )
+  const handleAddColumn = async () => {
+    const result = await promptDialog({
+      title: t('library.newColumn.title'),
+      description: t('library.newColumn.description'),
+      fields: [
+        { name: 'name', label: t('library.newColumn.name'), required: true },
+        {
+          name: 'type',
+          label: t('library.newColumn.type'),
+          initialValue: 'text',
+          required: true,
+        },
+      ],
+      confirmLabel: t('library.newColumn.create'),
+    })
+    if (!result) return
+    try {
+      await api.schema.addColumn({
+        name: result.name.trim(),
+        type: result.type.trim() as ColumnType,
+        inCsv: true,
+      })
+      queryClient.invalidateQueries({ queryKey: ['schema'] })
+    } catch (e) {
+      console.error(e)
+    }
   }
+
+  const hiddenColumns = table
+    .getAllLeafColumns()
+    .filter((c) => c.getCanHide() && !c.getIsVisible())
 
   return (
     <div className="flex flex-col h-full bg-[var(--bg-base)]">
       <FilterBar />
 
-      {/* Column headers */}
-      <div className="flex items-center gap-0 border-b border-[var(--border-color)] bg-[var(--bg-sidebar)] shrink-0 select-none">
-        {/* left accent placeholder */}
-        <div className="w-0.5 self-stretch" />
-        <div className="flex-1 min-w-0 flex items-center h-8 pl-4 pr-2">
-          <ColHeader label="Title" col="title" type="text" />
-        </div>
-        <div className="w-36 shrink-0 hidden md:flex items-center h-8 px-2">
-          <ColHeader label="Authors" col="authors" type="text" />
-        </div>
-        <div className="w-12 shrink-0 hidden md:flex items-center justify-end h-8 px-2">
-          <ColHeader label="Year" col="year" type="number" align="right" />
-        </div>
-        <div className="w-24 shrink-0 flex items-center justify-end h-8 px-2">
-          <ColHeader label="Status" col="status" type="select" align="right" />
-        </div>
-        <div className="w-32 shrink-0 hidden lg:flex items-center justify-end h-8 px-2">
-          <ColHeader label="Tags" type="tags" align="right" />
-        </div>
-        {extraCols.map(col => (
-          <div key={col.name} className="w-20 shrink-0 hidden xl:flex items-center justify-end h-8 px-2">
-            <ColHeader label={col.name} col={col.name} type={col.type} align="right" />
-          </div>
-        ))}
-        {/* actions column spacer */}
-        <div className="w-9 shrink-0" />
-      </div>
+      <TableHeader
+        table={table}
+        hiddenColumns={hiddenColumns}
+        onAddColumn={handleAddColumn}
+      />
 
-      {/* Rows */}
       <div className="flex-1 overflow-y-auto">
         {isLoadingPapers ? (
           <div className="flex items-center justify-center h-32 text-[12px] text-[var(--text-muted)]">
-            Loading…
+            {t('common.loading')}
           </div>
         ) : (
           <>
-            {sortedPapers.map(paper => (
+            {table.getRowModel().rows.map((row) => (
               <PaperRow
-                key={paper.id}
-                paper={paper}
-                extraCols={extraCols}
+                key={row.original.id}
+                row={row}
+                paper={row.original}
                 collections={collections}
                 activeCollection={activeCollection}
-                selected={selectedId === paper.id}
-                onClick={() => handleSelect(paper.id)}
-                onDelete={() => handleDelete(paper.id)}
-                onCopyDoi={() => { if (paper.doi) navigator.clipboard.writeText(paper.doi) }}
-                onAddToCollection={(name) => handleAddToCollection(paper.id, name)}
-                onRemoveFromCollection={(name) => handleRemoveFromCollection(paper.id, name)}
+                selected={selectedId === row.original.id}
+                onClick={() => handleSelect(row.original.id)}
+                onDelete={() => handleDelete(row.original.id)}
+                onCopyDoi={() => {
+                  if (row.original.doi) navigator.clipboard.writeText(row.original.doi)
+                }}
+                onAddToCollection={(name) => handleAddToCollection(row.original.id, name)}
+                onRemoveFromCollection={(name) => handleRemoveFromCollection(row.original.id, name)}
               />
             ))}
 
-            {/* Inline "New paper" row */}
             <button
               onClick={handleNewPaper}
-              className={cn(
-                'w-full flex items-center gap-2 pl-4 h-9',
-                'text-[12px] text-[var(--text-muted)] hover:text-[var(--text-secondary)]',
-                'hover:bg-[var(--bg-sidebar-hover)] transition-colors',
-                'border-b border-[var(--border-color)]/30'
-              )}
+              className="w-full flex items-center gap-2 pl-4 h-9 text-[12px] text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-sidebar-hover)] transition-colors border-b border-[var(--border-color)]/30 text-left"
             >
               <Plus size={13} />
-              New paper
+              {t('library.newPaper')}
             </button>
           </>
         )}
       </div>
 
-      {/* Status bar */}
       <div className="flex items-center justify-between px-3 py-1.5 border-t border-[var(--border-color)] shrink-0">
         <span className="text-[11px] text-[var(--text-muted)]">
-          {sortedPapers.length} paper{sortedPapers.length !== 1 ? 's' : ''}
+          {t('library.papers', { count: table.getRowModel().rows.length })}
         </span>
-        <button
+        <Button
           onClick={handleImportDoi}
-          className="flex items-center gap-1 px-2 py-1 text-[11px] text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] rounded-md transition-colors"
+          variant="ghost"
+          size="sm"
+          className="text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
         >
           <Upload size={11} />
-          Import DOI
-        </button>
+          {t('library.importDoi')}
+        </Button>
       </div>
+    </div>
+  )
+}
+
+interface TableHeaderProps {
+  table: ReturnType<typeof useReactTable<PaperRef>>
+  hiddenColumns: ReturnType<ReturnType<typeof useReactTable<PaperRef>>['getAllLeafColumns']>
+  onAddColumn: () => void
+}
+
+function TableHeader({ table, hiddenColumns, onAddColumn }: TableHeaderProps) {
+  const { t } = useTranslation()
+  return (
+    <div className="flex items-stretch border-b border-[var(--border-color)] bg-[var(--bg-sidebar)] shrink-0 select-none">
+      {table.getHeaderGroups().map((hg) =>
+        hg.headers.map((header) => (
+          <ColumnHeader key={header.id} header={header} onAddColumn={onAddColumn} />
+        ))
+      )}
+
+      {hiddenColumns.length > 0 ? (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              title={t('library.showHidden')}
+              className="flex items-center justify-center w-9 shrink-0 text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] transition-colors"
+            >
+              <Eye size={12} />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="min-w-[160px]">
+            {hiddenColumns.map((c) => (
+              <DropdownMenuItem key={c.id} onClick={() => c.toggleVisibility(true)}>
+                <Eye size={12} className="mr-2" />
+                {String(c.columnDef.header ?? c.id)}
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={onAddColumn}>
+              <Plus size={12} className="mr-2" />
+              {t('library.header.newColumn')}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : (
+        <div className="w-9 shrink-0" />
+      )}
     </div>
   )
 }

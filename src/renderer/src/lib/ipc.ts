@@ -1,7 +1,8 @@
 import type {
   PaperRef, PaperDetail, PaperDraft, PaperPatch, PaperId,
   Filter, SearchHit, Schema, Column, AgentEvent, AgentConfig,
-  AgentProfile, LibraryInfo, CollectionInfo,
+  AgentProfile, ProfilePatch, Language, LibraryInfo, CollectionInfo,
+  NewLibraryInput, NewS3LibraryInput, ProbeResult, LibraryNonePayload,
 } from '@shared/types'
 
 type UnsubFn = () => void
@@ -9,12 +10,16 @@ type UnsubFn = () => void
 export interface IApi {
   libraries: {
     list(): Promise<LibraryInfo[]>
-    switch(name: string): Promise<void>
-    add(name: string, path: string): Promise<LibraryInfo>
-    create(name: string, path: string): Promise<LibraryInfo>
-    remove(name: string): Promise<void>
-    rename(oldName: string, newName: string): Promise<void>
+    open(id: string): Promise<LibraryInfo>
+    add(input: NewLibraryInput): Promise<LibraryInfo>
+    remove(id: string): Promise<void>
+    rename(id: string, newName: string): Promise<void>
+    pickFolder(): Promise<string | null>
+    probeLocal(path: string): Promise<ProbeResult>
+    probeS3(cfg: Omit<NewS3LibraryInput, 'kind' | 'name' | 'initialize'>): Promise<ProbeResult>
+    hasNone(): Promise<boolean>
     onSwitched(cb: (info: LibraryInfo) => void): UnsubFn
+    onNone(cb: (payload: LibraryNonePayload) => void): UnsubFn
   }
   collections: {
     list(): Promise<CollectionInfo[]>
@@ -41,10 +46,11 @@ export interface IApi {
     renameColumn(from: string, to: string): Promise<void>
   }
   agent: {
-    send(message: string, paperId?: string): Promise<void>
+    send(message: string, paperId?: string, language?: Language): Promise<void>
     abort(): Promise<void>
     getConfig(): Promise<AgentConfig | null>
     setProfile(name: string): Promise<void>
+    updateProfile(name: string, patch: ProfilePatch): Promise<void>
     saveKey(profile: string, key: string): Promise<void>
     testKey(profile: string): Promise<boolean>
     getProfiles(): Promise<AgentProfile[]>
@@ -135,6 +141,15 @@ const MOCK_COLLECTIONS: CollectionInfo[] = [
   { name: 'Vision', paperCount: 2 },
 ]
 
+const STUB_LIBRARY: LibraryInfo = {
+  id: 'stub',
+  name: 'Demo Library',
+  kind: 'local',
+  path: '/demo',
+  active: true,
+  paperCount: MOCK_PAPERS.length,
+}
+
 const webStub: IApi = {
   collections: {
     list: () => Promise.resolve(MOCK_COLLECTIONS),
@@ -145,13 +160,17 @@ const webStub: IApi = {
     removePaper: () => Promise.resolve(),
   },
   libraries: {
-    list: () => Promise.resolve([{ name: 'My Library', path: '/demo', active: true, paperCount: 5, createdAt: '2024-01-01T00:00:00Z' }]),
-    switch: () => Promise.resolve(),
-    add: () => Promise.resolve({ name: '', path: '', active: false, paperCount: 0, createdAt: new Date().toISOString() }),
-    create: () => Promise.resolve({ name: '', path: '', active: false, paperCount: 0, createdAt: new Date().toISOString() }),
+    list: () => Promise.resolve([STUB_LIBRARY]),
+    open: () => Promise.resolve(STUB_LIBRARY),
+    add: () => Promise.resolve(STUB_LIBRARY),
     remove: () => Promise.resolve(),
     rename: () => Promise.resolve(),
+    pickFolder: () => Promise.resolve(null),
+    probeLocal: () => Promise.resolve({ status: 'ready' }),
+    probeS3: () => Promise.resolve({ status: 'ready' }),
+    hasNone: () => Promise.resolve(false),
     onSwitched: () => () => {},
+    onNone: () => () => {},
   },
   papers: {
     list: () => Promise.resolve(MOCK_PAPERS),
@@ -208,6 +227,7 @@ const webStub: IApi = {
     abort: () => Promise.resolve(),
     getConfig: () => Promise.resolve(null),
     setProfile: () => Promise.resolve(),
+    updateProfile: () => Promise.resolve(),
     saveKey: () => Promise.resolve(),
     testKey: () => Promise.resolve(true),
     getProfiles: () => Promise.resolve([]),

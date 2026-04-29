@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { cn } from '@/lib/utils'
 
-export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
+export type InputProps = React.InputHTMLAttributes<HTMLInputElement>
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, type, ...props }, ref) => {
@@ -9,9 +9,15 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       <input
         type={type}
         className={cn(
-          'flex w-full rounded-[4px] border border-[var(--bg-active)] bg-[var(--bg-elevated)] px-2 py-1 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--text-dim)] disabled:cursor-not-allowed disabled:opacity-50',
+          'h-10 w-full px-3 rounded-[10px] border text-[13px] bg-[var(--bg-elevated)]',
+          'text-[var(--text-primary)] placeholder:text-[var(--text-dim)]',
+          'border-[var(--border-color)] focus:border-[var(--accent-color)]',
+          'focus:ring-2 focus:ring-[var(--accent-color)]/20 focus:outline-none',
+          'disabled:cursor-not-allowed disabled:opacity-50',
+          'transition-all duration-150',
           className
         )}
+        style={{ userSelect: 'text', ...props.style }}
         ref={ref}
         {...props}
       />

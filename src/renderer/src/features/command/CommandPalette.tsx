@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react'
 import { Bot, FileText, Send, ArrowRight } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useUIStore } from '@/store/ui'
 import { useAgentStore } from '@/store/agent'
 import { api } from '@/lib/ipc'
@@ -7,6 +8,8 @@ import { cn } from '@/lib/utils'
 import type { SearchHit } from '@shared/types'
 
 export function CommandPalette() {
+  const { t } = useTranslation()
+  const suggestions = (t('command.suggestions', { returnObjects: true }) as string[]) ?? []
   const { commandOpen, setCommandOpen, setActiveView } = useUIStore()
   const { send } = useAgentStore()
 
@@ -106,7 +109,9 @@ export function CommandPalette() {
             <Bot size={14} className="text-[var(--accent-color)]" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Agent</p>
+            <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
+              {t('command.label')}
+            </p>
           </div>
           <kbd className="text-[10px] text-[var(--text-muted)] bg-[var(--bg-elevated)] border border-[var(--bg-active)] rounded px-1.5 py-0.5">esc</kbd>
         </div>
@@ -135,7 +140,7 @@ export function CommandPalette() {
               value={input}
               onChange={handleInputResize}
               onKeyDown={handleKeyDown}
-              placeholder="Ask anything about your papers…"
+              placeholder={t('command.placeholder')}
               rows={1}
               className="flex-1 bg-transparent border-none text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] resize-none focus:outline-none leading-relaxed min-h-[22px]"
               style={{ height: '22px', userSelect: 'text' }}
@@ -149,13 +154,14 @@ export function CommandPalette() {
                   ? 'bg-[var(--accent-color)] border-[var(--accent-color)] text-black hover:opacity-90'
                   : 'bg-transparent border-[var(--bg-active)] text-[var(--text-dim)] cursor-not-allowed'
               )}
-              title="Send (↵)"
+              title={t('command.send')}
             >
               <Send size={11} />
             </button>
           </div>
           <p className="text-[10px] text-[var(--text-dim)] mt-1.5">
-            ↵ send · ⇧↵ newline{paperHits.length > 0 ? ' · ⇥ add paper as context' : ''}
+            {t('command.shortcutHintBase')}
+            {paperHits.length > 0 ? t('command.shortcutHintWithPaper') : ''}
           </p>
         </div>
 
@@ -163,7 +169,7 @@ export function CommandPalette() {
         {paperHits.length > 0 && (
           <div className="py-2">
             <p className="px-4 pb-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-              Papers — tab to add as context
+              {t('command.papersHeading')}
             </p>
             {paperHits.map((hit, i) => (
               <button
@@ -196,11 +202,7 @@ export function CommandPalette() {
         {/* Empty hint */}
         {!input.trim() && paperHits.length === 0 && (
           <div className="px-4 py-4 space-y-1.5">
-            {[
-              'Summarize the key contributions of the attention paper',
-              'What papers in my library discuss diffusion models?',
-              'Compare the methods in these two papers',
-            ].map(hint => (
+            {suggestions.map(hint => (
               <button
                 key={hint}
                 onClick={() => setInput(hint)}

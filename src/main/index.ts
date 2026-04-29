@@ -3,15 +3,21 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { registerIpcHandlers, type AppState } from './ipc/index'
 import { LibraryManager } from './paperdb/manager'
+import { LibraryRegistry } from './libraries/registry'
+import { CredentialStore } from './libraries/credentials'
 import { AgentSession } from './agent/session'
-import { homedir } from 'os'
 
 let mainWindow: BrowserWindow | null = null
 
 export const appState: AppState = {
   manager: null,
   agent:   null,
-  get library() { return this.manager!.active }
+  get library() {
+    if (!this.manager?.hasActive()) {
+      throw new Error('No active library — show the welcome screen first')
+    }
+    return this.manager.active
+  }
 }
 
 function createWindow(): void {
@@ -31,7 +37,17 @@ function createWindow(): void {
     }
   })
 
-  mainWindow.on('ready-to-show', () => mainWindow!.show())
+  mainWindow.on('ready-to-show', () => {
+    mainWindow!.show()
+    // Tell the renderer if we have no active library so it shows the welcome screen.
+    if (!appState.manager?.hasActive()) {
+      const failed = appState.manager?.getFailedLastOpen()
+      mainWindow!.webContents.send('library:none', failed
+        ? { reason: 'last-failed', message: failed.message }
+        : { reason: 'empty' }
+      )
+    }
+  })
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url)
     return { action: 'deny' }
@@ -45,11 +61,12 @@ function createWindow(): void {
 }
 
 app.whenReady().then(async () => {
-  electronApp.setAppUserModelId('com.paperwithagent')
+  electronApp.setAppUserModelId('studio.catvinci.verko')
   app.on('browser-window-created', (_, w) => optimizer.watchWindowShortcuts(w))
 
-  const defaultLibPath = join(homedir(), 'PaperwithAgent', 'library')
-  appState.manager = await LibraryManager.init(defaultLibPath)
+  const registry = LibraryRegistry.fromUserData()
+  const credentials = CredentialStore.fromUserData()
+  appState.manager = await LibraryManager.init(registry, credentials)
   appState.agent   = new AgentSession(appState)
 
   registerIpcHandlers(ipcMain, appState, mainWindow)

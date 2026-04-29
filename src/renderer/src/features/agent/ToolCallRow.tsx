@@ -1,4 +1,5 @@
 import { ChevronRight, ChevronDown, Wrench, CheckCircle, Loader } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import type { ToolCall } from '@/store/agent'
 import { cn } from '@/lib/utils'
 
@@ -9,6 +10,7 @@ interface ToolCallRowProps {
 }
 
 export function ToolCallRow({ toolCall, msgId, onToggle }: ToolCallRowProps) {
+  const { t } = useTranslation()
   const hasResult = toolCall.result !== undefined
 
   return (
@@ -43,7 +45,9 @@ export function ToolCallRow({ toolCall, msgId, onToggle }: ToolCallRowProps) {
         <div className="border-t border-[var(--bg-active)]">
           {/* Args */}
           <div className="px-3 py-2">
-            <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider mb-1">Input</p>
+            <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider mb-1">
+              {t('agent.tool.input')}
+            </p>
             <pre className="text-[11px] text-[var(--text-secondary)] font-mono whitespace-pre-wrap break-all leading-relaxed">
               {JSON.stringify(toolCall.args, null, 2)}
             </pre>
@@ -52,7 +56,9 @@ export function ToolCallRow({ toolCall, msgId, onToggle }: ToolCallRowProps) {
           {/* Result */}
           {hasResult && (
             <div className="px-3 py-2 border-t border-[var(--bg-elevated)]">
-              <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider mb-1">Output</p>
+              <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider mb-1">
+                {t('agent.tool.output')}
+              </p>
               <pre className="text-[11px] text-[var(--status-read)]/80 font-mono whitespace-pre-wrap break-all leading-relaxed">
                 {typeof toolCall.result === 'string'
                   ? toolCall.result

@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Bot, Settings, PanelLeft } from 'lucide-react'
+import { PanelLeft } from 'lucide-react'
 import { useLibraryStore } from './store/library'
 import { useUIStore } from './store/ui'
 import { Sidebar } from './features/library/Sidebar'
@@ -8,11 +8,16 @@ import { PaperDetail } from './features/paper/PaperDetail'
 import { AgentPage } from './features/agent/AgentPage'
 import { CommandPalette } from './features/command/CommandPalette'
 import { SettingsModal } from './features/settings/SettingsModal'
+import { DialogHost } from './features/dialogs/DialogHost'
+import { TitleBar } from './components/common/TitleBar'
+import { WelcomeScreen } from './features/onboarding/WelcomeScreen'
+import { Button } from './components/ui/button'
 import { api } from './lib/ipc'
 import { useAgentEvents } from './features/agent/useAgent'
 
 export default function App() {
-  const { refreshPapers, refreshLibraries, refreshSchema, refreshCollections } = useLibraryStore()
+  const { refreshAll, status, setStatus } = useLibraryStore()
+  const setActiveView = useUIStore((s) => s.setActiveView)
   const {
     sidebarCollapsed,
     activeView,
@@ -26,20 +31,33 @@ export default function App() {
   // Subscribe to agent IPC events at the top level
   useAgentEvents()
 
-  // Initial data load
+  // Initial data load. Zustand actions are stable; mount-only is intentional.
   useEffect(() => {
-    refreshLibraries().then(() =>
-      Promise.all([refreshPapers(), refreshSchema(), refreshCollections()])
-    )
+    (async () => {
+      const noLibrary = await api.libraries.hasNone()
+      if (noLibrary) {
+        setStatus('none', { reason: 'empty' })
+        return
+      }
+      setStatus('ready')
+      setActiveView('agent')
+      await refreshAll()
+    })().catch(() => setStatus('none', { reason: 'empty' }))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Listen for library switch events
+  // Listen for library lifecycle events from main.
   useEffect(() => {
-    const unsub = api.libraries.onSwitched(() => {
-      refreshLibraries()
-      refreshPapers()
+    const unsubSwitch = api.libraries.onSwitched(() => {
+      setStatus('ready')
+      setActiveView('agent')
+      refreshAll()
     })
-    return unsub
+    const unsubNone = api.libraries.onNone((payload) => {
+      setStatus('none', payload)
+    })
+    return () => { unsubSwitch(); unsubNone() }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Global keyboard shortcuts
@@ -69,39 +87,28 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKey)
   }, [commandOpen, setCommandOpen, toggleSidebar, toggleAgent, setSettingsOpen])
 
+  if (status === 'none') {
+    return (
+      <div className="flex flex-col h-full bg-[var(--bg-base)] overflow-hidden">
+        <TitleBar
+          onOpenCommand={() => setCommandOpen(true)}
+          onOpenSettings={() => setSettingsOpen(true)}
+        />
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <WelcomeScreen />
+        </div>
+        <DialogHost />
+        <SettingsModal />
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col h-full bg-[var(--bg-base)] overflow-hidden">
-      {/* Titlebar */}
-      <div className="flex items-center h-11 border-b border-[var(--border-color)] shrink-0 titlebar-drag select-none">
-        {/* macOS traffic lights spacer */}
-        <div className="w-20 shrink-0" />
-
-        {/* App name */}
-        <div className="flex-1 flex items-center justify-center">
-          <span className="text-[12px] font-semibold text-[var(--text-dim)] tracking-wider uppercase">
-            PaperwithAgent
-          </span>
-        </div>
-
-        {/* Right controls */}
-        <div className="flex items-center gap-0.5 pr-3 no-drag shrink-0">
-          <button
-            onClick={() => setCommandOpen(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] rounded-[6px] transition-colors"
-            title="Ask Agent (⌘K)"
-          >
-            <Bot size={11} />
-            <span className="text-[10.5px] font-medium">⌘K</span>
-          </button>
-          <button
-            onClick={() => setSettingsOpen(true)}
-            className="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] rounded-[6px] transition-colors"
-            title="Settings (⌘,)"
-          >
-            <Settings size={13} />
-          </button>
-        </div>
-      </div>
+      <TitleBar
+        onOpenCommand={() => setCommandOpen(true)}
+        onOpenSettings={() => setSettingsOpen(true)}
+      />
 
       {/* Main layout */}
       <div className="flex flex-1 overflow-hidden min-h-0">
@@ -115,13 +122,15 @@ export default function App() {
         {/* Collapsed sidebar — show re-open button */}
         {sidebarCollapsed && (
           <div className="w-9 shrink-0 flex flex-col items-center pt-2 border-r border-[var(--border-color)]">
-            <button
+            <Button
               onClick={toggleSidebar}
-              className="p-1.5 rounded-[6px] text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] transition-colors"
+              variant="ghost"
+              size="icon-sm"
               title="Expand sidebar (⌘\\)"
+              className="h-7 w-7 text-[var(--text-muted)] rounded-[6px]"
             >
               <PanelLeft size={13} />
-            </button>
+            </Button>
           </div>
         )}
 
@@ -136,6 +145,7 @@ export default function App() {
       {/* Overlays */}
       <CommandPalette />
       <SettingsModal />
+      <DialogHost />
     </div>
   )
 }

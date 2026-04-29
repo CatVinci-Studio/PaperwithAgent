@@ -1,0 +1,258 @@
+{
+  "common": {
+    "save": "保存",
+    "cancel": "取消",
+    "delete": "删除",
+    "remove": "移除",
+    "rename": "重命名",
+    "create": "创建",
+    "add": "添加",
+    "open": "打开",
+    "ok": "确定",
+    "loading": "加载中…",
+    "settings": "设置",
+    "close": "关闭"
+  },
+  "titlebar": {
+    "appName": "Verko",
+    "askAgent": "问 Agent (⌘K)",
+    "settings": "设置 (⌘,)"
+  },
+  "settings": {
+    "title": "设置",
+    "tabs": {
+      "general": "通用",
+      "schema": "字段",
+      "library": "知识库"
+    },
+    "tabDescriptions": {
+      "general": "主题、语言和模型提供商。",
+      "schema": "在核心论文字段之上添加自定义列。",
+      "library": "管理并切换论文库文件夹。"
+    },
+    "basic": {
+      "title": "基础",
+      "description": "调整界面外观。",
+      "colorScheme": "配色方案",
+      "colorSchemeHint": "「系统」会自动跟随操作系统的偏好。",
+      "system": "系统",
+      "dark": "深色",
+      "light": "浅色",
+      "language": "语言",
+      "languageHint": "影响界面文案以及 Agent 的系统提示词。"
+    },
+    "provider": {
+      "title": "模型提供商",
+      "description": "选择一个提供商,然后配置其 API key。点击提供商即切换为当前使用。",
+      "current": "当前",
+      "baseUrl": "Base URL",
+      "model": "模型",
+      "apiKey": "API Key",
+      "testConnection": "测试连接",
+      "connected": "已连接",
+      "failed": "失败",
+      "keySaved": "已保存 key",
+      "labels": {
+        "openai": "OpenAI",
+        "qwen": "Qwen",
+        "deepseek": "DeepSeek",
+        "custom": "自定义"
+      }
+    },
+    "schema": {
+      "customColumns": {
+        "title": "自定义列",
+        "description": "你在核心论文字段之外添加的列,会出现在论文表格和 CSV 索引里。",
+        "empty": "还没有自定义列。",
+        "removeConfirmTitle": "移除列「{{name}}」?",
+        "removeConfirmMessage": "已有论文的 Markdown frontmatter 里仍保留数据,但该列不再出现在表格视图和 CSV 索引里。"
+      },
+      "addColumn": {
+        "title": "添加列",
+        "description": "新列会立即在所有论文上可用。",
+        "namePlaceholder": "列名…"
+      },
+      "types": {
+        "text": "文本",
+        "number": "数字",
+        "date": "日期",
+        "bool": "布尔",
+        "select": "单选",
+        "multiselect": "多选",
+        "tags": "标签",
+        "url": "链接"
+      }
+    },
+    "libraries": {
+      "title": "知识库",
+      "description": "每个知识库是一个独立的文件夹,包含论文、附件和字段定义。",
+      "switch": "切换",
+      "active": "使用中",
+      "papers": "{{count}} 篇论文",
+      "addExisting": "添加已有知识库",
+      "addDialog": {
+        "title": "添加知识库",
+        "description": "指向一个已存在的文件夹,Verko 会在首次打开时建立索引。",
+        "displayName": "显示名称",
+        "absolutePath": "绝对路径"
+      }
+    }
+  },
+  "welcome": {
+    "title": "欢迎使用 Verko",
+    "subtitle": "选择一个已有的知识库,或新建一个。知识库可以是本地的 Markdown 文件夹,也可以是 S3 兼容的对象存储。",
+    "actions": {
+      "openExisting": {
+        "title": "打开已有文件夹",
+        "description": "选择一个已经是 Verko 知识库的文件夹,或希望转换成 Verko 知识库的文件夹。"
+      },
+      "createLocal": {
+        "title": "新建本地知识库",
+        "description": "选择一个空文件夹,Verko 会自动创建必要的目录结构。"
+      },
+      "connectS3": {
+        "title": "连接 S3 知识库",
+        "description": "支持 AWS S3、Cloudflare R2、Backblaze B2、MinIO 等任意 S3 兼容服务。"
+      }
+    },
+    "namePrompt": {
+      "title": "为知识库命名",
+      "description": "用于侧边栏和切换菜单,可随时重命名。",
+      "label": "显示名称"
+    },
+    "initPrompt": {
+      "title": "初始化此文件夹?",
+      "message": "该文件夹还不是 Verko 知识库。我们会在其中创建 papers/、attachments/ 和 schema.md,不会修改已有文件。",
+      "confirm": "初始化"
+    },
+    "lastFailed": {
+      "title": "无法重新打开上次的知识库"
+    },
+    "errors": {
+      "openTitle": "无法打开此知识库",
+      "unknown": "未知错误"
+    },
+    "s3": {
+      "title": "连接 S3 知识库",
+      "description": "Verko 会把每篇论文写成 Markdown 文件存到桶中。访问凭据加密保存在本机。",
+      "connect": "连接",
+      "fields": {
+        "preset": "服务商",
+        "name": "显示名称",
+        "endpoint": "Endpoint",
+        "endpointHint": "AWS S3 留空;R2、B2、MinIO 必填。",
+        "region": "区域",
+        "bucket": "Bucket",
+        "prefix": "前缀(可选)",
+        "prefixHint": "如果多个知识库共用一个 bucket,在此区分。",
+        "accessKeyId": "Access Key ID",
+        "secretAccessKey": "Secret Access Key",
+        "forcePathStyle": "使用 path-style URL(MinIO 等)"
+      },
+      "initPrompt": {
+        "title": "初始化此 bucket?",
+        "message": "可以连接,但 bucket 中没有 schema.md。我们会写入 schema.md 和空的 papers.csv 完成初始化。"
+      },
+      "errors": {
+        "missingTitle": "缺少必填字段",
+        "missing": "Bucket、Access Key、Secret Key 必填。",
+        "probeTitle": "无法访问 bucket"
+      }
+    }
+  },
+  "library": {
+    "filterPlaceholder": "筛选论文…",
+    "newPaper": "新建论文",
+    "importDoi": "通过 DOI 导入",
+    "papers": "{{count}} 篇论文",
+    "showHidden": "显示已隐藏的列",
+    "deletePaper": {
+      "title": "删除这篇论文?",
+      "message": "会删除对应的 Markdown 文件和附件,无法撤销。",
+      "confirmLabel": "删除"
+    },
+    "importDialog": {
+      "title": "导入论文",
+      "description": "输入 DOI(如 10.1145/...)或 arXiv URL。",
+      "field": "DOI 或 arXiv URL",
+      "confirmLabel": "导入"
+    },
+    "newColumn": {
+      "title": "新建列",
+      "description": "向字段定义添加一个自定义列,会同时出现在表格视图和 CSV 索引。",
+      "name": "列名",
+      "type": "类型(text / number / date / bool / select / tags / url)",
+      "create": "创建"
+    },
+    "header": {
+      "title": "标题",
+      "authors": "作者",
+      "year": "年份",
+      "status": "状态",
+      "tags": "标签",
+      "hide": "隐藏列",
+      "newColumn": "新建列"
+    }
+  },
+  "agent": {
+    "title": "Agent",
+    "emptyTitle": "Agent",
+    "emptyDescription": "向我提问关于你的论文库的任何问题。",
+    "placeholder": "问问关于你的论文… (⌘↵ 发送)",
+    "send": "发送 (⌘↵)",
+    "stop": "停止",
+    "clear": "清空对话",
+    "shortcutHint": "⌘↵ 发送 · ↵ 换行",
+    "suggestions": [
+      "总结一下我已读论文的核心贡献",
+      "我的论文库里有哪些主要主题?",
+      "找跟 transformer 架构相关的论文",
+      "给我正在读的这篇论文加笔记"
+    ],
+    "tool": {
+      "input": "输入",
+      "output": "输出"
+    }
+  },
+  "paper": {
+    "untitled": "无标题",
+    "noAuthors": "无作者",
+    "authorsPlaceholder": "作者 1, 作者 2...",
+    "tagPlaceholder": "标签...",
+    "addTag": "标签",
+    "noNotes": "还没有笔记。切到「编辑」开始写。",
+    "tabs": {
+      "read": "阅读",
+      "edit": "编辑",
+      "pdf": "PDF"
+    },
+    "actions": {
+      "askAgent": "就这篇论文问 Agent (⌘.)",
+      "close": "关闭",
+      "editTitle": "点击编辑标题",
+      "editAuthors": "点击编辑作者",
+      "editYear": "点击编辑年份"
+    }
+  },
+  "command": {
+    "label": "Agent",
+    "placeholder": "问问你的论文库里的任何问题…",
+    "send": "发送 (↵)",
+    "shortcutHintBase": "↵ 发送 · ⇧↵ 换行",
+    "shortcutHintWithPaper": " · ⇥ 把论文加为上下文",
+    "papersHeading": "论文 — Tab 加为上下文",
+    "suggestions": [
+      "总结一下注意力论文的核心贡献",
+      "我的论文库里有哪些讨论扩散模型的?",
+      "对比这两篇论文的方法"
+    ]
+  },
+  "sidebar": {
+    "collectionNew": "新建合集",
+    "collectionRename": "重命名「{{name}}」",
+    "collectionDelete": {
+      "title": "删除合集「{{name}}」?",
+      "message": "合集里的论文不会被删除,只会解散这个分组。"
+    }
+  }
+}

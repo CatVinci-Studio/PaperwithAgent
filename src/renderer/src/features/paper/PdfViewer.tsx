@@ -1,5 +1,6 @@
 import { useRef, useState, useCallback, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { usePdfPath } from './usePaper'
 
 interface PdfViewerProps {
@@ -129,55 +130,65 @@ export function PdfViewer({ paperId }: PdfViewerProps) {
     <div className="flex flex-col h-full">
       {/* Controls */}
       <div className="flex items-center gap-2 px-3 py-1.5 border-b border-[var(--bg-active)] shrink-0">
-        <button
-          className="p-1 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] disabled:opacity-30"
-          onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
           disabled={currentPage <= 1}
         >
           <ChevronLeft size={14} />
-        </button>
+        </Button>
 
-        <span className="text-[11px] text-[var(--text-secondary)]">
+        <span className="text-[11px] text-[var(--text-secondary)] tabular-nums">
           {currentPage} / {numPages}
         </span>
 
-        <button
-          className="p-1 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] disabled:opacity-30"
-          onClick={() => setCurrentPage(p => Math.min(numPages, p + 1))}
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+          onClick={() => setCurrentPage((p) => Math.min(numPages, p + 1))}
           disabled={currentPage >= numPages}
         >
           <ChevronRight size={14} />
-        </button>
+        </Button>
 
         <div className="flex-1" />
 
-        <button
-          className="p-1 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]"
-          onClick={() => setScale(s => Math.max(0.5, s - 0.2))}
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+          onClick={() => setScale((s) => Math.max(0.5, s - 0.2))}
           title="Zoom out"
         >
           <ZoomOut size={13} />
-        </button>
+        </Button>
 
-        <span className="text-[11px] text-[var(--text-muted)] w-10 text-center">
+        <span className="text-[11px] text-[var(--text-muted)] w-10 text-center tabular-nums">
           {Math.round(scale * 100)}%
         </span>
 
-        <button
-          className="p-1 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]"
-          onClick={() => setScale(s => Math.min(3, s + 0.2))}
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+          onClick={() => setScale((s) => Math.min(3, s + 0.2))}
           title="Zoom in"
         >
           <ZoomIn size={13} />
-        </button>
+        </Button>
 
-        <button
-          className="p-1 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]"
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"
           onClick={() => setScale(1.2)}
           title="Reset zoom"
         >
           <RotateCcw size={12} />
-        </button>
+        </Button>
 
         {isRendering && (
           <span className="text-[11px] text-[var(--text-muted)] ml-1">Rendering…</span>

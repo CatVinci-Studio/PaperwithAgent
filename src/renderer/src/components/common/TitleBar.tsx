@@ -15,12 +15,9 @@ export function TitleBar({ onOpenCommand, onOpenSettings }: TitleBarProps) {
       {/* macOS traffic lights spacer */}
       <div className="w-20 shrink-0" />
 
-      {/* App name */}
-      <div className="flex-1 flex items-center justify-center gap-2">
-        <img src={logoUrl} alt="" className="w-4 h-4 rounded-[4px]" />
-        <span className="text-[12px] font-semibold text-[var(--text-dim)] tracking-wider uppercase">
-          {t('titlebar.appName')}
-        </span>
+      {/* App logo */}
+      <div className="flex-1 flex items-center justify-center">
+        <img src={logoUrl} alt={t('titlebar.appName')} className="w-5 h-5 rounded-[5px]" />
       </div>
 
       {/* Right controls */}

@@ -1,48 +1,113 @@
-import { Check, Plus } from 'lucide-react'
+import { useState } from 'react'
+import { Check, Cloud, FolderOpen, FolderPlus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useLibraryStore } from '@/store/library'
 import { api } from '@/lib/ipc'
-import { promptDialog } from '@/store/dialogs'
+import { confirmDialog, promptDialog } from '@/store/dialogs'
 import { Button } from '@/components/ui/button'
 import { SettingSection } from '@/components/ui/setting-section'
+import { S3ConnectForm } from '@/features/onboarding/S3ConnectForm'
 import { cn } from '@/lib/utils'
 import type { LibraryInfo } from '@shared/types'
+
+type Mode = 'list' | 's3'
 
 export function LibraryTab() {
   const { t } = useTranslation()
   const { libraries, refreshLibraries, switchLibrary } = useLibraryStore()
+  const [mode, setMode] = useState<Mode>('list')
+  const [busy, setBusy] = useState(false)
 
-  const handleAddLibrary = async () => {
+  const promptForName = async (path: string): Promise<string | null> => {
     const result = await promptDialog({
-      title: t('settings.libraries.addDialog.title'),
-      description: t('settings.libraries.addDialog.description'),
+      title: t('welcome.namePrompt.title'),
+      description: t('welcome.namePrompt.description'),
       fields: [
         {
           name: 'name',
-          label: t('settings.libraries.addDialog.displayName'),
-          placeholder: 'My research',
-          required: true,
-        },
-        {
-          name: 'path',
-          label: t('settings.libraries.addDialog.absolutePath'),
-          placeholder: '/Users/you/Papers',
+          label: t('welcome.namePrompt.label'),
+          placeholder: defaultName(path),
+          initialValue: defaultName(path),
           required: true,
         },
       ],
-      confirmLabel: t('common.add'),
+      confirmLabel: t('common.ok'),
     })
-    if (!result) return
+    return result?.name ?? null
+  }
+
+  const handleOpenExisting = async () => {
+    if (busy) return
+    const path = await api.libraries.pickFolder()
+    if (!path) return
+    setBusy(true)
     try {
-      await api.libraries.add({ kind: 'local', name: result.name, path: result.path, initialize: true })
+      const probe = await api.libraries.probeLocal(path)
+      if (probe.status === 'error') {
+        await confirmDialog({
+          title: t('welcome.errors.openTitle'),
+          message: probe.message ?? t('welcome.errors.unknown'),
+          confirmLabel: t('common.ok'),
+        })
+        return
+      }
+      if (probe.status === 'uninitialized') {
+        const ok = await confirmDialog({
+          title: t('welcome.initPrompt.title'),
+          message: t('welcome.initPrompt.message'),
+          confirmLabel: t('welcome.initPrompt.confirm'),
+        })
+        if (!ok) return
+      }
+      const name = await promptForName(path)
+      if (!name) return
+      await api.libraries.add({
+        kind: 'local',
+        name,
+        path,
+        initialize: probe.status === 'uninitialized',
+      })
       await refreshLibraries()
     } catch (e) {
-      console.error(e)
+      await confirmDialog({
+        title: t('welcome.errors.openTitle'),
+        message: e instanceof Error ? e.message : String(e),
+        confirmLabel: t('common.ok'),
+      })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleCreateNew = async () => {
+    if (busy) return
+    const path = await api.libraries.pickFolder()
+    if (!path) return
+    setBusy(true)
+    try {
+      const name = await promptForName(path)
+      if (!name) return
+      await api.libraries.add({ kind: 'local', name, path, initialize: true })
+      await refreshLibraries()
+    } finally {
+      setBusy(false)
     }
   }
 
   const summarize = (lib: LibraryInfo): string =>
     lib.kind === 'local' ? lib.path : `${lib.bucket}${lib.prefix ? '/' + lib.prefix : ''} (${lib.region})`
+
+  if (mode === 's3') {
+    return (
+      <S3ConnectForm
+        onCancel={() => setMode('list')}
+        onConnected={async () => {
+          setMode('list')
+          await refreshLibraries()
+        }}
+      />
+    )
+  }
 
   return (
     <SettingSection
@@ -87,14 +152,50 @@ export function LibraryTab() {
           </div>
         ))}
 
-        <button
-          onClick={handleAddLibrary}
-          className="flex items-center gap-2 w-full px-4 py-2.5 rounded-[10px] border border-dashed border-[var(--border-color)] text-[12px] text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:border-[var(--border-focus)] transition-colors"
-        >
-          <Plus size={13} />
-          {t('settings.libraries.addExisting')}
-        </button>
+        <div className="grid gap-2 pt-1">
+          <AddChoice
+            icon={<FolderOpen size={14} />}
+            label={t('welcome.actions.openExisting.title')}
+            onClick={handleOpenExisting}
+            disabled={busy}
+          />
+          <AddChoice
+            icon={<FolderPlus size={14} />}
+            label={t('welcome.actions.createLocal.title')}
+            onClick={handleCreateNew}
+            disabled={busy}
+          />
+          <AddChoice
+            icon={<Cloud size={14} />}
+            label={t('welcome.actions.connectS3.title')}
+            onClick={() => setMode('s3')}
+            disabled={busy}
+          />
+        </div>
       </div>
     </SettingSection>
   )
+}
+
+function AddChoice(props: {
+  icon: React.ReactNode
+  label: string
+  onClick: () => void
+  disabled?: boolean
+}) {
+  return (
+    <button
+      onClick={props.onClick}
+      disabled={props.disabled}
+      className="flex items-center gap-2 w-full px-4 py-2.5 rounded-[10px] border border-dashed border-[var(--border-color)] text-[12px] text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:border-[var(--border-focus)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      <span className="text-[var(--accent-color)]">{props.icon}</span>
+      {props.label}
+    </button>
+  )
+}
+
+function defaultName(path: string): string {
+  const parts = path.split(/[/\\]/).filter(Boolean)
+  return parts[parts.length - 1] || 'Library'
 }

@@ -41,9 +41,10 @@ export function AgentPage() {
     refreshConversations().catch(() => {})
   }, [refreshConversations])
 
+  const messageCount = messages.length
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, streamingText])
+  }, [messageCount, streamingText])
 
   const handleSend = async () => {
     const msg = input.trim()

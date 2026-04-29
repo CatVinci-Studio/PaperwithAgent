@@ -67,7 +67,9 @@ export function Sidebar() {
   } = useLibraryStore()
 
   const { activeView, setActiveView, agentOpen, setAgentOpen, toggleSidebar, setSettingsOpen } = useUIStore()
-  const { messages } = useAgentStore()
+  const activeId = useAgentStore((s) => s.activeId)
+  const byId = useAgentStore((s) => s.byId)
+  const messages = (activeId ? byId[activeId]?.messages : undefined) ?? []
 
   const [collectionsExpanded, setCollectionsExpanded] = useState(true)
   const [tagsExpanded, setTagsExpanded] = useState(false)

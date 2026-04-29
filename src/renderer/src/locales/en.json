@@ -214,6 +214,15 @@
     "tool": {
       "input": "Input",
       "output": "Output"
+    },
+    "conversations": {
+      "title": "Conversations",
+      "new": "New chat",
+      "empty": "No conversations yet — start typing below.",
+      "delete": {
+        "title": "Delete conversation?",
+        "message": "This permanently removes \"{{title}}\" and its messages."
+      }
     }
   },
   "paper": {

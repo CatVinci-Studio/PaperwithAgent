@@ -286,6 +286,45 @@ export const TOOL_DEFINITIONS: OpenAI.Chat.ChatCompletionTool[] = [
   {
     type: 'function',
     function: {
+      name: 'web_fetch',
+      description: 'Fetch a URL and return its contents. HTML pages are converted to Markdown. Useful for reading the abstract or related work pointed to by a paper.',
+      parameters: {
+        type: 'object',
+        properties: { url: { type: 'string', description: 'Absolute http(s) URL.' } },
+        required: ['url']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'view_pdf_page',
+      description: "Rasterize a single page of a paper's PDF to a PNG image. Returns a base64-encoded image so vision-capable models can read figures, equations, and tables. Use this when text extraction is insufficient.",
+      parameters: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', description: 'Paper ID.' },
+          page: { type: 'number', description: '1-based page number.' }
+        },
+        required: ['id', 'page']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'read_document',
+      description: 'Convert a document file into markdown. Supports .pdf, .docx, .html, .md, .txt, .json. The path must be inside the library root.',
+      parameters: {
+        type: 'object',
+        properties: { path: { type: 'string', description: 'Relative path from the library root.' } },
+        required: ['path']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
       name: 'list_files',
       description: 'List files and folders within the active library directory.',
       parameters: {
@@ -590,6 +629,43 @@ export async function dispatchTool(
       } catch (e) {
         return JSON.stringify({ error: `Cannot list "${relInput}": ${e instanceof Error ? e.message : String(e)}` })
       }
+    }
+
+    case 'web_fetch': {
+      const { webFetch } = await import('./newTools')
+      return webFetch(args['url'] as string)
+    }
+
+    case 'view_pdf_page': {
+      const { viewPdfPage } = await import('./newTools')
+      const result = await viewPdfPage(library, args['id'] as string, (args['page'] as number) ?? 1)
+      if (typeof result === 'string') return result  // error JSON string
+      // Image result — pack as JSON so the model sees a structured response.
+      return JSON.stringify({
+        type: 'image',
+        mimeType: result.mimeType,
+        data: result.data,
+        page: result.page,
+        totalPages: result.totalPages,
+      })
+    }
+
+    case 'read_document': {
+      const relInput = args['path'] as string
+      const localBase = library.backend.localPath('')
+      if (!localBase) return JSON.stringify({ error: 'read_document is only supported on local libraries; this library is on a remote backend.' })
+      // Reuse safeRelPath defined elsewhere in this file:
+      const rel = (function(): string | null {
+        const trimmed = relInput.replace(/^[/\\]+/, '').trim()
+        if (!trimmed || trimmed === '.') return ''
+        const parts = trimmed.split(/[/\\]+/)
+        for (const p of parts) { if (p === '..' || p === '') return null }
+        return parts.join('/')
+      })()
+      if (rel == null) return JSON.stringify({ error: 'Path is outside the library directory.' })
+      const { join } = await import('path')
+      const { readDocument } = await import('./newTools')
+      return readDocument(join(localBase, rel))
     }
 
     default:

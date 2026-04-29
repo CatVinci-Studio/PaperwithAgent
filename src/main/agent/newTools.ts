@@ -72,7 +72,7 @@ export async function viewPdfPage(
     return JSON.stringify({ error: `Page ${page} out of range (1-${doc.numPages}).` })
   }
 
-  let canvasMod: typeof import('@napi-rs/canvas') | null = null
+  let canvasMod: typeof import('@napi-rs/canvas')
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     canvasMod = require('@napi-rs/canvas') as typeof import('@napi-rs/canvas')

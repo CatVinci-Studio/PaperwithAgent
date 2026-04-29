@@ -65,7 +65,7 @@ export function CommandPalette() {
     if (!msg) return
     setCommandOpen(false)
     setActiveView('agent')
-    await send(msg, contextPaperId)
+    await send(msg, undefined, contextPaperId)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {

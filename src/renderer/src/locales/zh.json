@@ -212,6 +212,15 @@
     "tool": {
       "input": "输入",
       "output": "输出"
+    },
+    "conversations": {
+      "title": "对话",
+      "new": "新对话",
+      "empty": "暂无对话——在下方开始输入即可。",
+      "delete": {
+        "title": "删除对话?",
+        "message": "将永久删除 \"{{title}}\" 及其所有消息。"
+      }
     }
   },
   "paper": {

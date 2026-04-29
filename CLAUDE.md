@@ -11,7 +11,7 @@ Agent-first academic paper management desktop app. Built with Electron + React 1
 - **Tables**: TanStack Table v8 (headless) — drives the library paper view
 - **Editor**: CodeMirror 6 (Markdown)
 - **Search**: MiniSearch (in-memory full-text)
-- **Agent**: OpenAI-compatible streaming API via `openai` SDK v6
+- **Agent**: pluggable provider layer (`src/main/agent/providers/`) speaking OpenAI / Anthropic / Gemini protocols natively; multi-conversation history persisted under `<userData>/conversations/<id>.json`
 - **Tests**: Vitest 4 (main process only, node env)
 - **Package manager**: npm
 - **i18n**: i18next + react-i18next; English + 简体中文 (`src/renderer/src/locales/{en,zh}.json`); language preference persists to localStorage and is forwarded to the agent so the system prompt swaps with the UI
@@ -21,9 +21,13 @@ Agent-first academic paper management desktop app. Built with Electron + React 1
 ```
 src/
   main/             # Electron main process (Node.js)
-    paperdb/        # Library, schema, CSV, search, import, ID generation
-    agent/          # AgentSession, tool loop, tools, auth, config, prompt (EN/ZH)
-    ipc/            # IPC handler registration (thin wrappers over paperdb/agent)
+    paperdb/        # Library, schema, CSV, search, import, ID generation; backend/ has Local + S3 implementations
+    libraries/      # registry.ts (libraries.json) + credentials.ts (safeStorage)
+    agent/          # AgentSession + multi-conversation registry, tool loop, tools, auth, config, prompt (EN/ZH)
+      providers/    #   protocol adapters: openai.ts, anthropic.ts, gemini.ts (createProvider() picks one)
+      conversations.ts # per-conversation JSON files in userData
+      newTools.ts   #   web_fetch, view_pdf_page, read_document
+    ipc/            # IPC handler registration (thin wrappers over paperdb/agent/conversations)
     index.ts        # App entry, LibraryManager init, IPC registration
     __tests__/      # Vitest specs for main-process modules
 

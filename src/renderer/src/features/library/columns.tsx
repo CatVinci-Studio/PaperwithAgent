@@ -16,9 +16,12 @@ export function buildColumns(extras: Column[]): ColumnDef<PaperRef>[] {
       id: 'title',
       accessorKey: 'title',
       header: 'Title',
-      enableResizing: false,
+      // Title is the primary column — always visible, but the user is allowed
+      // to resize it like any other (Excel/Notion style). Default 320 leaves
+      // comfortable room; minSize 200 prevents accidental clipping.
       enableHiding: false,
-      size: 0,
+      size: 320,
+      minSize: 200,
       cell: ({ row }) => {
         const p = row.original
         return (

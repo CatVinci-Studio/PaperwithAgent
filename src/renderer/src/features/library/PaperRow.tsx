@@ -57,18 +57,15 @@ export function PaperRow({
         <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-[var(--accent-color)] z-10" />
       )}
 
-      {row.getVisibleCells().map((cell) => {
-        const isFlex = cell.column.id === 'title'
-        return (
-          <div
-            key={cell.id}
-            style={isFlex ? { flex: '1 1 0', minWidth: 200 } : { width: cell.column.getSize() }}
-            className="flex items-center px-3 overflow-hidden border-r border-[var(--border-color)]/50"
-          >
-            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-          </div>
-        )
-      })}
+      {row.getVisibleCells().map((cell) => (
+        <div
+          key={cell.id}
+          style={{ width: cell.column.getSize() }}
+          className="flex items-center px-3 overflow-hidden border-r border-[var(--border-color)]/50"
+        >
+          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+        </div>
+      ))}
 
       <div
         className="w-9 shrink-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"

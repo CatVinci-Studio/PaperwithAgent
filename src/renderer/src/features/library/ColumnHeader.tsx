@@ -21,14 +21,14 @@ export function ColumnHeader({ header, onAddColumn }: ColumnHeaderProps) {
   const canSort = column.getCanSort()
   const canHide = column.getCanHide()
   const canResize = column.getCanResize()
-  const isFlex = column.id === 'title'
+  const isResizing = column.getIsResizing()
 
   const label = String(column.columnDef.header ?? column.id)
 
   return (
     <div
-      data-resizing={header.column.getIsResizing() ? '' : undefined}
-      style={isFlex ? { flex: '1 1 0', minWidth: 200 } : { width: header.getSize() }}
+      data-resizing={isResizing ? '' : undefined}
+      style={{ width: header.getSize() }}
       className={cn(
         'group/header relative flex items-center h-8 px-3 text-[11px] font-medium select-none',
         'border-r border-[var(--border-color)]',
@@ -58,7 +58,7 @@ export function ColumnHeader({ header, onAddColumn }: ColumnHeaderProps) {
         <DropdownMenuTrigger asChild>
           <button
             type="button"
-            className="opacity-0 group-hover/header:opacity-100 p-0.5 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-opacity"
+            className="opacity-0 group-hover/header:opacity-100 p-0.5 mr-1 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-opacity"
             onClick={(e) => e.stopPropagation()}
           >
             <MoreHorizontal size={12} />
@@ -81,18 +81,28 @@ export function ColumnHeader({ header, onAddColumn }: ColumnHeaderProps) {
 
       {canResize && (
         <div
-          onMouseDown={header.getResizeHandler()}
-          onTouchStart={header.getResizeHandler()}
+          onMouseDown={(e) => {
+            // Block sort + dropdown trigger; this is exclusively a resize gesture.
+            e.stopPropagation()
+            e.preventDefault()
+            header.getResizeHandler()(e)
+          }}
+          onTouchStart={(e) => {
+            e.stopPropagation()
+            header.getResizeHandler()(e)
+          }}
           onClick={(e) => e.stopPropagation()}
+          // Sit on the right edge, hit area 8px (4px inside, 4px outside the
+          // column boundary). z-30 keeps it above adjacent header cell content.
           className={cn(
-            // Sit ON the divider, not inside the cell — half outside, half inside
-            'absolute -right-1.5 top-0 z-20 h-full w-3 cursor-col-resize select-none touch-none',
-            // Visible 1px line that stays on the cell's right border, brightens on hover/drag
-            'after:absolute after:left-1/2 after:-translate-x-1/2 after:top-1 after:bottom-1 after:w-[2px]',
-            'after:rounded-full after:bg-[var(--accent-color)] after:opacity-0 after:transition-opacity',
-            'hover:after:opacity-60 data-[resizing]:after:opacity-100'
+            'absolute -right-1 top-0 z-30 h-full w-2 cursor-col-resize select-none touch-none',
+            // Visible indicator line at center of hit area, on the boundary
+            'after:absolute after:inset-y-1 after:left-1/2 after:-translate-x-1/2 after:w-[2px] after:rounded-full',
+            'after:bg-[var(--accent-color)] after:opacity-0 after:transition-opacity',
+            'hover:after:opacity-60',
+            'data-[resizing=true]:after:opacity-100'
           )}
-          data-resizing={header.column.getIsResizing() ? '' : undefined}
+          data-resizing={isResizing}
         />
       )}
     </div>

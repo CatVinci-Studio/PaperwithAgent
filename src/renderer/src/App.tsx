@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Bot, Settings, PanelLeft } from 'lucide-react'
+import { PanelLeft } from 'lucide-react'
 import { useLibraryStore } from './store/library'
 import { useUIStore } from './store/ui'
 import { Sidebar } from './features/library/Sidebar'
@@ -9,6 +9,8 @@ import { AgentPage } from './features/agent/AgentPage'
 import { CommandPalette } from './features/command/CommandPalette'
 import { SettingsModal } from './features/settings/SettingsModal'
 import { DialogHost } from './features/dialogs/DialogHost'
+import { TitleBar } from './components/common/TitleBar'
+import { Button } from './components/ui/button'
 import { api } from './lib/ipc'
 import { useAgentEvents } from './features/agent/useAgent'
 
@@ -72,37 +74,10 @@ export default function App() {
 
   return (
     <div className="flex flex-col h-full bg-[var(--bg-base)] overflow-hidden">
-      {/* Titlebar */}
-      <div className="flex items-center h-11 border-b border-[var(--border-color)] shrink-0 titlebar-drag select-none">
-        {/* macOS traffic lights spacer */}
-        <div className="w-20 shrink-0" />
-
-        {/* App name */}
-        <div className="flex-1 flex items-center justify-center">
-          <span className="text-[12px] font-semibold text-[var(--text-dim)] tracking-wider uppercase">
-            PaperwithAgent
-          </span>
-        </div>
-
-        {/* Right controls */}
-        <div className="flex items-center gap-0.5 pr-3 no-drag shrink-0">
-          <button
-            onClick={() => setCommandOpen(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] rounded-[6px] transition-colors"
-            title="Ask Agent (⌘K)"
-          >
-            <Bot size={11} />
-            <span className="text-[10.5px] font-medium">⌘K</span>
-          </button>
-          <button
-            onClick={() => setSettingsOpen(true)}
-            className="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] rounded-[6px] transition-colors"
-            title="Settings (⌘,)"
-          >
-            <Settings size={13} />
-          </button>
-        </div>
-      </div>
+      <TitleBar
+        onOpenCommand={() => setCommandOpen(true)}
+        onOpenSettings={() => setSettingsOpen(true)}
+      />
 
       {/* Main layout */}
       <div className="flex flex-1 overflow-hidden min-h-0">
@@ -116,13 +91,15 @@ export default function App() {
         {/* Collapsed sidebar — show re-open button */}
         {sidebarCollapsed && (
           <div className="w-9 shrink-0 flex flex-col items-center pt-2 border-r border-[var(--border-color)]">
-            <button
+            <Button
               onClick={toggleSidebar}
-              className="p-1.5 rounded-[6px] text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] transition-colors"
+              variant="ghost"
+              size="icon-sm"
               title="Expand sidebar (⌘\\)"
+              className="h-7 w-7 text-[var(--text-muted)] rounded-[6px]"
             >
               <PanelLeft size={13} />
-            </button>
+            </Button>
           </div>
         )}
 

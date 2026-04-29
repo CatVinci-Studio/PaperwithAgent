@@ -15,8 +15,8 @@ release/
 /library/
 *.csv.bak
 
-# Claude Code
-.claude/
+# Claude Code (personal permission grants — not team-shared)
+.claude/settings.local.json
 
 # Editor
 .vscode/

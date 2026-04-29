@@ -135,14 +135,24 @@ function ProviderSection() {
         {/* Active provider details */}
         {active && (
           <div className="space-y-3 pt-2 border-t border-[var(--border-color)]">
-            <div className="grid grid-cols-[80px_1fr] gap-x-3 gap-y-2 items-center text-[12px]">
-              <span className="text-[var(--text-muted)]">Base URL</span>
-              <span className="text-[var(--text-secondary)] truncate" title={active.baseUrl}>
-                {active.baseUrl}
-              </span>
-              <span className="text-[var(--text-muted)]">Model</span>
-              <span className="text-[var(--text-secondary)]">{active.model}</span>
-            </div>
+            <ProfileField
+              label="Base URL"
+              value={active.baseUrl}
+              placeholder="https://api.example.com/v1"
+              onSave={async (v) => {
+                await api.agent.updateProfile(active.name, { baseUrl: v })
+                await refetch()
+              }}
+            />
+            <ProfileField
+              label="Model"
+              value={active.model}
+              placeholder="gpt-4o-mini"
+              onSave={async (v) => {
+                await api.agent.updateProfile(active.name, { model: v })
+                await refetch()
+              }}
+            />
 
             <div className="space-y-2 pt-1">
               <label className="text-[11.5px] font-medium text-[var(--text-secondary)]">
@@ -203,6 +213,48 @@ function ProviderSection() {
         )}
       </div>
     </SettingSection>
+  )
+}
+
+// ── Editable profile field ──────────────────────────────────────────────────
+
+function ProfileField({
+  label,
+  value,
+  placeholder,
+  onSave,
+}: {
+  label: string
+  value: string
+  placeholder?: string
+  onSave: (next: string) => Promise<void>
+}) {
+  const [draft, setDraft] = useState(value)
+
+  // Sync draft when active provider changes
+  useEffect(() => {
+    setDraft(value)
+  }, [value])
+
+  const commit = async () => {
+    const next = draft.trim()
+    if (next === value) return
+    await onSave(next)
+  }
+
+  return (
+    <div className="grid grid-cols-[80px_1fr] gap-x-3 items-center">
+      <label className="text-[11.5px] font-medium text-[var(--text-secondary)]">{label}</label>
+      <Input
+        value={draft}
+        placeholder={placeholder}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+        }}
+      />
+    </div>
   )
 }
 

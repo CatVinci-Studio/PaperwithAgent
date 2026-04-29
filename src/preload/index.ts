@@ -56,7 +56,9 @@ const api = {
     send:        (message: string, paperId?: string) => api.invoke('agent:send', message, paperId),
     abort:       ()                                   => api.invoke('agent:abort'),
     getConfig:   ()                                   => api.invoke('agent:getConfig'),
-    setProfile:  (name: string)                       => api.invoke('agent:setProfile', name),
+    setProfile:    (name: string)                       => api.invoke('agent:setProfile', name),
+    updateProfile: (name: string, patch: import('@shared/types').ProfilePatch) =>
+                                                          api.invoke('agent:updateProfile', name, patch),
     saveKey:     (profile: string, key: string)       => api.invoke('agent:saveKey', profile, key),
     testKey:     (profile: string)                    => api.invoke('agent:testKey', profile),
     getProfiles: ()                                   => api.invoke('agent:getProfiles'),

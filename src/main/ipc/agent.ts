@@ -1,6 +1,7 @@
 import type { IpcMain, BrowserWindow } from 'electron'
 import type { AgentEvent } from '@shared/types'
-import { getConfig, setActiveProfile, getProfiles } from '../agent/config'
+import type { ProfilePatch } from '@shared/types'
+import { getConfig, setActiveProfile, updateProfile, getProfiles } from '../agent/config'
 import { saveKey, loadKey } from '../agent/auth'
 import { testConnection } from '../agent/client'
 
@@ -50,6 +51,14 @@ export function registerAgentHandlers(
   ipc.handle('agent:setProfile', async (_, name: string) => {
     try {
       setActiveProfile(name)
+    } catch (e) {
+      throw new Error(e instanceof Error ? e.message : String(e))
+    }
+  })
+
+  ipc.handle('agent:updateProfile', async (_, name: string, patch: ProfilePatch) => {
+    try {
+      updateProfile(name, patch)
     } catch (e) {
       throw new Error(e instanceof Error ? e.message : String(e))
     }

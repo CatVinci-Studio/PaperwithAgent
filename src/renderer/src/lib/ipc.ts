@@ -1,7 +1,7 @@
 import type {
   PaperRef, PaperDetail, PaperDraft, PaperPatch, PaperId,
   Filter, SearchHit, Schema, Column, AgentEvent, AgentConfig,
-  AgentProfile, LibraryInfo, CollectionInfo,
+  AgentProfile, ProfilePatch, LibraryInfo, CollectionInfo,
 } from '@shared/types'
 
 type UnsubFn = () => void
@@ -45,6 +45,7 @@ export interface IApi {
     abort(): Promise<void>
     getConfig(): Promise<AgentConfig | null>
     setProfile(name: string): Promise<void>
+    updateProfile(name: string, patch: ProfilePatch): Promise<void>
     saveKey(profile: string, key: string): Promise<void>
     testKey(profile: string): Promise<boolean>
     getProfiles(): Promise<AgentProfile[]>
@@ -208,6 +209,7 @@ const webStub: IApi = {
     abort: () => Promise.resolve(),
     getConfig: () => Promise.resolve(null),
     setProfile: () => Promise.resolve(),
+    updateProfile: () => Promise.resolve(),
     saveKey: () => Promise.resolve(),
     testKey: () => Promise.resolve(true),
     getProfiles: () => Promise.resolve([]),

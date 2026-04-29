@@ -19,6 +19,19 @@ export function setActiveProfile(name: string): void {
   store.set('config', { ...config, defaultProfile: name })
 }
 
+/** Patch a provider profile's editable fields (baseUrl, model). */
+export function updateProfile(
+  name: string,
+  patch: Partial<Pick<AgentProfile, 'baseUrl' | 'model'>>,
+): void {
+  const config = store.get('config')
+  const idx = config.profiles.findIndex((p) => p.name === name)
+  if (idx === -1) throw new Error(`Profile "${name}" not found`)
+  const updated = [...config.profiles]
+  updated[idx] = { ...updated[idx], ...patch }
+  store.set('config', { ...config, profiles: updated })
+}
+
 export function getProfiles(): AgentProfile[] {
   const config = store.get('config')
   return config.profiles.map((p) => ({

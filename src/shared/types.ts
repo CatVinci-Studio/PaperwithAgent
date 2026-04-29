@@ -132,6 +132,9 @@ export interface AgentProfile {
   hasKey: boolean
 }
 
+/** Editable fields of a provider profile. `name` and `hasKey` are not patchable. */
+export type ProfilePatch = Partial<Pick<AgentProfile, 'baseUrl' | 'model'>>
+
 export interface AgentConfig {
   defaultProfile: string
   profiles: Omit<AgentProfile, 'hasKey'>[]
@@ -202,6 +205,7 @@ export interface IpcChannels {
   'agent:abort':         { args: [];                        ret: void }
   'agent:getConfig':     { args: [];                        ret: AgentConfig }
   'agent:setProfile':    { args: [string];                  ret: void }
+  'agent:updateProfile': { args: [string, ProfilePatch];    ret: void }
   'agent:saveKey':       { args: [string, string];          ret: void }
   'agent:testKey':       { args: [string];                  ret: boolean }
   'agent:getProfiles':   { args: [];                        ret: AgentProfile[] }

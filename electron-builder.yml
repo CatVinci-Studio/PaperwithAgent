@@ -15,9 +15,7 @@ mac:
   category: public.app-category.productivity
   target:
     - target: dmg
-      arch: [x64, arm64]
-    - target: zip
-      arch: [x64, arm64]
+      arch: [universal]       # one dmg for Intel + Apple Silicon
   identity: null              # unsigned for now; users right-click → Open
   gatekeeperAssess: false
 
@@ -28,8 +26,6 @@ dmg:
 win:
   target:
     - target: nsis
-      arch: [x64]
-    - target: zip
       arch: [x64]
 
 nsis:

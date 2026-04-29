@@ -16,8 +16,7 @@
     "coverage": "vitest run --coverage",
     "dist:mac": "npm run build && electron-builder --mac",
     "dist:win": "npm run build && electron-builder --win",
-    "dist:linux": "npm run build && electron-builder --linux",
-    "lint": "eslint src --ext .ts,.tsx"
+    "dist:linux": "npm run build && electron-builder --linux"
   },
   "dependencies": {
     "@codemirror/commands": "^6.10.3",

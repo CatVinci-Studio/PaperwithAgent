@@ -21,6 +21,18 @@ import { buildIndex, searchIndex } from './search'
 import { generateId } from './id'
 import { detectAndImport } from './import'
 
+/**
+ * In-memory paper library backed by Markdown files on disk.
+ *
+ * The on-disk layout is the source of truth: one `.md` file per paper
+ * under `papers/`, plus `schema.json` and `collections.json` for
+ * metadata. The CSV index at `papers.csv` is a derived projection
+ * rebuilt on every write. All mutations go through this class so the
+ * cache, search index, and CSV stay in sync.
+ *
+ * Construct with `Library.open(root)` — the constructor is private
+ * because initialization is async (directory creation, cache build).
+ */
 export class Library {
   readonly root: string
   private _schema!: Schema
@@ -38,6 +50,7 @@ export class Library {
   get schemaPath(): string      { return join(this.root, 'schema.json') }
   get collectionsPath(): string { return join(this.root, 'collections.json') }
 
+  /** Open (or create) a library at `root`. Idempotent on existing folders. */
   static async open(root: string): Promise<Library> {
     const lib = new Library(root)
     await lib._init()

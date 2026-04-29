@@ -7,12 +7,29 @@ import { createClient } from './client'
 import { runAgentLoop } from './loop'
 import { TOOL_DEFINITIONS } from './tools'
 
+/**
+ * One conversational session with the AI agent.
+ *
+ * Owns the chat history (kept in memory for the lifetime of the
+ * session) and exposes streaming-style messaging via `send`. Each call
+ * runs an OpenAI-compatible tool loop that may invoke library tools
+ * (search, read, write papers, manage collections) before responding.
+ *
+ * Streamed output is delivered through the `onEvent` callback as a
+ * sequence of `AgentEvent`s, terminated by `{ type: 'done' }`.
+ */
 export class AgentSession {
   private history: OpenAI.Chat.ChatCompletionMessageParam[] = []
   private abortController: AbortController | null = null
 
   constructor(private appState: { library: Library; manager: LibraryManager | null }) {}
 
+  /**
+   * Send a user message and stream the agent's response.
+   * Uses the active profile from settings; emits an `error` event if no
+   * key is configured. Safe to call concurrently — each call runs its
+   * own tool loop, but `abort` cancels whichever call is in flight.
+   */
   async send(
     userMessage: string,
     onEvent: (event: AgentEvent) => void,

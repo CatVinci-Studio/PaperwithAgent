@@ -9,16 +9,17 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:     'bg-[var(--bg-elevated)] border-[var(--bg-active)] text-[var(--text-primary)] hover:bg-[var(--bg-hover)]',
-        accent:      'bg-[var(--accent-color)] border-[var(--accent-color)] text-white hover:bg-[var(--accent-hover)] hover:border-[var(--accent-hover)]',
+        accent:      'bg-[var(--accent-color)] border-[var(--accent-color)] text-[var(--accent-on)] hover:opacity-90 active:scale-[0.98]',
         ghost:       'bg-transparent border-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]',
         destructive: 'bg-[var(--danger)]/10 border-[var(--danger)]/30 text-[var(--danger)] hover:bg-[var(--danger)]/20',
         outline:     'bg-transparent border-[var(--bg-active)] text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]',
       },
       size: {
-        default: 'h-7 px-2.5 rounded-[4px]',
-        sm:      'h-6 px-2 text-[11px] rounded-[3px]',
-        lg:      'h-8 px-3 rounded-md',
-        icon:    'h-7 w-7 rounded-[4px]',
+        default:   'h-7 px-2.5 rounded-[4px]',
+        sm:        'h-6 px-2 text-[11px] rounded-[3px]',
+        lg:        'h-8 px-3 rounded-md',
+        xl:        'h-10 px-4 text-[12.5px] rounded-[10px]',
+        icon:      'h-7 w-7 rounded-[4px]',
         'icon-sm': 'h-6 w-6 rounded-[3px]',
       },
     },

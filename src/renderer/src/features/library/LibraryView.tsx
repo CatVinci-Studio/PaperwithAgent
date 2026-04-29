@@ -11,6 +11,7 @@ import { useLibraryStore } from '@/store/library'
 import { useUIStore } from '@/store/ui'
 import { api } from '@/lib/ipc'
 import { confirmDialog, promptDialog } from '@/store/dialogs'
+import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -199,7 +200,7 @@ export function LibraryView() {
 
             <button
               onClick={handleNewPaper}
-              className="w-full flex items-center gap-2 pl-4 h-9 text-[12px] text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-sidebar-hover)] transition-colors border-b border-[var(--border-color)]/30"
+              className="w-full flex items-center gap-2 pl-4 h-9 text-[12px] text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-sidebar-hover)] transition-colors border-b border-[var(--border-color)]/30 text-left"
             >
               <Plus size={13} />
               New paper
@@ -212,13 +213,15 @@ export function LibraryView() {
         <span className="text-[11px] text-[var(--text-muted)]">
           {table.getRowModel().rows.length} paper{table.getRowModel().rows.length !== 1 ? 's' : ''}
         </span>
-        <button
+        <Button
           onClick={handleImportDoi}
-          className="flex items-center gap-1 px-2 py-1 text-[11px] text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] rounded-md transition-colors"
+          variant="ghost"
+          size="sm"
+          className="text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
         >
           <Upload size={11} />
           Import DOI
-        </button>
+        </Button>
       </div>
     </div>
   )

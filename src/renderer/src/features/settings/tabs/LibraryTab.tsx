@@ -2,6 +2,7 @@ import { Check, Plus } from 'lucide-react'
 import { useLibraryStore } from '@/store/library'
 import { api } from '@/lib/ipc'
 import { promptDialog } from '@/store/dialogs'
+import { Button } from '@/components/ui/button'
 import { SettingSection } from '@/components/ui/setting-section'
 import { cn } from '@/lib/utils'
 import type { LibraryInfo } from '@shared/types'
@@ -52,12 +53,14 @@ export function LibraryTab() {
                 <span className="text-[10.5px] text-[var(--accent-color)] font-medium">Active</span>
               </div>
             ) : (
-              <button
+              <Button
                 onClick={() => switchLibrary(lib.name)}
-                className="shrink-0 px-3 py-1.5 rounded-[8px] text-[11.5px] font-medium text-[var(--text-muted)] border border-[var(--border-color)] hover:text-[var(--text-primary)] hover:border-[var(--border-focus)] transition-colors"
+                variant="outline"
+                size="sm"
+                className="rounded-[8px] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--border-focus)]"
               >
                 Switch
-              </button>
+              </Button>
             )}
           </div>
         ))}

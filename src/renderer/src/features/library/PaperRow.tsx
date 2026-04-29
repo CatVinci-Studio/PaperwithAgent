@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ArrowUpRight, MoreHorizontal } from 'lucide-react'
 import { flexRender, type Row } from '@tanstack/react-table'
 import type { PaperRef, CollectionInfo } from '@shared/types'
+import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -75,9 +76,9 @@ export function PaperRow({
       >
         <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
           <DropdownMenuTrigger asChild>
-            <button className="p-1 rounded-md hover:bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
+            <Button variant="ghost" size="icon-sm" className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
               <MoreHorizontal size={14} />
-            </button>
+            </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={onClick}>

@@ -3,9 +3,10 @@ import { Plus, Trash2, Loader } from 'lucide-react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/ipc'
 import { confirmDialog } from '@/store/dialogs'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { SettingSection } from '@/components/ui/setting-section'
-import { cn } from '@/lib/utils'
 import type { ColumnType } from '@shared/types'
 
 const COLUMN_TYPES: { value: ColumnType; label: string }[] = [
@@ -86,17 +87,19 @@ export function SchemaTab() {
                   <span className="text-[12.5px] font-medium text-[var(--text-primary)]">{col.name}</span>
                   <span className="ml-2 text-[11px] text-[var(--text-muted)] capitalize">{col.type}</span>
                 </div>
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
                   onClick={() => handleRemoveColumn(col.name)}
                   disabled={removing === col.name}
-                  className="p-1.5 rounded-[6px] text-[var(--text-muted)] hover:text-[var(--danger)] hover:bg-[var(--danger)]/10 transition-colors"
+                  className="text-[var(--text-muted)] hover:text-[var(--danger)] hover:bg-[var(--danger)]/10"
                 >
                   {removing === col.name ? (
                     <Loader size={12} className="animate-spin" />
                   ) : (
                     <Trash2 size={12} />
                   )}
-                </button>
+                </Button>
               </div>
             ))}
           </div>
@@ -107,19 +110,12 @@ export function SchemaTab() {
 
       <SettingSection title="Add column" description="New columns become available immediately on every paper.">
         <div className="flex gap-2 pt-2">
-          <input
+          <Input
             placeholder="Column name…"
             value={newColName}
             onChange={(e) => setNewColName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleAddColumn()}
-            className={cn(
-              'flex-1 h-10 px-3 rounded-[10px] border text-[13px] bg-[var(--bg-elevated)]',
-              'text-[var(--text-primary)] placeholder:text-[var(--text-dim)]',
-              'border-[var(--border-color)] focus:border-[var(--accent-color)]',
-              'focus:ring-2 focus:ring-[var(--accent-color)]/20 focus:outline-none',
-              'transition-all duration-150'
-            )}
-            style={{ userSelect: 'text' }}
+            className="flex-1"
           />
           <Select value={newColType} onValueChange={(v) => setNewColType(v as ColumnType)}>
             <SelectTrigger className="w-32 h-10 rounded-[10px] border-[var(--border-color)] bg-[var(--bg-elevated)] text-[12.5px]">
@@ -133,18 +129,14 @@ export function SchemaTab() {
               ))}
             </SelectContent>
           </Select>
-          <button
+          <Button
+            variant="accent"
+            size="xl"
             onClick={handleAddColumn}
             disabled={adding || !newColName.trim()}
-            className={cn(
-              'px-4 h-10 rounded-[10px] text-[12.5px] font-medium transition-all duration-150 active:scale-[0.98]',
-              newColName.trim() && !adding
-                ? 'bg-[var(--accent-color)] text-[var(--accent-on)] hover:opacity-90'
-                : 'bg-[var(--bg-active)] text-[var(--text-dim)] cursor-not-allowed'
-            )}
           >
             {adding ? <Loader size={12} className="animate-spin" /> : <Plus size={13} />}
-          </button>
+          </Button>
         </div>
       </SettingSection>
     </div>

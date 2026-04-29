@@ -7,6 +7,7 @@ import { useAgentStore } from '@/store/agent'
 import { usePaperDetail, useUpdatePaper } from './usePaper'
 import { MarkdownEditor } from './MarkdownEditor'
 import { PdfViewer } from './PdfViewer'
+import { Button } from '@/components/ui/button'
 import { ChipStatus } from '@/components/common/ChipStatus'
 import { ChipTag } from '@/components/common/ChipTag'
 import { cn, formatYear } from '@/lib/utils'
@@ -174,20 +175,24 @@ export function PaperDetail() {
 
           {/* Actions */}
           <div className="flex items-center gap-1 shrink-0">
-            <button
+            <Button
+              variant="ghost"
+              size="icon-sm"
               onClick={handleOpenAgent}
-              className="p-1 rounded text-[var(--text-muted)] hover:text-[var(--accent-color)] hover:bg-[var(--bg-elevated)] transition-colors"
               title="Ask agent about this paper (⌘.)"
+              className="text-[var(--text-muted)] hover:text-[var(--accent-color)]"
             >
               <Bot size={15} />
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon-sm"
               onClick={handleClose}
-              className="p-1 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors"
               title="Close"
+              className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"
             >
               <X size={15} />
-            </button>
+            </Button>
           </div>
         </div>
 

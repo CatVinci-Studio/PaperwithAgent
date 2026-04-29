@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { X, Settings2, Table2, Library } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useUIStore } from '@/store/ui'
+import { Button } from '@/components/ui/button'
 import { GeneralTab } from './tabs/GeneralTab'
 import { SchemaTab } from './tabs/SchemaTab'
 import { LibraryTab } from './tabs/LibraryTab'
@@ -60,12 +61,14 @@ export function SettingsModal() {
           <div className="flex-1">
             <h2 className="text-[14.5px] font-semibold text-[var(--text-primary)] tracking-tight">Settings</h2>
           </div>
-          <button
+          <Button
             onClick={() => setSettingsOpen(false)}
-            className="p-1.5 rounded-[8px] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] border border-transparent hover:border-[var(--border-color)] transition-all"
+            variant="ghost"
+            size="icon"
+            className="rounded-[8px] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
           >
             <X size={14} />
-          </button>
+          </Button>
         </div>
 
         <div className="flex flex-1 overflow-hidden min-h-0">

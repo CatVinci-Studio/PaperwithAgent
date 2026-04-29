@@ -3,6 +3,8 @@ import { CheckCircle, XCircle, Loader, Wifi } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/ipc'
 import { useUIStore } from '@/store/ui'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { SettingRow } from '@/components/ui/setting-row'
 import { SettingSection } from '@/components/ui/setting-section'
 import { SettingSegmented } from '@/components/ui/setting-segmented'
@@ -152,49 +154,35 @@ function ProviderSection() {
             </div>
 
             <div className="flex gap-2">
-              <input
+              <Input
                 type="password"
                 placeholder={profile?.hasKey ? '••••••••••••••••' : 'sk-...'}
                 value={keyInput}
                 onChange={(e) => setKeyInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSaveKey()}
-                className={cn(
-                  'flex-1 h-10 px-3 rounded-[10px] border text-[13px] bg-[var(--bg-elevated)]',
-                  'text-[var(--text-primary)] placeholder:text-[var(--text-dim)]',
-                  'border-[var(--border-color)] focus:border-[var(--accent-color)]',
-                  'focus:ring-2 focus:ring-[var(--accent-color)]/20 focus:outline-none',
-                  'transition-all duration-150'
-                )}
-                style={{ userSelect: 'text' }}
+                className="flex-1"
               />
-              <button
+              <Button
+                variant="accent"
+                size="xl"
                 onClick={handleSaveKey}
                 disabled={saving || !keyInput.trim()}
-                className={cn(
-                  'px-4 h-10 rounded-[10px] text-[12.5px] font-medium transition-all duration-150 active:scale-[0.98]',
-                  keyInput.trim() && !saving
-                    ? 'bg-[var(--accent-color)] text-[var(--accent-on)] hover:opacity-90'
-                    : 'bg-[var(--bg-active)] text-[var(--text-dim)] cursor-not-allowed'
-                )}
               >
                 {saving ? <Loader size={12} className="animate-spin" /> : 'Save'}
-              </button>
+              </Button>
             </div>
 
             <div className="flex items-center gap-3">
-              <button
+              <Button
+                variant="outline"
+                size="lg"
                 onClick={handleTestKey}
                 disabled={testing || !profile?.hasKey}
-                className={cn(
-                  'flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-[12px] font-medium border transition-all duration-150 active:scale-[0.98]',
-                  !testing && profile?.hasKey
-                    ? 'border-[var(--border-color)] text-[var(--text-secondary)] hover:border-[var(--border-focus)] hover:text-[var(--text-primary)]'
-                    : 'border-transparent text-[var(--text-dim)] cursor-not-allowed'
-                )}
+                className="rounded-[8px]"
               >
                 {testing ? <Loader size={11} className="animate-spin" /> : <Wifi size={11} />}
                 Test connection
-              </button>
+              </Button>
 
               {testResult !== null && (
                 <span

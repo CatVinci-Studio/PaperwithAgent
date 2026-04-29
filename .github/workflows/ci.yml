@@ -16,19 +16,16 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: '20'
-
-      - uses: pnpm/action-setup@v6
-        with:
-          version: latest
+          cache: 'npm'
 
       - name: Install dependencies
-        run: pnpm install
+        run: npm ci
 
       - name: Type check
-        run: pnpm typecheck
+        run: npm run typecheck
 
       - name: Run tests
-        run: pnpm test --reporter=verbose
+        run: npm test -- --reporter=verbose
 
       - name: Upload coverage
         uses: codecov/codecov-action@v6

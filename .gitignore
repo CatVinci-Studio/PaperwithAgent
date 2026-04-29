@@ -1,6 +1,7 @@
 # Node
 node_modules/
 dist/
+dist-web/
 
 # Electron-vite build output
 out/

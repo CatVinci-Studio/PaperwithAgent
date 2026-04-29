@@ -2,11 +2,17 @@
   "name": "verko",
   "version": "0.0.1",
   "description": "Agent-first paper management. CSV + Markdown native storage.",
+  "author": {
+    "name": "CatVinci-Studio",
+    "email": "leonardoshen@icloud.com"
+  },
+  "homepage": "https://github.com/CatVinci-Studio/Verko",
   "main": "./out/main/index.js",
   "private": true,
   "scripts": {
     "dev": "electron-vite dev",
     "dev:web": "vite src/renderer --config vite.renderer.config.ts",
+    "build:web": "vite build --config vite.renderer.config.ts",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",

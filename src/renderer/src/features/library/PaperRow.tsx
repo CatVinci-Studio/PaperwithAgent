@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ArrowUpRight, MoreHorizontal } from 'lucide-react'
 import { flexRender, type Row } from '@tanstack/react-table'
+import { useTranslation } from 'react-i18next'
 import type { PaperRef, CollectionInfo } from '@shared/types'
 import { Button } from '@/components/ui/button'
 import {
@@ -40,6 +41,7 @@ export function PaperRow({
   onAddToCollection,
   onRemoveFromCollection,
 }: PaperRowProps) {
+  const { t } = useTranslation()
   const [menuOpen, setMenuOpen] = useState(false)
 
   return (
@@ -82,7 +84,7 @@ export function PaperRow({
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={onClick}>
               <ArrowUpRight size={12} className="mr-2" />
-              Open
+              {t('common.open')}
             </DropdownMenuItem>
             {paper.doi && onCopyDoi && (
               <DropdownMenuItem onClick={onCopyDoi}>Copy DOI</DropdownMenuItem>

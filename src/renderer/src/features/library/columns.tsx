@@ -33,30 +33,42 @@ export function buildColumns(extras: Column[], t: TFunction): ColumnDef<PaperRef
       cell: ({ row, table }) => {
         const p = row.original
         const meta = table.options.meta!
+        // Title is editable like any other cell. Opening the paper detail
+        // happens via the trailing ↗ arrow (hover-revealed) or the row's
+        // ⋮ menu — keeps the cell click free for inline editing.
         return (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              meta.open(p.id)
-            }}
-            className="group/title flex items-center gap-1.5 min-w-0 w-full text-left rounded-[4px] hover:bg-[var(--bg-elevated)] px-1 -mx-1"
-          >
+          <div className="group/title flex items-center gap-1.5 min-w-0 w-full">
             {p.hasPdf && (
               <FileText size={12} className="shrink-0 text-[var(--text-dim)]" />
             )}
-            <span className="text-[13px] truncate font-medium text-[var(--text-bright)]">
-              {p.title || (
-                <span className="text-[var(--text-muted)] font-normal italic">
-                  {t('paper.untitled')}
-                </span>
-              )}
-            </span>
-            <ArrowUpRight
-              size={12}
-              className="shrink-0 text-[var(--text-muted)] opacity-0 group-hover/title:opacity-100 transition-opacity"
-            />
-          </button>
+            <div className="flex-1 min-w-0">
+              <EditableTextCell
+                value={p.title}
+                placeholder={t('paper.untitled')}
+                display={
+                  <span className="text-[13px] truncate font-medium text-[var(--text-bright)]">
+                    {p.title || (
+                      <span className="text-[var(--text-muted)] font-normal italic">
+                        {t('paper.untitled')}
+                      </span>
+                    )}
+                  </span>
+                }
+                onSave={(next) => meta.update(p.id, { title: next })}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                meta.open(p.id)
+              }}
+              className="shrink-0 p-0.5 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] opacity-0 group-hover/title:opacity-100 transition-opacity"
+              title={t('common.open')}
+            >
+              <ArrowUpRight size={12} />
+            </button>
+          </div>
         )
       },
     },

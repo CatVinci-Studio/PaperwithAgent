@@ -200,7 +200,12 @@
       "status": "状态",
       "tags": "标签",
       "hide": "隐藏列",
-      "newColumn": "新建列"
+      "newColumn": "新建列",
+      "sortAsc": "升序排序",
+      "sortDesc": "降序排序",
+      "clearSort": "清除排序",
+      "pin": "钉住列",
+      "unpin": "取消钉住"
     }
   },
   "agent": {
@@ -221,6 +226,12 @@
     "tool": {
       "input": "输入",
       "output": "输出"
+    },
+    "mention": {
+      "title": "选择集合或论文",
+      "papersIn": "中的论文",
+      "back": "返回集合",
+      "empty": "未找到匹配项"
     },
     "conversations": {
       "title": "对话",

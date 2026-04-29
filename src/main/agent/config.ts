@@ -60,6 +60,20 @@ function migrateConfig(): void {
     dirty = true
   }
 
+  // Re-order profiles to match the canonical preset order (openai, anthropic,
+  // gemini, custom, …extras). Existing users may have an out-of-order list
+  // from earlier installs.
+  const order = DEFAULT_AGENT_CONFIG.profiles.map((p) => p.name)
+  const sortedNames = cfg.profiles.map((p) => p.name)
+  const desired = [
+    ...order.filter((n) => sortedNames.includes(n)),
+    ...sortedNames.filter((n) => !order.includes(n)),
+  ]
+  if (sortedNames.join('|') !== desired.join('|')) {
+    cfg.profiles = desired.map((n) => cfg.profiles.find((p) => p.name === n)!)
+    dirty = true
+  }
+
   if (dirty) store.set('config', cfg)
 }
 

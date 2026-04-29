@@ -202,7 +202,12 @@
       "status": "Status",
       "tags": "Tags",
       "hide": "Hide column",
-      "newColumn": "New column"
+      "newColumn": "New column",
+      "sortAsc": "Sort ascending",
+      "sortDesc": "Sort descending",
+      "clearSort": "Clear sort",
+      "pin": "Pin column",
+      "unpin": "Unpin column"
     }
   },
   "agent": {
@@ -223,6 +228,12 @@
     "tool": {
       "input": "Input",
       "output": "Output"
+    },
+    "mention": {
+      "title": "Pick a collection or paper",
+      "papersIn": "papers",
+      "back": "Back to collections",
+      "empty": "No matches"
     },
     "conversations": {
       "title": "Conversations",

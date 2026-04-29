@@ -71,6 +71,18 @@ export function PaperRow({
         </div>
       ))}
 
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); onClick() }}
+        title={t('common.open')}
+        className={cn(
+          'w-7 shrink-0 flex items-center justify-center transition-colors',
+          'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]',
+        )}
+      >
+        <ArrowUpRight size={13} />
+      </button>
+
       <div
         className="w-9 shrink-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
         onClick={(e) => e.stopPropagation()}

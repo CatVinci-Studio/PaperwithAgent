@@ -13,6 +13,7 @@ interface UIStore {
   agentOpen: boolean
   settingsOpen: boolean
   commandOpen: boolean
+  filterOpen: boolean
   activeDetailTab: 'read' | 'edit' | 'pdf'
   theme: ThemePreference
   resolvedTheme: ResolvedTheme
@@ -24,6 +25,7 @@ interface UIStore {
   setAgentOpen: (v: boolean) => void
   setSettingsOpen: (v: boolean) => void
   setCommandOpen: (v: boolean) => void
+  setFilterOpen: (v: boolean) => void
   setActiveDetailTab: (tab: 'read' | 'edit' | 'pdf') => void
   setTheme: (theme: ThemePreference) => void
 }
@@ -74,6 +76,7 @@ export const useUIStore = create<UIStore>((set) => ({
   agentOpen: true,
   settingsOpen: false,
   commandOpen: false,
+  filterOpen: false,
   activeDetailTab: 'read',
   theme: initialPref,
   resolvedTheme: initialResolved,
@@ -88,6 +91,7 @@ export const useUIStore = create<UIStore>((set) => ({
   setAgentOpen: (v) => set({ agentOpen: v }),
   setSettingsOpen: (v) => set({ settingsOpen: v }),
   setCommandOpen: (v) => set({ commandOpen: v }),
+  setFilterOpen: (v) => set({ filterOpen: v }),
   setActiveDetailTab: (tab) => set({ activeDetailTab: tab }),
   setTheme: (theme) => {
     localStorage.setItem(STORAGE_KEY, theme)

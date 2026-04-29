@@ -35,13 +35,13 @@ function BasicSection() {
         label={t('settings.basic.colorScheme')}
         description={t('settings.basic.colorSchemeHint')}
       >
-        <SettingSegmented<'system' | 'dark' | 'light'>
+        <SettingSegmented<'system' | 'light' | 'dark'>
           value={theme}
           onValueChange={setTheme}
           options={[
             { value: 'system', label: t('settings.basic.system') },
-            { value: 'dark', label: t('settings.basic.dark') },
             { value: 'light', label: t('settings.basic.light') },
+            { value: 'dark', label: t('settings.basic.dark') },
           ]}
         />
       </SettingRow>

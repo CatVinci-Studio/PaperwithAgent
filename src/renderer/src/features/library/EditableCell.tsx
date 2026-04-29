@@ -21,6 +21,10 @@ interface EditableTextCellProps {
   onSave: (next: string) => void | Promise<void>
   /** What to render when not editing. Defaults to the value or an em-dash. */
   display?: React.ReactNode
+  /** When true on first render, enter edit mode immediately (e.g. for new rows). */
+  startEditing?: boolean
+  /** Fires when an in-progress edit either commits or cancels. */
+  onEditEnd?: () => void
 }
 
 export function EditableTextCell({
@@ -30,8 +34,10 @@ export function EditableTextCell({
   align = 'left',
   onSave,
   display,
+  startEditing,
+  onEditEnd,
 }: EditableTextCellProps) {
-  const [editing, setEditing] = useState(false)
+  const [editing, setEditing] = useState(!!startEditing)
   const [draft, setDraft] = useState(value)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -45,11 +51,13 @@ export function EditableTextCell({
   const commit = async () => {
     setEditing(false)
     if (draft !== value) await onSave(draft)
+    onEditEnd?.()
   }
 
   const cancel = () => {
     setDraft(value)
     setEditing(false)
+    onEditEnd?.()
   }
 
   if (!editing) {

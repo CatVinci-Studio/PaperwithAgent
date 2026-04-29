@@ -27,6 +27,7 @@ export default function App() {
     commandOpen,
     setCommandOpen,
     setSettingsOpen,
+    setFilterOpen,
     toggleSidebar,
     toggleAgent,
   } = useUIStore()
@@ -84,11 +85,15 @@ export default function App() {
         e.preventDefault()
         setSettingsOpen(true)
       }
+      if (meta && e.key === 'f') {
+        e.preventDefault()
+        setFilterOpen(true)
+      }
     }
 
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [commandOpen, setCommandOpen, toggleSidebar, toggleAgent, setSettingsOpen])
+  }, [commandOpen, setCommandOpen, toggleSidebar, toggleAgent, setSettingsOpen, setFilterOpen])
 
   if (status === 'none') {
     return (

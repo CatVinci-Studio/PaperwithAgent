@@ -71,8 +71,15 @@ export function Sidebar() {
 
   const { activeView, setActiveView, agentOpen, setAgentOpen, toggleSidebar, setSettingsOpen } = useUIStore()
   const activeId = useAgentStore((s) => s.activeId)
-  const byId = useAgentStore((s) => s.byId)
-  const messages = (activeId ? byId[activeId]?.messages : undefined) ?? []
+  const conversations = useAgentStore((s) => s.conversations)
+  const newConversation = useAgentStore((s) => s.newConversation)
+  const selectConversation = useAgentStore((s) => s.selectConversation)
+  const deleteConversation = useAgentStore((s) => s.deleteConversation)
+  const refreshConversations = useAgentStore((s) => s.refreshConversations)
+
+  React.useEffect(() => {
+    if (!isWeb) refreshConversations().catch(() => {})
+  }, [refreshConversations])
 
   const [collectionsExpanded, setCollectionsExpanded] = useState(true)
   const [tagsExpanded, setTagsExpanded] = useState(false)
@@ -155,8 +162,24 @@ export function Sidebar() {
     catch (e) { console.error(e) }
   }
 
-  // Last user message for agent section preview
-  const lastUserMsg = [...messages].reverse().find(m => m.role === 'user')?.content
+  const handleNewConversation = () => {
+    newConversation()
+    setActiveView('agent')
+  }
+  const handleSelectConversation = (id: string) => {
+    void selectConversation(id)
+    setActiveView('agent')
+  }
+  const handleDeleteConversation = async (id: string, title: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    const ok = await confirmDialog({
+      title: t('agent.conversations.delete.title'),
+      message: t('agent.conversations.delete.message', { title }),
+      confirmLabel: t('common.delete'),
+      danger: true,
+    })
+    if (ok) await deleteConversation(id)
+  }
 
   return (
     <div className="flex flex-col h-full bg-[var(--bg-sidebar)] border-r border-[var(--border-color)] text-[var(--text-secondary)]">
@@ -209,36 +232,58 @@ export function Sidebar() {
             label="Agent"
             expanded={agentOpen}
             onToggle={() => setAgentOpen(!agentOpen)}
+            actions={
+              <button
+                onClick={(e) => { e.stopPropagation(); handleNewConversation() }}
+                title={t('agent.conversations.new')}
+                className="p-1 rounded text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] transition-colors"
+              >
+                <Plus size={10} />
+              </button>
+            }
           />
         )}
 
         {!isWeb && agentOpen && (
-          <button
-            onClick={() => setActiveView('agent')}
-            className={cn(
-              'w-full text-left px-3 py-2 mx-1 mb-1 rounded-[6px] transition-colors',
-              'text-[12px] text-[var(--text-secondary)] hover:bg-[var(--bg-sidebar-hover)]',
-              activeView === 'agent' && 'bg-[var(--bg-elevated)] text-[var(--text-primary)]'
+          <div className="mx-1 mb-1 space-y-0.5">
+            {conversations.length === 0 && (
+              <button
+                onClick={handleNewConversation}
+                className={cn(
+                  'w-full text-left px-2 py-1.5 rounded-[6px] transition-colors',
+                  'text-[11.5px] text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-sidebar-hover)]',
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <MessageSquare size={11} className="shrink-0" />
+                  {t('agent.conversations.empty')}
+                </div>
+              </button>
             )}
-            style={{ maxWidth: 'calc(100% - 8px)' }}
-          >
-            <div className="flex items-center gap-2 mb-0.5">
-              <MessageSquare size={12} className="shrink-0 text-[var(--text-muted)]" />
-              <span className="font-medium text-[12px]">
-                {messages.length > 0 ? `${messages.length} message${messages.length !== 1 ? 's' : ''}` : 'New conversation'}
-              </span>
-            </div>
-            {lastUserMsg && (
-              <p className="text-[11px] text-[var(--text-muted)] truncate pl-[20px]">
-                {lastUserMsg}
-              </p>
-            )}
-            {!lastUserMsg && (
-              <p className="text-[11px] text-[var(--text-muted)] pl-[20px]">
-                Ask about your papers…
-              </p>
-            )}
-          </button>
+            {conversations.map((c) => (
+              <button
+                key={c.id}
+                onClick={() => handleSelectConversation(c.id)}
+                className={cn(
+                  'group/conv w-full text-left px-2 py-1.5 rounded-[6px] transition-colors flex items-center gap-2',
+                  'text-[11.5px] hover:bg-[var(--bg-sidebar-hover)]',
+                  activeId === c.id && activeView === 'agent'
+                    ? 'bg-[var(--bg-elevated)] text-[var(--text-primary)]'
+                    : 'text-[var(--text-secondary)]',
+                )}
+              >
+                <MessageSquare size={11} className="shrink-0 text-[var(--text-muted)]" />
+                <span className="flex-1 min-w-0 truncate">{c.title}</span>
+                <span
+                  onClick={(e) => void handleDeleteConversation(c.id, c.title, e)}
+                  className="opacity-0 group-hover/conv:opacity-100 p-0.5 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer"
+                  title={t('common.delete')}
+                >
+                  <Trash2 size={10} />
+                </span>
+              </button>
+            ))}
+          </div>
         )}
 
         {/* Divider */}

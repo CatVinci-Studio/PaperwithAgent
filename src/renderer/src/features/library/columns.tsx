@@ -1,6 +1,6 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import type { TFunction } from 'i18next'
-import { Star, FileText, ArrowUpRight } from 'lucide-react'
+import { Star, FileText } from 'lucide-react'
 import type { PaperRef, PaperPatch, PaperStatus, Column } from '@shared/types'
 import { ChipStatus } from '@/components/common/ChipStatus'
 import { ChipTag } from '@/components/common/ChipTag'
@@ -17,6 +17,10 @@ declare module '@tanstack/react-table' {
   interface TableMeta<TData> {
     open: (id: string) => void
     update: (id: string, patch: PaperPatch) => void | Promise<void>
+    /** Paper ID that should auto-enter edit mode on its title cell. */
+    editingId?: string | null
+    /** Clear editingId once the user finishes editing the new row. */
+    clearEditingId?: () => void
     _phantom?: TData
   }
 }
@@ -34,10 +38,10 @@ export function buildColumns(extras: Column[], t: TFunction): ColumnDef<PaperRef
         const p = row.original
         const meta = table.options.meta!
         // Title is editable like any other cell. Opening the paper detail
-        // happens via the trailing ↗ arrow (hover-revealed) or the row's
-        // ⋮ menu — keeps the cell click free for inline editing.
+        // happens via the trailing ↗ arrow at the row end. New papers
+        // auto-enter edit mode via meta.editingId.
         return (
-          <div className="group/title flex items-center gap-1.5 min-w-0 w-full">
+          <div className="flex items-center gap-1.5 min-w-0 w-full">
             {p.hasPdf && (
               <FileText size={12} className="shrink-0 text-[var(--text-dim)]" />
             )}
@@ -45,6 +49,8 @@ export function buildColumns(extras: Column[], t: TFunction): ColumnDef<PaperRef
               <EditableTextCell
                 value={p.title}
                 placeholder={t('paper.untitled')}
+                startEditing={meta.editingId === p.id}
+                onEditEnd={meta.clearEditingId}
                 display={
                   <span className="text-[13px] truncate font-medium text-[var(--text-bright)]">
                     {p.title || (
@@ -57,17 +63,6 @@ export function buildColumns(extras: Column[], t: TFunction): ColumnDef<PaperRef
                 onSave={(next) => meta.update(p.id, { title: next })}
               />
             </div>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                meta.open(p.id)
-              }}
-              className="shrink-0 p-0.5 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] opacity-0 group-hover/title:opacity-100 transition-opacity"
-              title={t('common.open')}
-            >
-              <ArrowUpRight size={12} />
-            </button>
           </div>
         )
       },

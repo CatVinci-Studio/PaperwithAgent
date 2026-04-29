@@ -20,7 +20,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { FilterBar } from './FilterBar'
+import { FilterModal } from './FilterBar'
 import { PaperRow } from './PaperRow'
 import { ColumnHeader } from './ColumnHeader'
 import { buildColumns } from './columns'
@@ -58,7 +58,13 @@ export function LibraryView() {
   const columns = useMemo(() => buildColumns(extraCols, t), [extraCols, t])
 
   const [sorting, setSorting] = useState<SortingState>([{ id: 'added_at', desc: true }])
-  const { sizing, setSizing, visibility, setVisibility } = useColumnPersistence(activeLibraryName)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const {
+    sizing, setSizing,
+    visibility, setVisibility,
+    order, setOrder,
+    pinning, setPinning,
+  } = useColumnPersistence(activeLibraryName)
 
   const handleSelect = (id: string) => {
     setSelected(id)
@@ -78,10 +84,18 @@ export function LibraryView() {
   const table = useReactTable({
     data: papers,
     columns,
-    state: { sorting, columnVisibility: visibility, columnSizing: sizing },
+    state: {
+      sorting,
+      columnVisibility: visibility,
+      columnSizing: sizing,
+      columnOrder: order,
+      columnPinning: pinning,
+    },
     onSortingChange: setSorting,
     onColumnVisibilityChange: setVisibility,
     onColumnSizingChange: setSizing,
+    onColumnOrderChange: setOrder,
+    onColumnPinningChange: setPinning,
     enableColumnResizing: true,
     columnResizeMode: 'onChange',
     getCoreRowModel: getCoreRowModel(),
@@ -89,6 +103,8 @@ export function LibraryView() {
     meta: {
       open: handleSelect,
       update: handleInlineUpdate,
+      editingId,
+      clearEditingId: () => setEditingId(null),
     },
   })
 
@@ -111,9 +127,13 @@ export function LibraryView() {
 
   const handleNewPaper = async () => {
     try {
-      const id = await api.papers.add({ title: 'Untitled', status: 'unread', tags: [] })
+      const id = await api.papers.add({ title: '', status: 'unread', tags: [] })
       await refreshPapers()
-      handleSelect(id)
+      // Select the new row and put its title cell into edit mode — clicking
+      // the row's arrow opens the detail page, but creation alone shouldn't
+      // navigate away from the table.
+      setSelected(id)
+      setEditingId(id)
     } catch (e) {
       console.error(e)
     }
@@ -190,7 +210,7 @@ export function LibraryView() {
 
   return (
     <div className="flex flex-col h-full bg-[var(--bg-base)]">
-      <FilterBar />
+      <FilterModal />
 
       <TableHeader
         table={table}
@@ -268,7 +288,7 @@ function TableHeader({ table, hiddenColumns, onAddColumn }: TableHeaderProps) {
         ))
       )}
 
-      {hiddenColumns.length > 0 ? (
+      {hiddenColumns.length > 0 && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
@@ -293,8 +313,6 @@ function TableHeader({ table, hiddenColumns, onAddColumn }: TableHeaderProps) {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      ) : (
-        <div className="w-9 shrink-0" />
       )}
     </div>
   )

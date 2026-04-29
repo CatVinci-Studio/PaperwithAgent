@@ -1,8 +1,9 @@
-import { useRef, useEffect } from 'react'
-import { Send, Square, Paperclip, X } from 'lucide-react'
+import { useRef, useEffect, useState } from 'react'
+import { Send, Square, Paperclip, X, FileText } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
-import type { ChatContentPart } from '@shared/types'
+import type { ChatContentPart, PaperRef } from '@shared/types'
+import { MentionPicker } from './MentionPicker'
 
 interface ChatInputProps {
   value: string
@@ -14,6 +15,9 @@ interface ChatInputProps {
   placeholder?: string
   attachments?: ChatContentPart[]
   onAttachmentsChange?: (next: ChatContentPart[]) => void
+  /** Papers picked via the @-mention picker; expanded into prompt context on send. */
+  mentionedPapers?: PaperRef[]
+  onMentionedPapersChange?: (next: PaperRef[]) => void
 }
 
 function readFileAsBase64(file: File): Promise<string> {
@@ -43,11 +47,22 @@ export function ChatInput({
   placeholder,
   attachments,
   onAttachmentsChange,
+  mentionedPapers,
+  onMentionedPapersChange,
 }: ChatInputProps) {
   const { t } = useTranslation()
   const resolvedPlaceholder = placeholder ?? t('agent.placeholder')
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // @-mention picker state. `triggerPos` records the index of the `@` in the
+  // textarea value so we can tell where the query ends (caret) and replace
+  // the whole token on selection.
+  const [mention, setMention] = useState<{
+    triggerPos: number
+    coords: { x: number; y: number }
+    query: string
+  } | null>(null)
 
   useEffect(() => {
     if (!autoFocus) return
@@ -56,7 +71,8 @@ export function ChatInput({
   }, [autoFocus])
 
   const hasAttachments = !!attachments && attachments.length > 0
-  const canSend = !!value.trim() || hasAttachments
+  const hasMentions = !!mentionedPapers && mentionedPapers.length > 0
+  const canSend = !!value.trim() || hasAttachments || hasMentions
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
@@ -66,10 +82,54 @@ export function ChatInput({
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    onChange(e.target.value)
+    const next = e.target.value
+    onChange(next)
     const el = e.target
     el.style.height = 'auto'
     el.style.height = `${Math.min(el.scrollHeight, 140)}px`
+
+    // Detect @-mention trigger: the most recent `@` before the caret with
+    // only word/space chars between it and the caret, and either start of
+    // string or whitespace before the `@`.
+    const caret = el.selectionStart ?? next.length
+    const upTo = next.slice(0, caret)
+    const at = upTo.lastIndexOf('@')
+    if (at < 0) { setMention(null); return }
+    const before = at === 0 ? ' ' : upTo[at - 1]
+    if (!/\s/.test(before)) { setMention(null); return }
+    const after = upTo.slice(at + 1)
+    if (/[\n\r]/.test(after)) { setMention(null); return }
+    const rect = el.getBoundingClientRect()
+    setMention({
+      triggerPos: at,
+      coords: { x: rect.left + 16, y: rect.top },
+      query: after,
+    })
+  }
+
+  const handleMentionPick = (paper: PaperRef) => {
+    if (!mention) return
+    const before = value.slice(0, mention.triggerPos)
+    const afterCaret = value.slice(mention.triggerPos + 1 + mention.query.length)
+    const token = `@${paper.title || paper.id}`
+    onChange(before + token + (afterCaret.startsWith(' ') ? '' : ' ') + afterCaret)
+    if (onMentionedPapersChange && !(mentionedPapers ?? []).some((p) => p.id === paper.id)) {
+      onMentionedPapersChange([...(mentionedPapers ?? []), paper])
+    }
+    setMention(null)
+    // Restore textarea focus + caret after the inserted token.
+    requestAnimationFrame(() => {
+      const el = inputRef.current
+      if (!el) return
+      el.focus()
+      const pos = before.length + token.length + 1
+      el.setSelectionRange(pos, pos)
+    })
+  }
+
+  const removeMentionedPaper = (id: string) => {
+    if (!onMentionedPapersChange || !mentionedPapers) return
+    onMentionedPapersChange(mentionedPapers.filter((p) => p.id !== id))
   }
 
   const appendImageFiles = async (files: File[]) => {
@@ -120,6 +180,26 @@ export function ChatInput({
     <div className="shrink-0 px-4 pb-5 pt-3">
       <div className="max-w-3xl mx-auto">
         <div className="bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-[16px] px-4 py-3 focus-within:border-[var(--border-focus)] shadow-sm transition-colors">
+          {hasMentions && (
+            <div className="flex flex-wrap gap-1.5 pb-2 mb-2 border-b border-[var(--border-color)]">
+              {mentionedPapers!.map((p) => (
+                <span
+                  key={p.id}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--accent-color)]/10 border border-[var(--accent-color)]/25 text-[11px] text-[var(--accent-color)] max-w-[240px]"
+                >
+                  <FileText size={10} className="shrink-0" />
+                  <span className="truncate">{p.title || p.id}</span>
+                  <button
+                    onClick={() => removeMentionedPaper(p.id)}
+                    className="ml-0.5 -mr-0.5 hover:text-[var(--text-primary)]"
+                    title={t('agent.removeAttachment', { defaultValue: 'Remove' })}
+                  >
+                    <X size={9} />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
           {hasAttachments && (
             <div className="flex flex-wrap gap-2 pb-2 mb-2 border-b border-[var(--border-color)]">
               {attachments!.map((a, i) =>
@@ -205,6 +285,16 @@ export function ChatInput({
         </div>
         <p className="text-[11px] text-[var(--text-dim)] text-center mt-2">{t('agent.shortcutHint')}</p>
       </div>
+
+      {mention && (
+        <MentionPicker
+          x={mention.coords.x}
+          y={mention.coords.y}
+          query={mention.query}
+          onPick={handleMentionPick}
+          onCancel={() => setMention(null)}
+        />
+      )}
     </div>
   )
 }

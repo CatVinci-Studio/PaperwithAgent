@@ -1,8 +1,10 @@
 import React from 'react'
 import { Search, X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useLibraryStore } from '@/store/library'
 
 export function FilterBar() {
+  const { t } = useTranslation()
   const { filter, setFilter } = useLibraryStore()
   const [searchValue, setSearchValue] = React.useState(filter.query ?? '')
 
@@ -19,13 +21,16 @@ export function FilterBar() {
         <input
           value={searchValue}
           onChange={handleSearchChange}
-          placeholder="Filter papers…"
+          placeholder={t('library.filterPlaceholder')}
           className="w-full bg-[var(--bg-sidebar-hover)] border border-[var(--bg-active)] rounded-[4px] pl-6 pr-2 py-1 text-[12px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--text-dim)]"
         />
         {searchValue && (
           <button
             className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
-            onClick={() => { setSearchValue(''); setFilter({ query: undefined }) }}
+            onClick={() => {
+              setSearchValue('')
+              setFilter({ query: undefined })
+            }}
           >
             <X size={11} />
           </button>

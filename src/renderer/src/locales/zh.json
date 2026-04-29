@@ -92,6 +92,7 @@
     }
   },
   "library": {
+    "filterPlaceholder": "筛选论文…",
     "newPaper": "新建论文",
     "importDoi": "通过 DOI 导入",
     "papers": "{{count}} 篇论文",
@@ -138,6 +139,43 @@
       "我的论文库里有哪些主要主题?",
       "找跟 transformer 架构相关的论文",
       "给我正在读的这篇论文加笔记"
+    ],
+    "tool": {
+      "input": "输入",
+      "output": "输出"
+    }
+  },
+  "paper": {
+    "untitled": "无标题",
+    "noAuthors": "无作者",
+    "authorsPlaceholder": "作者 1, 作者 2...",
+    "tagPlaceholder": "标签...",
+    "addTag": "标签",
+    "noNotes": "还没有笔记。切到「编辑」开始写。",
+    "tabs": {
+      "read": "阅读",
+      "edit": "编辑",
+      "pdf": "PDF"
+    },
+    "actions": {
+      "askAgent": "就这篇论文问 Agent (⌘.)",
+      "close": "关闭",
+      "editTitle": "点击编辑标题",
+      "editAuthors": "点击编辑作者",
+      "editYear": "点击编辑年份"
+    }
+  },
+  "command": {
+    "label": "Agent",
+    "placeholder": "问问你的论文库里的任何问题…",
+    "send": "发送 (↵)",
+    "shortcutHintBase": "↵ 发送 · ⇧↵ 换行",
+    "shortcutHintWithPaper": " · ⇥ 把论文加为上下文",
+    "papersHeading": "论文 — Tab 加为上下文",
+    "suggestions": [
+      "总结一下注意力论文的核心贡献",
+      "我的论文库里有哪些讨论扩散模型的?",
+      "对比这两篇论文的方法"
     ]
   },
   "sidebar": {

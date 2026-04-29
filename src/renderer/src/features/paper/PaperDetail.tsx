@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react'
 import { X, Star, Plus, Bot, FileText } from 'lucide-react'
 import { marked } from 'marked'
+import { useTranslation } from 'react-i18next'
 import { useLibraryStore } from '@/store/library'
 import { useUIStore } from '@/store/ui'
 import { useAgentStore } from '@/store/agent'
@@ -16,6 +17,7 @@ import type { PaperStatus } from '@shared/types'
 const STATUS_CYCLE: PaperStatus[] = ['unread', 'reading', 'read', 'archived']
 
 export function PaperDetail() {
+  const { t } = useTranslation()
   const { selectedId } = useLibraryStore()
   const { activeDetailTab, setActiveDetailTab, setActiveView } = useUIStore()
   const { setCurrentPaperId } = useAgentStore()
@@ -114,11 +116,12 @@ export function PaperDetail() {
     updatePaper.mutate({ id: paper.id, patch: { markdown: value } })
   }, [paper, updatePaper])
 
-  // Render markdown to HTML
+  // Render markdown to HTML; re-key on language so the placeholder copy
+  // tracks language changes.
   const htmlContent = React.useMemo(() => {
-    if (!markdownValue) return '<p style="color:#555;font-style:italic">No notes yet. Switch to Edit to add content.</p>'
+    if (!markdownValue) return `<p style="color:#555;font-style:italic">${t('paper.noNotes')}</p>`
     return marked(markdownValue) as string
-  }, [markdownValue])
+  }, [markdownValue, t])
 
   if (!selectedId) {
     return (
@@ -132,7 +135,7 @@ export function PaperDetail() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <span className="text-[12px] text-[var(--text-muted)]">Loading…</span>
+        <span className="text-[12px] text-[var(--text-muted)]">{t('common.loading')}</span>
       </div>
     )
   }
@@ -169,9 +172,9 @@ export function PaperDetail() {
               <h2
                 className="text-[15px] font-semibold text-[var(--text-primary)] leading-tight cursor-text hover:text-white"
                 onClick={() => { setTitleDraft(paper.title); setEditingTitle(true) }}
-                title="Click to edit title"
+                title={t('paper.actions.editTitle')}
               >
-                {paper.title || <span className="text-[var(--text-muted)] italic">Untitled</span>}
+                {paper.title || <span className="text-[var(--text-muted)] italic">{t('paper.untitled')}</span>}
               </h2>
             )}
           </div>
@@ -182,7 +185,7 @@ export function PaperDetail() {
               variant="ghost"
               size="icon-sm"
               onClick={handleOpenAgent}
-              title="Ask agent about this paper (⌘.)"
+              title={t('paper.actions.askAgent')}
               className="text-[var(--text-muted)] hover:text-[var(--accent-color)]"
             >
               <Bot size={15} />
@@ -191,7 +194,7 @@ export function PaperDetail() {
               variant="ghost"
               size="icon-sm"
               onClick={handleClose}
-              title="Close"
+              title={t('paper.actions.close')}
               className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"
             >
               <X size={15} />
@@ -212,16 +215,16 @@ export function PaperDetail() {
                 if (e.key === 'Enter') handleAuthorsSave()
                 if (e.key === 'Escape') setEditingAuthors(false)
               }}
-              placeholder="Author 1, Author 2..."
+              placeholder={t('paper.authorsPlaceholder')}
               style={{ userSelect: 'text' }}
             />
           ) : (
             <span
               className="text-[12px] text-[var(--text-secondary)] cursor-text hover:text-[var(--text-muted)] truncate"
               onClick={() => { setAuthorsDraft(paper.authors.join(', ')); setEditingAuthors(true) }}
-              title="Click to edit authors"
+              title={t('paper.actions.editAuthors')}
             >
-              {paper.authors.length > 0 ? paper.authors.join(', ') : <span className="text-[var(--text-muted)] italic">No authors</span>}
+              {paper.authors.length > 0 ? paper.authors.join(', ') : <span className="text-[var(--text-muted)] italic">{t('paper.noAuthors')}</span>}
             </span>
           )}
 
@@ -244,7 +247,7 @@ export function PaperDetail() {
             <span
               className="text-[12px] text-[var(--text-secondary)] cursor-text hover:text-[var(--text-muted)]"
               onClick={() => { setYearDraft(String(paper.year ?? '')); setEditingYear(true) }}
-              title="Click to edit year"
+              title={t('paper.actions.editYear')}
             >
               {formatYear(paper.year)}
             </span>
@@ -285,7 +288,7 @@ export function PaperDetail() {
                 if (e.key === 'Enter') handleAddTag()
                 if (e.key === 'Escape') { setAddingTag(false); setTagDraft('') }
               }}
-              placeholder="tag..."
+              placeholder={t('paper.tagPlaceholder')}
               style={{ userSelect: 'text' }}
             />
           ) : (
@@ -293,7 +296,7 @@ export function PaperDetail() {
               onClick={() => setAddingTag(true)}
               className="inline-flex items-center gap-0.5 rounded-full text-[11px] px-1.5 py-0.5 border border-dashed border-[var(--bg-active)] text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:border-[var(--text-dim)] transition-colors"
             >
-              <Plus size={9} />tag
+              <Plus size={9} />{t('paper.addTag')}
             </button>
           )}
 
@@ -333,7 +336,7 @@ export function PaperDetail() {
                 : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
             )}
           >
-            {tab === 'pdf' ? 'PDF' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+            {t(`paper.tabs.${tab}`)}
           </button>
         ))}
       </div>

@@ -93,6 +93,7 @@
     }
   },
   "library": {
+    "filterPlaceholder": "Filter papers…",
     "newPaper": "New paper",
     "importDoi": "Import DOI",
     "papers": "{{count}} papers",
@@ -140,6 +141,43 @@
       "What are the main themes across my library?",
       "Find papers related to transformer architecture",
       "Add notes on the paper I'm currently reading"
+    ],
+    "tool": {
+      "input": "Input",
+      "output": "Output"
+    }
+  },
+  "paper": {
+    "untitled": "Untitled",
+    "noAuthors": "No authors",
+    "authorsPlaceholder": "Author 1, Author 2...",
+    "tagPlaceholder": "tag...",
+    "addTag": "tag",
+    "noNotes": "No notes yet. Switch to Edit to add content.",
+    "tabs": {
+      "read": "Read",
+      "edit": "Edit",
+      "pdf": "PDF"
+    },
+    "actions": {
+      "askAgent": "Ask agent about this paper (⌘.)",
+      "close": "Close",
+      "editTitle": "Click to edit title",
+      "editAuthors": "Click to edit authors",
+      "editYear": "Click to edit year"
+    }
+  },
+  "command": {
+    "label": "Agent",
+    "placeholder": "Ask anything about your papers…",
+    "send": "Send (↵)",
+    "shortcutHintBase": "↵ send · ⇧↵ newline",
+    "shortcutHintWithPaper": " · ⇥ add paper as context",
+    "papersHeading": "Papers — tab to add as context",
+    "suggestions": [
+      "Summarize the key contributions of the attention paper",
+      "What papers in my library discuss diffusion models?",
+      "Compare the methods in these two papers"
     ]
   },
   "sidebar": {

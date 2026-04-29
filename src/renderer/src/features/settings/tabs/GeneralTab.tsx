@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { CheckCircle, XCircle, Loader, Wifi } from 'lucide-react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/ipc'
 import { useUIStore } from '@/store/ui'
 import { Button } from '@/components/ui/button'
@@ -46,30 +46,44 @@ function BasicSection() {
 // ── Provider ────────────────────────────────────────────────────────────────
 
 function ProviderSection() {
+  const queryClient = useQueryClient()
   const { data: profiles, refetch } = useQuery({
     queryKey: ['agent', 'profiles'],
     queryFn: () => api.agent.getProfiles(),
   })
 
-  const [selectedProfile, setSelectedProfile] = useState<string>('')
+  const { data: activeName } = useQuery({
+    queryKey: ['agent', 'config'],
+    queryFn: async () => {
+      const cfg = await api.agent.getConfig()
+      return cfg?.defaultProfile ?? null
+    },
+  })
+
   const [keyInput, setKeyInput] = useState('')
   const [saving, setSaving] = useState(false)
   const [testing, setTesting] = useState(false)
   const [testResult, setTestResult] = useState<boolean | null>(null)
 
-  const profile = profiles?.find((p) => p.name === selectedProfile)
+  const active = profiles?.find((p) => p.name === activeName) ?? profiles?.[0]
 
+  // Reset transient input state when active provider changes
   useEffect(() => {
-    if (profiles && profiles.length > 0 && !selectedProfile) {
-      setSelectedProfile(profiles[0].name)
-    }
-  }, [profiles, selectedProfile])
+    setKeyInput('')
+    setTestResult(null)
+  }, [activeName])
+
+  const switchProvider = async (name: string) => {
+    if (name === activeName) return
+    await api.agent.setProfile(name)
+    queryClient.invalidateQueries({ queryKey: ['agent'] })
+  }
 
   const handleSaveKey = async () => {
-    if (!selectedProfile || !keyInput.trim()) return
+    if (!active || !keyInput.trim()) return
     setSaving(true)
     try {
-      await api.agent.saveKey(selectedProfile, keyInput.trim())
+      await api.agent.saveKey(active.name, keyInput.trim())
       setKeyInput('')
       refetch()
     } finally {
@@ -78,134 +92,152 @@ function ProviderSection() {
   }
 
   const handleTestKey = async () => {
-    if (!selectedProfile) return
+    if (!active) return
     setTesting(true)
     setTestResult(null)
     try {
-      const ok = await api.agent.testKey(selectedProfile)
+      const ok = await api.agent.testKey(active.name)
       setTestResult(ok)
     } finally {
       setTesting(false)
     }
   }
 
-  const handleSetActive = async (name: string) => {
-    await api.agent.setProfile(name)
-    refetch()
-  }
-
   return (
-    <SettingSection title="Model provider" description="Pick a provider profile and configure its API key.">
+    <SettingSection
+      title="Model provider"
+      description="Pick a provider, then configure its API key. Clicking a provider switches the active one."
+    >
       <div className="space-y-4 pt-2">
-        {profiles && profiles.length > 0 && (
-          <div className="space-y-1.5">
-            {profiles.map((p: AgentProfile) => {
-              const active = selectedProfile === p.name
-              return (
-                <button
-                  key={p.name}
-                  onClick={() => setSelectedProfile(p.name)}
-                  className={cn(
-                    'w-full flex items-center gap-3 px-4 py-3 rounded-[12px] border text-left transition-all duration-150',
-                    active
-                      ? 'bg-[var(--bg-accent-subtle)] border-[var(--accent-color)]/25 text-[var(--text-primary)]'
-                      : 'bg-[var(--bg-elevated)] border-[var(--border-color)] text-[var(--text-secondary)] hover:border-[var(--border-focus)]'
-                  )}
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[12.5px] font-medium">{p.name}</div>
-                    <div className="text-[11px] text-[var(--text-muted)] truncate mt-0.5">
-                      {p.baseUrl} · {p.model}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    {p.hasKey ? (
-                      <CheckCircle size={13} className="text-[var(--status-read)]" />
-                    ) : (
-                      <XCircle size={13} className="text-[var(--text-dim)]" />
-                    )}
-                    <span
-                      className={cn(
-                        'text-[10.5px]',
-                        p.hasKey ? 'text-[var(--status-read)]' : 'text-[var(--text-muted)]'
-                      )}
-                    >
-                      {p.hasKey ? 'Key saved' : 'No key'}
-                    </span>
-                  </div>
-                </button>
-              )
-            })}
+        {/* Current provider summary */}
+        {active && (
+          <div className="text-[12px] text-[var(--text-muted)]">
+            Current:{' '}
+            <span className="font-medium text-[var(--text-primary)]">{active.name}</span>
+            <span className="ml-1 text-[var(--text-dim)]">/ {active.model}</span>
           </div>
         )}
 
-        {selectedProfile && (
-          <div className="space-y-3 pt-2 border-t border-[var(--border-color)]">
-            <div className="flex items-center justify-between">
-              <label className="text-[11.5px] font-medium text-[var(--text-secondary)]">
-                API Key — <span className="text-[var(--text-primary)]">{selectedProfile}</span>
-              </label>
-              <button
-                onClick={() => handleSetActive(selectedProfile)}
-                className="text-[10.5px] font-medium text-[var(--text-muted)] hover:text-[var(--accent-color)] transition-colors"
-              >
-                Set as active profile
-              </button>
-            </div>
-
-            <div className="flex gap-2">
-              <Input
-                type="password"
-                placeholder={profile?.hasKey ? '••••••••••••••••' : 'sk-...'}
-                value={keyInput}
-                onChange={(e) => setKeyInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSaveKey()}
-                className="flex-1"
+        {/* Provider pill grid */}
+        {profiles && profiles.length > 0 && (
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+            {profiles.map((p: AgentProfile) => (
+              <ProviderPill
+                key={p.name}
+                profile={p}
+                active={p.name === active?.name}
+                onClick={() => switchProvider(p.name)}
               />
-              <Button
-                variant="accent"
-                size="xl"
-                onClick={handleSaveKey}
-                disabled={saving || !keyInput.trim()}
-              >
-                {saving ? <Loader size={12} className="animate-spin" /> : 'Save'}
-              </Button>
+            ))}
+          </div>
+        )}
+
+        {/* Active provider details */}
+        {active && (
+          <div className="space-y-3 pt-2 border-t border-[var(--border-color)]">
+            <div className="grid grid-cols-[80px_1fr] gap-x-3 gap-y-2 items-center text-[12px]">
+              <span className="text-[var(--text-muted)]">Base URL</span>
+              <span className="text-[var(--text-secondary)] truncate" title={active.baseUrl}>
+                {active.baseUrl}
+              </span>
+              <span className="text-[var(--text-muted)]">Model</span>
+              <span className="text-[var(--text-secondary)]">{active.model}</span>
             </div>
 
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={handleTestKey}
-                disabled={testing || !profile?.hasKey}
-                className="rounded-[8px]"
-              >
-                {testing ? <Loader size={11} className="animate-spin" /> : <Wifi size={11} />}
-                Test connection
-              </Button>
-
-              {testResult !== null && (
-                <span
-                  className={cn(
-                    'flex items-center gap-1 text-[11.5px]',
-                    testResult ? 'text-[var(--status-read)]' : 'text-[var(--danger)]'
-                  )}
+            <div className="space-y-2 pt-1">
+              <label className="text-[11.5px] font-medium text-[var(--text-secondary)]">
+                API Key
+              </label>
+              <div className="flex gap-2">
+                <Input
+                  type="password"
+                  placeholder={active.hasKey ? '••••••••••••••••' : 'sk-...'}
+                  value={keyInput}
+                  onChange={(e) => setKeyInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSaveKey()}
+                  className="flex-1"
+                />
+                <Button
+                  variant="accent"
+                  size="xl"
+                  onClick={handleSaveKey}
+                  disabled={saving || !keyInput.trim()}
                 >
-                  {testResult ? (
-                    <>
-                      <CheckCircle size={11} /> Connected
-                    </>
-                  ) : (
-                    <>
-                      <XCircle size={11} /> Failed
-                    </>
-                  )}
-                </span>
-              )}
+                  {saving ? <Loader size={12} className="animate-spin" /> : 'Save'}
+                </Button>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={handleTestKey}
+                  disabled={testing || !active.hasKey}
+                  className="rounded-[8px]"
+                >
+                  {testing ? <Loader size={11} className="animate-spin" /> : <Wifi size={11} />}
+                  Test connection
+                </Button>
+
+                {testResult !== null && (
+                  <span
+                    className={cn(
+                      'flex items-center gap-1 text-[11.5px]',
+                      testResult ? 'text-[var(--status-read)]' : 'text-[var(--danger)]'
+                    )}
+                  >
+                    {testResult ? (
+                      <>
+                        <CheckCircle size={11} /> Connected
+                      </>
+                    ) : (
+                      <>
+                        <XCircle size={11} /> Failed
+                      </>
+                    )}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         )}
       </div>
     </SettingSection>
+  )
+}
+
+// ── Pill ────────────────────────────────────────────────────────────────────
+
+function ProviderPill({
+  profile,
+  active,
+  onClick,
+}: {
+  profile: AgentProfile
+  active: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'group relative px-3 py-2 rounded-full text-[12px] font-medium text-center transition-all duration-150 active:scale-[0.98]',
+        active
+          ? 'bg-[var(--accent-color)] text-[var(--accent-on)]'
+          : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'
+      )}
+    >
+      <span className="block truncate">{profile.name}</span>
+      {profile.hasKey && (
+        <span
+          className={cn(
+            'absolute -top-1 -right-1 w-2 h-2 rounded-full',
+            active ? 'bg-[var(--bg-surface)]' : 'bg-[var(--status-read)]'
+          )}
+          title="API key saved"
+        />
+      )}
+    </button>
   )
 }

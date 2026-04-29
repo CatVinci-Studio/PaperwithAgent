@@ -85,10 +85,12 @@ export function ColumnHeader({ header, onAddColumn }: ColumnHeaderProps) {
           onTouchStart={header.getResizeHandler()}
           onClick={(e) => e.stopPropagation()}
           className={cn(
-            'absolute right-0 top-0 h-full w-1.5 cursor-col-resize select-none touch-none',
-            'after:absolute after:right-0 after:top-1/4 after:bottom-1/4 after:w-px',
-            'after:bg-[var(--accent-color)] after:opacity-0 hover:after:opacity-60',
-            'data-[resizing]:after:opacity-100'
+            // Sit ON the divider, not inside the cell — half outside, half inside
+            'absolute -right-1.5 top-0 z-20 h-full w-3 cursor-col-resize select-none touch-none',
+            // Visible 1px line that stays on the cell's right border, brightens on hover/drag
+            'after:absolute after:left-1/2 after:-translate-x-1/2 after:top-1 after:bottom-1 after:w-[2px]',
+            'after:rounded-full after:bg-[var(--accent-color)] after:opacity-0 after:transition-opacity',
+            'hover:after:opacity-60 data-[resizing]:after:opacity-100'
           )}
           data-resizing={header.column.getIsResizing() ? '' : undefined}
         />

@@ -8,6 +8,7 @@ Agent-first academic paper management desktop app. Built with Electron + React 1
 - **Frontend**: React 19, Tailwind CSS 4, shadcn/ui (Radix primitives copied into `components/ui/`)
 - **State**: Zustand 5 (`ui`, `library`, `agent`, `dialogs` stores)
 - **Data fetching**: TanStack Query v5 over IPC
+- **Tables**: TanStack Table v8 (headless) — drives the library paper view
 - **Editor**: CodeMirror 6 (Markdown)
 - **Search**: MiniSearch (in-memory full-text)
 - **Agent**: OpenAI-compatible streaming API via `openai` SDK v6
@@ -31,9 +32,14 @@ src/
   renderer/src/     # React frontend
     store/          # Zustand stores: library.ts, ui.ts, agent.ts, dialogs.ts
     features/       # Feature folders: library/, paper/, agent/, command/, settings/, dialogs/
-      settings/     #   SettingsModal + tabs/{Agent,Schema,Library,Appearance}Tab
+      library/      #   LibraryView (TanStack Table host) + PaperRow + ColumnHeader +
+                    #   columns.tsx (ColumnDef builder) + useColumnPersistence (localStorage)
+                    #   + FilterBar + Sidebar
+      paper/        #   PaperDetail + MarkdownEditor + PdfViewer + usePaper hooks
+      settings/     #   SettingsModal + tabs/{General,Schema,Library}Tab
       agent/        #   AgentPage + MessageBubble + ChatInput + ToolCallRow
-      dialogs/      #   ConfirmDialog, PromptDialog, DialogHost
+      command/      #   CommandPalette
+      dialogs/      #   ConfirmDialog + PromptDialog + DialogHost
     components/
       ui/           # shadcn primitives (kebab-case): dialog, button, input, select,
                     # popover, tooltip, dropdown-menu, scroll-area, separator, badge,
@@ -104,6 +110,14 @@ Tabs in `features/settings/tabs/` compose three small primitives from `component
 - `SettingSegmented` — segmented control (typed-generic over the value union)
 
 Use these for any new setting rather than hand-rolling row layouts. Add a `SettingToggle` primitive when you need an actual on/off control (none yet — the prior placeholder was deleted as YAGNI).
+
+## Library Table
+The papers list is a TanStack Table v8 (headless) instance. The contract:
+
+- **Column definitions** (`features/library/columns.tsx`): `buildColumns(extras)` returns `ColumnDef<PaperRef>[]` for the core columns plus any user-defined schema extras. Title is `enableResizing: false, enableHiding: false` (always present, always flexible).
+- **Persistence** (`features/library/useColumnPersistence.ts`): TanStack's `columnSizing` and `columnVisibility` state piped through `localStorage`, scoped per-library. Key prefix is `paperwithagent:column-state:<libraryName>`. **The library schema (`schema.json`, `papers.csv`, `.md` files) intentionally never sees these preferences** — keeping the data layer agent-readable is more important than syncing prefs across machines.
+- **Header** (`features/library/ColumnHeader.tsx`): renders sort toggle, drag-to-resize handle (right edge), and ⋮ dropdown on hover (Hide / New column). Hidden columns surface again via the 👁 button at the right end of the header bar.
+- **Add column** flow: a context-menu "New column" opens a `promptDialog` for name + type and calls `api.schema.addColumn`. Schema changes are persisted (they're real data); only sizing/visibility live in localStorage.
 
 ## Commands
 ```bash

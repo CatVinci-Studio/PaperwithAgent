@@ -1,5 +1,6 @@
 import { ChevronUp, ChevronDown, MoreHorizontal, EyeOff, Plus } from 'lucide-react'
 import type { Header } from '@tanstack/react-table'
+import { useTranslation } from 'react-i18next'
 import type { PaperRef } from '@shared/types'
 import {
   DropdownMenu,
@@ -16,6 +17,7 @@ interface ColumnHeaderProps {
 }
 
 export function ColumnHeader({ header, onAddColumn }: ColumnHeaderProps) {
+  const { t } = useTranslation()
   const column = header.column
   const sorted = column.getIsSorted()
   const canSort = column.getCanSort()
@@ -68,13 +70,13 @@ export function ColumnHeader({ header, onAddColumn }: ColumnHeaderProps) {
           {canHide && (
             <DropdownMenuItem onClick={() => column.toggleVisibility(false)}>
               <EyeOff size={12} className="mr-2" />
-              Hide column
+              {t('library.header.hide')}
             </DropdownMenuItem>
           )}
           {canHide && <DropdownMenuSeparator />}
           <DropdownMenuItem onClick={onAddColumn}>
             <Plus size={12} className="mr-2" />
-            New column
+            {t('library.header.newColumn')}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

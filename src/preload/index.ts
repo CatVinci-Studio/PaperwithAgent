@@ -53,7 +53,8 @@ const api = {
   },
 
   agent: {
-    send:        (message: string, paperId?: string) => api.invoke('agent:send', message, paperId),
+    send:        (message: string, paperId?: string, language?: import('@shared/types').Language) =>
+                                                          api.invoke('agent:send', message, paperId, language),
     abort:       ()                                   => api.invoke('agent:abort'),
     getConfig:   ()                                   => api.invoke('agent:getConfig'),
     setProfile:    (name: string)                       => api.invoke('agent:setProfile', name),

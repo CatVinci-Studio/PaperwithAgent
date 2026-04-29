@@ -1,4 +1,5 @@
 import { Bot, Settings } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 
 interface TitleBarProps {
@@ -7,6 +8,7 @@ interface TitleBarProps {
 }
 
 export function TitleBar({ onOpenCommand, onOpenSettings }: TitleBarProps) {
+  const { t } = useTranslation()
   return (
     <div className="flex items-center h-11 border-b border-[var(--border-color)] shrink-0 titlebar-drag select-none">
       {/* macOS traffic lights spacer */}
@@ -15,7 +17,7 @@ export function TitleBar({ onOpenCommand, onOpenSettings }: TitleBarProps) {
       {/* App name */}
       <div className="flex-1 flex items-center justify-center">
         <span className="text-[12px] font-semibold text-[var(--text-dim)] tracking-wider uppercase">
-          PaperwithAgent
+          {t('titlebar.appName')}
         </span>
       </div>
 
@@ -25,7 +27,7 @@ export function TitleBar({ onOpenCommand, onOpenSettings }: TitleBarProps) {
           onClick={onOpenCommand}
           variant="ghost"
           size="sm"
-          title="Ask Agent (⌘K)"
+          title={t('titlebar.askAgent')}
           className="h-7 px-2.5 gap-1.5 text-[var(--text-muted)] rounded-[6px]"
         >
           <Bot size={11} />
@@ -35,7 +37,7 @@ export function TitleBar({ onOpenCommand, onOpenSettings }: TitleBarProps) {
           onClick={onOpenSettings}
           variant="ghost"
           size="icon-sm"
-          title="Settings (⌘,)"
+          title={t('titlebar.settings')}
           className="h-7 w-7 text-[var(--text-muted)] rounded-[6px]"
         >
           <Settings size={13} />

@@ -1,0 +1,153 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "remove": "Remove",
+    "rename": "Rename",
+    "create": "Create",
+    "add": "Add",
+    "ok": "OK",
+    "loading": "Loading…",
+    "settings": "Settings",
+    "close": "Close"
+  },
+  "titlebar": {
+    "appName": "PaperwithAgent",
+    "askAgent": "Ask Agent (⌘K)",
+    "settings": "Settings (⌘,)"
+  },
+  "settings": {
+    "title": "Settings",
+    "tabs": {
+      "general": "General",
+      "schema": "Schema",
+      "library": "Libraries"
+    },
+    "tabDescriptions": {
+      "general": "Theme, language, and model provider.",
+      "schema": "Custom columns on top of the core paper schema.",
+      "library": "Manage and switch paper library folders."
+    },
+    "basic": {
+      "title": "Basic",
+      "description": "Adjust how the interface looks.",
+      "colorScheme": "Color scheme",
+      "colorSchemeHint": "System tracks the OS preference automatically.",
+      "system": "System",
+      "dark": "Dark",
+      "light": "Light",
+      "language": "Language",
+      "languageHint": "Affects the interface and the agent's system prompt."
+    },
+    "provider": {
+      "title": "Model provider",
+      "description": "Pick a provider, then configure its API key. Clicking a provider switches the active one.",
+      "current": "Current",
+      "baseUrl": "Base URL",
+      "model": "Model",
+      "apiKey": "API Key",
+      "testConnection": "Test connection",
+      "connected": "Connected",
+      "failed": "Failed",
+      "keySaved": "API key saved"
+    },
+    "schema": {
+      "customColumns": {
+        "title": "Custom columns",
+        "description": "Extra fields you've added on top of the core paper schema. They appear in the library view and CSV index.",
+        "empty": "No custom columns yet.",
+        "removeConfirmTitle": "Remove column \"{{name}}\"?",
+        "removeConfirmMessage": "Existing papers keep their data in the Markdown frontmatter, but the column will no longer appear in the library view or CSV index."
+      },
+      "addColumn": {
+        "title": "Add column",
+        "description": "New columns become available immediately on every paper.",
+        "namePlaceholder": "Column name…"
+      },
+      "types": {
+        "text": "Text",
+        "number": "Number",
+        "date": "Date",
+        "bool": "Boolean",
+        "select": "Select",
+        "multiselect": "Multi-select",
+        "tags": "Tags",
+        "url": "URL"
+      }
+    },
+    "libraries": {
+      "title": "Libraries",
+      "description": "Each library is a self-contained folder of papers, attachments, and schema.",
+      "switch": "Switch",
+      "active": "Active",
+      "papers": "{{count}} papers",
+      "papers_one": "{{count}} paper",
+      "addExisting": "Add existing library",
+      "addDialog": {
+        "title": "Add library",
+        "description": "Point to an existing folder. PaperwithAgent will index it on first open.",
+        "displayName": "Display name",
+        "absolutePath": "Absolute path"
+      }
+    }
+  },
+  "library": {
+    "newPaper": "New paper",
+    "importDoi": "Import DOI",
+    "papers": "{{count}} papers",
+    "papers_one": "{{count}} paper",
+    "showHidden": "Show hidden columns",
+    "deletePaper": {
+      "title": "Delete paper?",
+      "message": "This removes the Markdown file and any attachments. The action cannot be undone.",
+      "confirmLabel": "Delete"
+    },
+    "importDialog": {
+      "title": "Import paper",
+      "description": "Enter a DOI (e.g. 10.1145/...) or an arXiv URL.",
+      "field": "DOI or arXiv URL",
+      "confirmLabel": "Import"
+    },
+    "newColumn": {
+      "title": "New column",
+      "description": "Add a custom column to the schema. It appears in this view and the CSV index.",
+      "name": "Column name",
+      "type": "Type (text / number / date / bool / select / tags / url)",
+      "create": "Create"
+    },
+    "header": {
+      "title": "Title",
+      "authors": "Authors",
+      "year": "Year",
+      "status": "Status",
+      "tags": "Tags",
+      "hide": "Hide column",
+      "newColumn": "New column"
+    }
+  },
+  "agent": {
+    "title": "Agent",
+    "emptyTitle": "Agent",
+    "emptyDescription": "Ask anything about your research library.",
+    "placeholder": "Ask about your papers… (⌘↵ to send)",
+    "send": "Send (⌘↵)",
+    "stop": "Stop",
+    "clear": "Clear conversation",
+    "shortcutHint": "⌘↵ send · ↵ newline",
+    "suggestions": [
+      "Summarize the key contributions of the papers I've read",
+      "What are the main themes across my library?",
+      "Find papers related to transformer architecture",
+      "Add notes on the paper I'm currently reading"
+    ]
+  },
+  "sidebar": {
+    "collectionNew": "New collection",
+    "collectionRename": "Rename \"{{name}}\"",
+    "collectionDelete": {
+      "title": "Delete collection \"{{name}}\"?",
+      "message": "Papers in this collection will not be deleted, only the collection grouping."
+    }
+  }
+}

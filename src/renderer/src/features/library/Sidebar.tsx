@@ -10,6 +10,7 @@ import { useAgentStore } from '@/store/agent'
 import { api } from '@/lib/ipc'
 import { confirmDialog, promptDialog } from '@/store/dialogs'
 import { cn } from '@/lib/utils'
+import { useTranslation } from 'react-i18next'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -58,6 +59,7 @@ function SectionHeader({
 // ── Sidebar ──────────────────────────────────────────────────────────────────
 
 export function Sidebar() {
+  const { t } = useTranslation()
   const {
     papers, filter, setFilter,
     libraries, activeLibrary, switchLibrary, refreshLibraries,
@@ -94,9 +96,9 @@ export function Sidebar() {
   // ── Collections ──────────────────────────────────────────────────────────────
   const handleCreateCollection = async () => {
     const result = await promptDialog({
-      title: 'New collection',
-      fields: [{ name: 'name', label: 'Name', placeholder: 'To read', required: true }],
-      confirmLabel: 'Create',
+      title: t('sidebar.collectionNew'),
+      fields: [{ name: 'name', label: t('common.create'), placeholder: 'To read', required: true }],
+      confirmLabel: t('common.create'),
     })
     if (!result) return
     try { await api.collections.create(result.name.trim()); await refreshCollections() }
@@ -105,9 +107,9 @@ export function Sidebar() {
 
   const handleRenameCollection = async (oldName: string) => {
     const result = await promptDialog({
-      title: `Rename "${oldName}"`,
-      fields: [{ name: 'name', label: 'New name', initialValue: oldName, required: true }],
-      confirmLabel: 'Rename',
+      title: t('sidebar.collectionRename', { name: oldName }),
+      fields: [{ name: 'name', label: t('common.rename'), initialValue: oldName, required: true }],
+      confirmLabel: t('common.rename'),
     })
     if (!result || result.name === oldName) return
     try {
@@ -119,9 +121,9 @@ export function Sidebar() {
 
   const handleDeleteCollection = async (name: string) => {
     const ok = await confirmDialog({
-      title: `Delete collection "${name}"?`,
-      message: 'Papers in this collection will not be deleted, only the collection grouping.',
-      confirmLabel: 'Delete',
+      title: t('sidebar.collectionDelete.title', { name }),
+      message: t('sidebar.collectionDelete.message'),
+      confirmLabel: t('common.delete'),
       danger: true,
     })
     if (!ok) return
@@ -135,13 +137,13 @@ export function Sidebar() {
   // ── Library ──────────────────────────────────────────────────────────────────
   const handleAddLibrary = async () => {
     const result = await promptDialog({
-      title: 'Add library',
-      description: 'Point to an existing folder. PaperwithAgent will index it on first open.',
+      title: t('settings.libraries.addDialog.title'),
+      description: t('settings.libraries.addDialog.description'),
       fields: [
-        { name: 'name', label: 'Display name', placeholder: 'My research', required: true },
-        { name: 'path', label: 'Absolute path', placeholder: '/Users/you/Papers', required: true },
+        { name: 'name', label: t('settings.libraries.addDialog.displayName'), placeholder: 'My research', required: true },
+        { name: 'path', label: t('settings.libraries.addDialog.absolutePath'), placeholder: '/Users/you/Papers', required: true },
       ],
-      confirmLabel: 'Add',
+      confirmLabel: t('common.add'),
     })
     if (!result) return
     try { await api.libraries.add(result.name, result.path); await refreshLibraries() }

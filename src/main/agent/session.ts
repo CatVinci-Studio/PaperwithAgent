@@ -1,10 +1,11 @@
 import OpenAI from 'openai'
-import type { AgentEvent } from '@shared/types'
+import type { AgentEvent, Language } from '@shared/types'
 import type { Library } from '@main/paperdb/store'
 import type { LibraryManager } from '@main/paperdb/manager'
 import { getConfig, getActiveProfile } from './config'
 import { createClient } from './client'
 import { runAgentLoop } from './loop'
+import { buildSystemPrompt } from './prompt'
 import { TOOL_DEFINITIONS } from './tools'
 
 /**
@@ -33,7 +34,8 @@ export class AgentSession {
   async send(
     userMessage: string,
     onEvent: (event: AgentEvent) => void,
-    currentPaperId?: string
+    currentPaperId?: string,
+    language: Language = 'en',
   ): Promise<void> {
     const config = getConfig()
     let profile: ReturnType<typeof getActiveProfile>
@@ -57,47 +59,14 @@ export class AgentSession {
       return
     }
 
-    // Build system prompt
-    const libraryName = this.appState.manager?.activeName ?? 'My Library'
-    const currentDate = new Date().toISOString().split('T')[0]
-
-    const systemLines = [
-      'You are the primary interface for interacting with the user\'s research paper library.',
-      'This is an agent-first application: all meaningful interactions with papers happen through you.',
-      '',
-      `Active library: ${libraryName}`,
-      `Library root path: ${this.appState.library.root}`,
-      `Current date: ${currentDate}`,
-      '',
-      '## Library structure',
-      '  papers/        — one Markdown file per paper (YAML frontmatter + notes body)',
-      '  attachments/   — PDF files named <id>.pdf',
-      '  papers.csv     — derived index, rebuilt automatically on every write',
-      '  schema.json    — column definitions',
-      '  collections.json — collection membership { "Name": ["id1", "id2"] }',
-      '  <Name>.csv     — one CSV per collection, rebuilt automatically',
-      '',
-      '## Your capabilities',
-      '- Read and write paper notes (append_note, update_paper, read_paper)',
-      '- Search the library full-text (search_papers)',
-      '- Read any file within the library (read_file)',
-      '- Write any file within the library (write_file) — use carefully for paper .md files; prefer update_paper/append_note to keep the index in sync',
-      '- List directory contents (list_files)',
-      '- Manage collections (list_collections, create_collection, add_to_collection, remove_from_collection)',
-      '- Import papers by DOI (import_doi)',
-      '- Extract PDF text (extract_pdf_text)',
-      '',
-      '## Guidelines',
-      '- ALL file operations are restricted to the library root. You cannot access files outside it.',
-      '- Authors in frontmatter are semicolon-separated (e.g. "Vaswani, A.; Ho, J.") — not comma-separated.',
-      '- Paper IDs follow the pattern {year}-{lastname}-{keyword}, e.g. "2017-vaswani-attention".',
-      '- When adding notes prefer append_note over full rewrites to preserve existing content.',
-      '- Always respond in the same language the user uses.',
-    ]
-    if (currentPaperId) {
-      systemLines.push(`\nCurrently focused paper: ${currentPaperId}`)
-    }
-    const systemPrompt = systemLines.join('\n')
+    // Build system prompt in the user's UI language. Tool semantics stay
+    // identical across languages — only the surface wording changes.
+    const systemPrompt = buildSystemPrompt(language, {
+      libraryName: this.appState.manager?.activeName ?? 'My Library',
+      libraryRoot: this.appState.library.root,
+      currentDate: new Date().toISOString().split('T')[0],
+      currentPaperId,
+    })
 
     // Push user message to history
     this.history.push({ role: 'user', content: userMessage })

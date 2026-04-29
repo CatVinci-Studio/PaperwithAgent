@@ -135,6 +135,9 @@ export interface AgentProfile {
 /** Editable fields of a provider profile. `name` and `hasKey` are not patchable. */
 export type ProfilePatch = Partial<Pick<AgentProfile, 'baseUrl' | 'model'>>
 
+/** Supported UI languages — also used to pick the system prompt template. */
+export type Language = 'en' | 'zh'
+
 export interface AgentConfig {
   defaultProfile: string
   profiles: Omit<AgentProfile, 'hasKey'>[]
@@ -201,7 +204,7 @@ export interface IpcChannels {
   'schema:renameColumn': { args: [string, string];          ret: void }
 
   // Agent
-  'agent:send':          { args: [string, PaperId?];        ret: void }
+  'agent:send':          { args: [string, PaperId?, Language?]; ret: void }
   'agent:abort':         { args: [];                        ret: void }
   'agent:getConfig':     { args: [];                        ret: AgentConfig }
   'agent:setProfile':    { args: [string];                  ret: void }

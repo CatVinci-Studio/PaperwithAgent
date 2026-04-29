@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Plus, Trash2, Loader } from 'lucide-react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { api } from '@/lib/ipc'
 import { confirmDialog } from '@/store/dialogs'
 import { Button } from '@/components/ui/button'
@@ -9,16 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { SettingSection } from '@/components/ui/setting-section'
 import type { ColumnType } from '@shared/types'
 
-const COLUMN_TYPES: { value: ColumnType; label: string }[] = [
-  { value: 'text', label: 'Text' },
-  { value: 'number', label: 'Number' },
-  { value: 'date', label: 'Date' },
-  { value: 'bool', label: 'Boolean' },
-  { value: 'select', label: 'Select' },
-  { value: 'multiselect', label: 'Multi-select' },
-  { value: 'tags', label: 'Tags' },
-  { value: 'url', label: 'URL' },
-]
+const COLUMN_TYPES: ColumnType[] = ['text', 'number', 'date', 'bool', 'select', 'multiselect', 'tags', 'url']
 
 const CORE_COLS = new Set([
   'title', 'authors', 'year', 'venue', 'doi', 'url', 'pdf',
@@ -26,6 +18,7 @@ const CORE_COLS = new Set([
 ])
 
 export function SchemaTab() {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const { data: schema, isLoading } = useQuery({
     queryKey: ['schema'],
@@ -52,9 +45,9 @@ export function SchemaTab() {
 
   const handleRemoveColumn = async (name: string) => {
     const ok = await confirmDialog({
-      title: `Remove column "${name}"?`,
-      message: 'Existing papers keep their data in the Markdown frontmatter, but the column will no longer appear in the library view or CSV index.',
-      confirmLabel: 'Remove',
+      title: t('settings.schema.customColumns.removeConfirmTitle', { name }),
+      message: t('settings.schema.customColumns.removeConfirmMessage'),
+      confirmLabel: t('common.remove'),
       danger: true,
     })
     if (!ok) return
@@ -68,14 +61,17 @@ export function SchemaTab() {
   }
 
   if (isLoading) {
-    return <div className="text-[12px] text-[var(--text-muted)]">Loading schema…</div>
+    return <div className="text-[12px] text-[var(--text-muted)]">{t('common.loading')}</div>
   }
 
   const userColumns = schema?.columns.filter((c) => !CORE_COLS.has(c.name)) ?? []
 
   return (
     <div className="space-y-6">
-      <SettingSection title="Custom columns" description="Extra fields you've added on top of the core paper schema. They appear in the library view and CSV index.">
+      <SettingSection
+        title={t('settings.schema.customColumns.title')}
+        description={t('settings.schema.customColumns.description')}
+      >
         {userColumns.length > 0 ? (
           <div className="space-y-1.5 pt-2">
             {userColumns.map((col) => (
@@ -85,7 +81,9 @@ export function SchemaTab() {
               >
                 <div className="flex-1 min-w-0">
                   <span className="text-[12.5px] font-medium text-[var(--text-primary)]">{col.name}</span>
-                  <span className="ml-2 text-[11px] text-[var(--text-muted)] capitalize">{col.type}</span>
+                  <span className="ml-2 text-[11px] text-[var(--text-muted)]">
+                    {t(`settings.schema.types.${col.type}`)}
+                  </span>
                 </div>
                 <Button
                   variant="ghost"
@@ -104,14 +102,19 @@ export function SchemaTab() {
             ))}
           </div>
         ) : (
-          <p className="text-[12px] text-[var(--text-muted)] italic px-1 pt-2">No custom columns yet.</p>
+          <p className="text-[12px] text-[var(--text-muted)] italic px-1 pt-2">
+            {t('settings.schema.customColumns.empty')}
+          </p>
         )}
       </SettingSection>
 
-      <SettingSection title="Add column" description="New columns become available immediately on every paper.">
+      <SettingSection
+        title={t('settings.schema.addColumn.title')}
+        description={t('settings.schema.addColumn.description')}
+      >
         <div className="flex gap-2 pt-2">
           <Input
-            placeholder="Column name…"
+            placeholder={t('settings.schema.addColumn.namePlaceholder')}
             value={newColName}
             onChange={(e) => setNewColName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleAddColumn()}
@@ -122,9 +125,9 @@ export function SchemaTab() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {COLUMN_TYPES.map((t) => (
-                <SelectItem key={t.value} value={t.value}>
-                  {t.label}
+              {COLUMN_TYPES.map((type) => (
+                <SelectItem key={type} value={type}>
+                  {t(`settings.schema.types.${type}`)}
                 </SelectItem>
               ))}
             </SelectContent>

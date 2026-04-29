@@ -1,12 +1,17 @@
 import type { IpcMain, BrowserWindow } from 'electron'
 import type { AgentEvent } from '@shared/types'
-import type { ProfilePatch } from '@shared/types'
+import type { Language, ProfilePatch } from '@shared/types'
 import { getConfig, setActiveProfile, updateProfile, getProfiles } from '../agent/config'
 import { saveKey, loadKey } from '../agent/auth'
 import { testConnection } from '../agent/client'
 
 export interface AgentSession {
-  send(message: string, onEvent: (event: AgentEvent) => void, paperId?: string): void
+  send(
+    message: string,
+    onEvent: (event: AgentEvent) => void,
+    paperId?: string,
+    language?: Language,
+  ): void
   abort(): void
 }
 
@@ -15,7 +20,7 @@ export function registerAgentHandlers(
   getAgent: () => AgentSession,
   getWindow: () => BrowserWindow | null
 ): void {
-  ipc.handle('agent:send', async (_, message: string, paperId?: string) => {
+  ipc.handle('agent:send', async (_, message: string, paperId?: string, language?: Language) => {
     try {
       const agent = getAgent()
       // Fire-and-forget: do not await; streaming events arrive via webContents.send
@@ -24,7 +29,8 @@ export function registerAgentHandlers(
         (event: AgentEvent) => {
           getWindow()?.webContents.send('agent:event', event)
         },
-        paperId
+        paperId,
+        language,
       )
     } catch (e) {
       throw new Error(e instanceof Error ? e.message : String(e))

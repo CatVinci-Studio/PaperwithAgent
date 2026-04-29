@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import { CheckCircle, XCircle, Loader, Wifi } from 'lucide-react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { api } from '@/lib/ipc'
+import { setLanguage, type Language } from '@/lib/i18n'
 import { useUIStore } from '@/store/ui'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -23,18 +25,36 @@ export function GeneralTab() {
 // ── Basic ───────────────────────────────────────────────────────────────────
 
 function BasicSection() {
+  const { t, i18n } = useTranslation()
   const { theme, setTheme } = useUIStore()
+  const currentLang = (i18n.language as Language) ?? 'en'
 
   return (
-    <SettingSection title="Basic" description="Adjust how the interface looks.">
-      <SettingRow label="Color scheme" description="System tracks the OS preference automatically.">
+    <SettingSection title={t('settings.basic.title')} description={t('settings.basic.description')}>
+      <SettingRow
+        label={t('settings.basic.colorScheme')}
+        description={t('settings.basic.colorSchemeHint')}
+      >
         <SettingSegmented<'system' | 'dark' | 'light'>
           value={theme}
           onValueChange={setTheme}
           options={[
-            { value: 'system', label: 'System' },
-            { value: 'dark', label: 'Dark' },
-            { value: 'light', label: 'Light' },
+            { value: 'system', label: t('settings.basic.system') },
+            { value: 'dark', label: t('settings.basic.dark') },
+            { value: 'light', label: t('settings.basic.light') },
+          ]}
+        />
+      </SettingRow>
+      <SettingRow
+        label={t('settings.basic.language')}
+        description={t('settings.basic.languageHint')}
+      >
+        <SettingSegmented<Language>
+          value={currentLang}
+          onValueChange={setLanguage}
+          options={[
+            { value: 'en', label: 'English' },
+            { value: 'zh', label: '中文' },
           ]}
         />
       </SettingRow>
@@ -45,6 +65,7 @@ function BasicSection() {
 // ── Provider ────────────────────────────────────────────────────────────────
 
 function ProviderSection() {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const { data: profiles, refetch } = useQuery({
     queryKey: ['agent', 'profiles'],
@@ -104,14 +125,14 @@ function ProviderSection() {
 
   return (
     <SettingSection
-      title="Model provider"
-      description="Pick a provider, then configure its API key. Clicking a provider switches the active one."
+      title={t('settings.provider.title')}
+      description={t('settings.provider.description')}
     >
       <div className="space-y-4 pt-2">
         {/* Current provider summary */}
         {active && (
           <div className="text-[12px] text-[var(--text-muted)]">
-            Current:{' '}
+            {t('settings.provider.current')}:{' '}
             <span className="font-medium text-[var(--text-primary)]">{active.name}</span>
             <span className="ml-1 text-[var(--text-dim)]">/ {active.model}</span>
           </div>
@@ -135,7 +156,7 @@ function ProviderSection() {
         {active && (
           <div className="space-y-3 pt-2 border-t border-[var(--border-color)]">
             <ProfileField
-              label="Base URL"
+              label={t('settings.provider.baseUrl')}
               value={active.baseUrl}
               placeholder="https://api.example.com/v1"
               onSave={async (v) => {
@@ -144,7 +165,7 @@ function ProviderSection() {
               }}
             />
             <ProfileField
-              label="Model"
+              label={t('settings.provider.model')}
               value={active.model}
               placeholder="gpt-4o-mini"
               onSave={async (v) => {
@@ -155,7 +176,7 @@ function ProviderSection() {
 
             <div className="space-y-2 pt-1">
               <label className="text-[11.5px] font-medium text-[var(--text-secondary)]">
-                API Key
+                {t('settings.provider.apiKey')}
               </label>
               <div className="flex gap-2">
                 <Input
@@ -172,7 +193,7 @@ function ProviderSection() {
                   onClick={handleSaveKey}
                   disabled={saving || !keyInput.trim()}
                 >
-                  {saving ? <Loader size={12} className="animate-spin" /> : 'Save'}
+                  {saving ? <Loader size={12} className="animate-spin" /> : t('common.save')}
                 </Button>
               </div>
 
@@ -185,7 +206,7 @@ function ProviderSection() {
                   className="rounded-[8px]"
                 >
                   {testing ? <Loader size={11} className="animate-spin" /> : <Wifi size={11} />}
-                  Test connection
+                  {t('settings.provider.testConnection')}
                 </Button>
 
                 {testResult !== null && (
@@ -197,11 +218,11 @@ function ProviderSection() {
                   >
                     {testResult ? (
                       <>
-                        <CheckCircle size={11} /> Connected
+                        <CheckCircle size={11} /> {t('settings.provider.connected')}
                       </>
                     ) : (
                       <>
-                        <XCircle size={11} /> Failed
+                        <XCircle size={11} /> {t('settings.provider.failed')}
                       </>
                     )}
                   </span>
@@ -268,6 +289,7 @@ function ProviderPill({
   active: boolean
   onClick: () => void
 }) {
+  const { t } = useTranslation()
   return (
     <button
       type="button"
@@ -286,7 +308,7 @@ function ProviderPill({
             'absolute -top-1 -right-1 w-2 h-2 rounded-full',
             active ? 'bg-[var(--bg-surface)]' : 'bg-[var(--status-read)]'
           )}
-          title="API key saved"
+          title={t('settings.provider.keySaved')}
         />
       )}
     </button>

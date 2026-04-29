@@ -1,5 +1,6 @@
 import { useRef, useEffect } from 'react'
 import { Send, Square } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 
 interface ChatInputProps {
@@ -19,8 +20,10 @@ export function ChatInput({
   onAbort,
   isStreaming,
   autoFocus,
-  placeholder = 'Ask about your papers… (⌘↵ to send)',
+  placeholder,
 }: ChatInputProps) {
+  const { t } = useTranslation()
+  const resolvedPlaceholder = placeholder ?? t('agent.placeholder')
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
@@ -52,7 +55,7 @@ export function ChatInput({
             value={value}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
-            placeholder={placeholder}
+            placeholder={resolvedPlaceholder}
             rows={1}
             className="flex-1 bg-transparent border-none text-[13.5px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] resize-none focus:outline-none leading-relaxed"
             style={{ height: '24px', minHeight: '24px', userSelect: 'text' }}
@@ -63,7 +66,7 @@ export function ChatInput({
               onClick={onAbort}
               variant="destructive"
               size="icon"
-              title="Stop"
+              title={t('agent.stop')}
               className="rounded-[10px] w-8 h-8"
             >
               <Square size={12} />
@@ -74,14 +77,14 @@ export function ChatInput({
               disabled={!value.trim()}
               variant="accent"
               size="icon"
-              title="Send (⌘↵)"
+              title={t('agent.send')}
               className="rounded-[10px] w-8 h-8"
             >
               <Send size={13} />
             </Button>
           )}
         </div>
-        <p className="text-[11px] text-[var(--text-dim)] text-center mt-2">⌘↵ send · ↵ newline</p>
+        <p className="text-[11px] text-[var(--text-dim)] text-center mt-2">{t('agent.shortcutHint')}</p>
       </div>
     </div>
   )

@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components -- module exports a column-def builder, not React components; Fast Refresh boundary check doesn't apply */
 import type { ColumnDef } from '@tanstack/react-table'
+import type { TFunction } from 'i18next'
 import { Star, FileText } from 'lucide-react'
 import type { PaperRef, Column } from '@shared/types'
 import { ChipStatus } from '@/components/common/ChipStatus'
@@ -10,12 +11,12 @@ const ITALIC_PLACEHOLDER = (label: string) => (
   <span className="text-[var(--text-muted)] font-normal italic">{label}</span>
 )
 
-export function buildColumns(extras: Column[]): ColumnDef<PaperRef>[] {
+export function buildColumns(extras: Column[], t: TFunction): ColumnDef<PaperRef>[] {
   return [
     {
       id: 'title',
       accessorKey: 'title',
-      header: 'Title',
+      header: t('library.header.title'),
       // Title is the primary column — always visible, but the user is allowed
       // to resize it like any other (Excel/Notion style). Default 320 leaves
       // comfortable room; minSize 200 prevents accidental clipping.
@@ -39,7 +40,7 @@ export function buildColumns(extras: Column[]): ColumnDef<PaperRef>[] {
     {
       id: 'authors',
       accessorKey: 'authors',
-      header: 'Authors',
+      header: t('library.header.authors'),
       size: 168,
       minSize: 80,
       cell: ({ row }) => (
@@ -51,7 +52,7 @@ export function buildColumns(extras: Column[]): ColumnDef<PaperRef>[] {
     {
       id: 'year',
       accessorKey: 'year',
-      header: 'Year',
+      header: t('library.header.year'),
       size: 64,
       minSize: 48,
       cell: ({ row }) => (
@@ -63,7 +64,7 @@ export function buildColumns(extras: Column[]): ColumnDef<PaperRef>[] {
     {
       id: 'status',
       accessorKey: 'status',
-      header: 'Status',
+      header: t('library.header.status'),
       size: 104,
       minSize: 80,
       cell: ({ row }) => <ChipStatus status={row.original.status} />,
@@ -71,7 +72,7 @@ export function buildColumns(extras: Column[]): ColumnDef<PaperRef>[] {
     {
       id: 'tags',
       accessorKey: 'tags',
-      header: 'Tags',
+      header: t('library.header.tags'),
       enableSorting: false,
       size: 144,
       minSize: 80,

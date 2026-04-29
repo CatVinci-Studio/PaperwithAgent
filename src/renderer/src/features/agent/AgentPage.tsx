@@ -1,19 +1,15 @@
 import { useRef, useEffect, useState } from 'react'
 import { Bot, Eraser, FileText } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useAgentStore } from '@/store/agent'
 import { useLibraryStore } from '@/store/library'
 import { Button } from '@/components/ui/button'
 import { MessageBubble, StreamingBubble } from './MessageBubble'
 import { ChatInput } from './ChatInput'
 
-const SUGGESTIONS = [
-  "Summarize the key contributions of the papers I've read",
-  'What are the main themes across my library?',
-  'Find papers related to transformer architecture',
-  "Add notes on the paper I'm currently reading",
-]
-
 export function AgentPage() {
+  const { t } = useTranslation()
+  const suggestions = (t('agent.suggestions', { returnObjects: true }) as string[]) ?? []
   const {
     messages,
     isStreaming,
@@ -50,7 +46,7 @@ export function AgentPage() {
           <div className="w-6 h-6 rounded-[8px] bg-[var(--accent-color)]/15 border border-[var(--accent-color)]/25 flex items-center justify-center shrink-0">
             <Bot size={13} className="text-[var(--accent-color)]" />
           </div>
-          <span className="text-[13px] font-medium text-[var(--text-secondary)]">Agent</span>
+          <span className="text-[13px] font-medium text-[var(--text-secondary)]">{t('agent.title')}</span>
 
           {contextPaper && (
             <div className="flex items-center gap-1 ml-2 px-2 py-0.5 rounded-full bg-[var(--accent-color)]/10 border border-[var(--accent-color)]/20">
@@ -67,7 +63,7 @@ export function AgentPage() {
             onClick={clear}
             variant="ghost"
             size="icon"
-            title="Clear conversation"
+            title={t('agent.clear')}
             className="rounded-[8px]"
           >
             <Eraser size={14} />
@@ -79,7 +75,12 @@ export function AgentPage() {
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-3xl mx-auto px-6 py-6">
           {messages.length === 0 && !isStreaming && (
-            <EmptyState onPick={(s) => setInput(s)} />
+            <EmptyState
+              suggestions={suggestions}
+              title={t('agent.emptyTitle')}
+              description={t('agent.emptyDescription')}
+              onPick={(s) => setInput(s)}
+            />
           )}
 
           <div className="space-y-5">
@@ -105,20 +106,25 @@ export function AgentPage() {
   )
 }
 
-function EmptyState({ onPick }: { onPick: (suggestion: string) => void }) {
+interface EmptyStateProps {
+  title: string
+  description: string
+  suggestions: string[]
+  onPick: (suggestion: string) => void
+}
+
+function EmptyState({ title, description, suggestions, onPick }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center gap-6 pt-12">
       <div className="w-12 h-12 rounded-[14px] bg-[var(--accent-color)]/10 border border-[var(--accent-color)]/20 flex items-center justify-center">
         <Bot size={22} className="text-[var(--accent-color)]" />
       </div>
       <div className="text-center">
-        <p className="text-[15px] font-medium text-[var(--text-primary)] mb-1">Agent</p>
-        <p className="text-[13px] text-[var(--text-muted)]">
-          Ask anything about your research library.
-        </p>
+        <p className="text-[15px] font-medium text-[var(--text-primary)] mb-1">{title}</p>
+        <p className="text-[13px] text-[var(--text-muted)]">{description}</p>
       </div>
       <div className="grid grid-cols-1 gap-2 w-full max-w-sm">
-        {SUGGESTIONS.map((s) => (
+        {suggestions.map((s) => (
           <button
             key={s}
             onClick={() => onPick(s)}

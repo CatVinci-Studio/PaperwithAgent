@@ -1,7 +1,7 @@
 import type {
   PaperRef, PaperDetail, PaperDraft, PaperPatch, PaperId,
   Filter, SearchHit, Schema, Column, AgentEvent, AgentConfig,
-  AgentProfile, ProfilePatch, LibraryInfo, CollectionInfo,
+  AgentProfile, ProfilePatch, Language, LibraryInfo, CollectionInfo,
 } from '@shared/types'
 
 type UnsubFn = () => void
@@ -41,7 +41,7 @@ export interface IApi {
     renameColumn(from: string, to: string): Promise<void>
   }
   agent: {
-    send(message: string, paperId?: string): Promise<void>
+    send(message: string, paperId?: string, language?: Language): Promise<void>
     abort(): Promise<void>
     getConfig(): Promise<AgentConfig | null>
     setProfile(name: string): Promise<void>

@@ -7,6 +7,7 @@ import {
   type SortingState,
 } from '@tanstack/react-table'
 import { Plus, Upload, Eye } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useLibraryStore } from '@/store/library'
 import { useUIStore } from '@/store/ui'
 import { api } from '@/lib/ipc'
@@ -29,6 +30,7 @@ import type { Column, ColumnType, PaperRef } from '@shared/types'
 const CORE_COLS = new Set(['id', 'title', 'authors', 'year', 'status', 'tags', 'rating', 'added_at', 'updated_at', 'doi', 'url', 'venue', 'pdf'])
 
 export function LibraryView() {
+  const { t } = useTranslation()
   const {
     papers,
     schema,
@@ -51,7 +53,9 @@ export function LibraryView() {
     [schema]
   )
 
-  const columns = useMemo(() => buildColumns(extraCols), [extraCols])
+  // Re-key on i18n.language so column header labels update when the user
+  // switches languages — buildColumns reads strings via t() at construction time.
+  const columns = useMemo(() => buildColumns(extraCols, t), [extraCols, t])
 
   const [sorting, setSorting] = useState<SortingState>([{ id: 'added_at', desc: true }])
   const { sizing, setSizing, visibility, setVisibility } = useColumnPersistence(activeLibraryName)
@@ -76,9 +80,9 @@ export function LibraryView() {
 
   const handleDelete = async (id: string) => {
     const ok = await confirmDialog({
-      title: 'Delete paper?',
-      message: 'This removes the Markdown file and any attachments. The action cannot be undone.',
-      confirmLabel: 'Delete',
+      title: t('library.deletePaper.title'),
+      message: t('library.deletePaper.message'),
+      confirmLabel: t('library.deletePaper.confirmLabel'),
       danger: true,
     })
     if (!ok) return
@@ -122,10 +126,12 @@ export function LibraryView() {
 
   const handleImportDoi = async () => {
     const result = await promptDialog({
-      title: 'Import paper',
-      description: 'Enter a DOI (e.g. 10.1145/...) or an arXiv URL.',
-      fields: [{ name: 'doi', label: 'DOI or arXiv URL', placeholder: '10.1145/...', required: true }],
-      confirmLabel: 'Import',
+      title: t('library.importDialog.title'),
+      description: t('library.importDialog.description'),
+      fields: [
+        { name: 'doi', label: t('library.importDialog.field'), placeholder: '10.1145/...', required: true },
+      ],
+      confirmLabel: t('library.importDialog.confirmLabel'),
     })
     if (!result) return
     try {
@@ -138,13 +144,18 @@ export function LibraryView() {
 
   const handleAddColumn = async () => {
     const result = await promptDialog({
-      title: 'New column',
-      description: 'Add a custom column to the schema. It appears in this view and the CSV index.',
+      title: t('library.newColumn.title'),
+      description: t('library.newColumn.description'),
       fields: [
-        { name: 'name', label: 'Column name', required: true },
-        { name: 'type', label: 'Type (text / number / date / bool / select / tags / url)', initialValue: 'text', required: true },
+        { name: 'name', label: t('library.newColumn.name'), required: true },
+        {
+          name: 'type',
+          label: t('library.newColumn.type'),
+          initialValue: 'text',
+          required: true,
+        },
       ],
-      confirmLabel: 'Create',
+      confirmLabel: t('library.newColumn.create'),
     })
     if (!result) return
     try {
@@ -176,7 +187,7 @@ export function LibraryView() {
       <div className="flex-1 overflow-y-auto">
         {isLoadingPapers ? (
           <div className="flex items-center justify-center h-32 text-[12px] text-[var(--text-muted)]">
-            Loading…
+            {t('common.loading')}
           </div>
         ) : (
           <>
@@ -203,7 +214,7 @@ export function LibraryView() {
               className="w-full flex items-center gap-2 pl-4 h-9 text-[12px] text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-sidebar-hover)] transition-colors border-b border-[var(--border-color)]/30 text-left"
             >
               <Plus size={13} />
-              New paper
+              {t('library.newPaper')}
             </button>
           </>
         )}
@@ -211,7 +222,7 @@ export function LibraryView() {
 
       <div className="flex items-center justify-between px-3 py-1.5 border-t border-[var(--border-color)] shrink-0">
         <span className="text-[11px] text-[var(--text-muted)]">
-          {table.getRowModel().rows.length} paper{table.getRowModel().rows.length !== 1 ? 's' : ''}
+          {t('library.papers', { count: table.getRowModel().rows.length })}
         </span>
         <Button
           onClick={handleImportDoi}
@@ -220,7 +231,7 @@ export function LibraryView() {
           className="text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
         >
           <Upload size={11} />
-          Import DOI
+          {t('library.importDoi')}
         </Button>
       </div>
     </div>
@@ -234,6 +245,7 @@ interface TableHeaderProps {
 }
 
 function TableHeader({ table, hiddenColumns, onAddColumn }: TableHeaderProps) {
+  const { t } = useTranslation()
   return (
     <div className="flex items-stretch border-b border-[var(--border-color)] bg-[var(--bg-sidebar)] shrink-0 select-none">
       {table.getHeaderGroups().map((hg) =>
@@ -247,7 +259,7 @@ function TableHeader({ table, hiddenColumns, onAddColumn }: TableHeaderProps) {
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              title="Show hidden columns"
+              title={t('library.showHidden')}
               className="flex items-center justify-center w-9 shrink-0 text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] transition-colors"
             >
               <Eye size={12} />
@@ -255,18 +267,15 @@ function TableHeader({ table, hiddenColumns, onAddColumn }: TableHeaderProps) {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-[160px]">
             {hiddenColumns.map((c) => (
-              <DropdownMenuItem
-                key={c.id}
-                onClick={() => c.toggleVisibility(true)}
-              >
+              <DropdownMenuItem key={c.id} onClick={() => c.toggleVisibility(true)}>
                 <Eye size={12} className="mr-2" />
-                Show "{String(c.columnDef.header ?? c.id)}"
+                {String(c.columnDef.header ?? c.id)}
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={onAddColumn}>
               <Plus size={12} className="mr-2" />
-              New column
+              {t('library.header.newColumn')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -1,4 +1,5 @@
 import { Check, Plus } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useLibraryStore } from '@/store/library'
 import { api } from '@/lib/ipc'
 import { promptDialog } from '@/store/dialogs'
@@ -8,17 +9,28 @@ import { cn } from '@/lib/utils'
 import type { LibraryInfo } from '@shared/types'
 
 export function LibraryTab() {
+  const { t } = useTranslation()
   const { libraries, refreshLibraries, switchLibrary } = useLibraryStore()
 
   const handleAddLibrary = async () => {
     const result = await promptDialog({
-      title: 'Add library',
-      description: 'Point to an existing folder. PaperwithAgent will index it on first open.',
+      title: t('settings.libraries.addDialog.title'),
+      description: t('settings.libraries.addDialog.description'),
       fields: [
-        { name: 'name', label: 'Display name', placeholder: 'My research', required: true },
-        { name: 'path', label: 'Absolute path', placeholder: '/Users/you/Papers', required: true },
+        {
+          name: 'name',
+          label: t('settings.libraries.addDialog.displayName'),
+          placeholder: 'My research',
+          required: true,
+        },
+        {
+          name: 'path',
+          label: t('settings.libraries.addDialog.absolutePath'),
+          placeholder: '/Users/you/Papers',
+          required: true,
+        },
       ],
-      confirmLabel: 'Add',
+      confirmLabel: t('common.add'),
     })
     if (!result) return
     try {
@@ -30,7 +42,10 @@ export function LibraryTab() {
   }
 
   return (
-    <SettingSection title="Libraries" description="Each library is a self-contained folder of papers, attachments, and schema.">
+    <SettingSection
+      title={t('settings.libraries.title')}
+      description={t('settings.libraries.description')}
+    >
       <div className="space-y-2 pt-2">
         {libraries.map((lib: LibraryInfo) => (
           <div
@@ -45,12 +60,16 @@ export function LibraryTab() {
             <div className="flex-1 min-w-0">
               <div className="text-[12.5px] font-medium text-[var(--text-primary)]">{lib.name}</div>
               <div className="text-[11px] text-[var(--text-muted)] truncate mt-0.5">{lib.path}</div>
-              <div className="text-[10.5px] text-[var(--text-muted)] mt-0.5">{lib.paperCount} papers</div>
+              <div className="text-[10.5px] text-[var(--text-muted)] mt-0.5">
+                {t('settings.libraries.papers', { count: lib.paperCount })}
+              </div>
             </div>
             {lib.active ? (
               <div className="flex items-center gap-1.5 shrink-0 px-2.5 py-1 rounded-full bg-[var(--accent-color)]/10 border border-[var(--accent-color)]/25">
                 <Check size={10} className="text-[var(--accent-color)]" />
-                <span className="text-[10.5px] text-[var(--accent-color)] font-medium">Active</span>
+                <span className="text-[10.5px] text-[var(--accent-color)] font-medium">
+                  {t('settings.libraries.active')}
+                </span>
               </div>
             ) : (
               <Button
@@ -59,7 +78,7 @@ export function LibraryTab() {
                 size="sm"
                 className="rounded-[8px] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--border-focus)]"
               >
-                Switch
+                {t('settings.libraries.switch')}
               </Button>
             )}
           </div>
@@ -70,7 +89,7 @@ export function LibraryTab() {
           className="flex items-center gap-2 w-full px-4 py-2.5 rounded-[10px] border border-dashed border-[var(--border-color)] text-[12px] text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:border-[var(--border-focus)] transition-colors"
         >
           <Plus size={13} />
-          Add existing library
+          {t('settings.libraries.addExisting')}
         </button>
       </div>
     </SettingSection>

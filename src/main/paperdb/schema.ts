@@ -1,4 +1,4 @@
-import { readFile, writeFile, unlink } from 'fs/promises'
+import { readFile, writeFile } from 'fs/promises'
 import { join } from 'path'
 import matter from 'gray-matter'
 import type { Schema, Column } from '@shared/types'
@@ -45,48 +45,21 @@ Use this body to leave notes on why specific columns exist; it isn't
 parsed.
 `
 
-const MD_PATH = (root: string) => join(root, 'schema.md')
-const LEGACY_JSON_PATH = (root: string) => join(root, 'schema.json')
+const SCHEMA_PATH = (root: string) => join(root, 'schema.md')
 
-/**
- * Load the schema for a library.
- *
- * Resolution order:
- *   1. `schema.md`    — current format (YAML frontmatter + markdown notes)
- *   2. `schema.json`  — legacy format from earlier versions
- *   3. DEFAULT_SCHEMA — fresh / unrecognized libraries
- *
- * On a successful legacy fallback, the schema is rewritten as `.md`
- * (and the old `.json` removed) by the next `saveSchema` call.
- */
+/** Load `schema.md` from the library root, or DEFAULT_SCHEMA if missing. */
 export async function loadSchema(root: string): Promise<Schema> {
-  // 1. schema.md
   try {
-    const raw = await readFile(MD_PATH(root), 'utf-8')
-    const parsed = matter(raw)
-    return parsed.data as Schema
-  } catch { /* fallthrough */ }
-
-  // 2. legacy schema.json
-  try {
-    const raw = await readFile(LEGACY_JSON_PATH(root), 'utf-8')
-    return JSON.parse(raw) as Schema
-  } catch { /* fallthrough */ }
-
-  // 3. default
-  return structuredClone(DEFAULT_SCHEMA)
+    const raw = await readFile(SCHEMA_PATH(root), 'utf-8')
+    const { data } = matter(raw)
+    return data as Schema
+  } catch {
+    return structuredClone(DEFAULT_SCHEMA)
+  }
 }
 
-/**
- * Persist schema as `schema.md`. If a legacy `schema.json` is present,
- * remove it after the new file is written so libraries gradually settle
- * on a single source of truth.
- */
+/** Persist schema as `schema.md` (YAML frontmatter + notes body). */
 export async function saveSchema(root: string, schema: Schema): Promise<void> {
   const md = matter.stringify(SCHEMA_BODY, schema as unknown as Record<string, unknown>)
-  await writeFile(MD_PATH(root), md, 'utf-8')
-  // Best-effort legacy cleanup; missing-file is fine.
-  try {
-    await unlink(LEGACY_JSON_PATH(root))
-  } catch { /* not present, no-op */ }
+  await writeFile(SCHEMA_PATH(root), md, 'utf-8')
 }

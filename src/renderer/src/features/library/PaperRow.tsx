@@ -48,7 +48,7 @@ export function PaperRow({
     <div
       data-selected={selected || undefined}
       className={cn(
-        'group relative flex items-stretch border-b border-[var(--border-color)]/50 cursor-default h-9 transition-colors',
+        'group relative flex items-stretch border-b border-[var(--border-color)]/50 cursor-default h-9 transition-colors w-fit min-w-full',
         // Row no longer opens on click — cells own their own click semantics
         // (title cell opens; other cells edit). Selection still highlights
         // whichever paper is the current PaperDetail subject.

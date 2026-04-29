@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
+import { useDragAutoScroll } from './useDragAutoScroll'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   getCoreRowModel,
@@ -208,17 +209,20 @@ export function LibraryView() {
     .getAllLeafColumns()
     .filter((c) => c.getCanHide() && !c.getIsVisible())
 
+  const scrollRef = useRef<HTMLDivElement>(null)
+  useDragAutoScroll(scrollRef)
+
   return (
     <div className="flex flex-col h-full bg-[var(--bg-base)]">
       <FilterModal />
 
-      <TableHeader
-        table={table}
-        hiddenColumns={hiddenColumns}
-        onAddColumn={handleAddColumn}
-      />
+      <div ref={scrollRef} className="flex-1 overflow-auto">
+        <TableHeader
+          table={table}
+          hiddenColumns={hiddenColumns}
+          onAddColumn={handleAddColumn}
+        />
 
-      <div className="flex-1 overflow-y-auto">
         {isLoadingPapers ? (
           <div className="flex items-center justify-center h-32 text-[12px] text-[var(--text-muted)]">
             {t('common.loading')}
@@ -281,7 +285,7 @@ interface TableHeaderProps {
 function TableHeader({ table, hiddenColumns, onAddColumn }: TableHeaderProps) {
   const { t } = useTranslation()
   return (
-    <div className="flex items-stretch border-b border-[var(--border-color)] bg-[var(--bg-sidebar)] shrink-0 select-none">
+    <div className="sticky top-0 z-20 flex items-stretch border-b border-[var(--border-color)] bg-[var(--bg-sidebar)] shrink-0 select-none w-fit min-w-full">
       {table.getHeaderGroups().map((hg) =>
         hg.headers.map((header) => (
           <ColumnHeader key={header.id} header={header} onAddColumn={onAddColumn} />

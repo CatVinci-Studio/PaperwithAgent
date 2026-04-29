@@ -19,29 +19,6 @@ export function setActiveProfile(name: string): void {
   store.set('config', { ...config, defaultProfile: name })
 }
 
-export function addProfile(profile: Omit<AgentProfile, 'hasKey'>): void {
-  const config = store.get('config')
-  const existing = config.profiles.find((p) => p.name === profile.name)
-  if (existing) throw new Error(`Profile "${profile.name}" already exists`)
-  store.set('config', {
-    ...config,
-    profiles: [...config.profiles, profile]
-  })
-}
-
-export function removeProfile(name: string): void {
-  const config = store.get('config')
-  store.set('config', {
-    ...config,
-    profiles: config.profiles.filter((p) => p.name !== name)
-  })
-}
-
-export function updateConfig(patch: Partial<AgentConfig>): void {
-  const config = store.get('config')
-  store.set('config', { ...config, ...patch })
-}
-
 export function getProfiles(): AgentProfile[] {
   const config = store.get('config')
   return config.profiles.map((p) => ({

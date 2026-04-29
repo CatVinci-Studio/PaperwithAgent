@@ -112,8 +112,6 @@ export interface SearchHit {
 
 // ─── Agent ───────────────────────────────────────────────────────────────────
 
-export type AgentEventType = 'text' | 'tool_start' | 'tool_result' | 'error' | 'done'
-
 export interface AgentTextEvent    { type: 'text';        delta: string }
 export interface AgentToolStart    { type: 'tool_start';  name: string; args: unknown }
 export interface AgentToolResult   { type: 'tool_result'; name: string; result: unknown }
@@ -210,10 +208,4 @@ export interface IpcChannels {
 
   // PDF
   'pdf:getPath':         { args: [PaperId];                 ret: string | null }
-}
-
-// Streaming events (main → renderer via ipcRenderer.on)
-export interface IpcEvents {
-  'agent:event':      AgentEvent
-  'library:switched': LibraryInfo   // broadcast when active library changes
 }

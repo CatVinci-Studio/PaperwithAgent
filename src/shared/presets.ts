@@ -14,5 +14,3 @@ export const DEFAULT_AGENT_CONFIG: AgentConfig = {
     { name: 'lmstudio',   baseUrl: 'http://localhost:1234/v1',              model: 'local-model' },
   ]
 }
-
-export const BUILT_IN_PRESETS = DEFAULT_AGENT_CONFIG.profiles

@@ -87,7 +87,8 @@ app.whenReady().then(async () => {
   ipcMain.on('window:minimize',        () => mainWindow?.minimize())
   ipcMain.on('window:toggle-maximize', () => {
     if (!mainWindow) return
-    mainWindow.isMaximized() ? mainWindow.unmaximize() : mainWindow.maximize()
+    if (mainWindow.isMaximized()) mainWindow.unmaximize()
+    else mainWindow.maximize()
   })
   ipcMain.on('window:close',           () => mainWindow?.close())
 

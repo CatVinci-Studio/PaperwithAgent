@@ -208,19 +208,12 @@
   },
   "agent": {
     "title": "Agent",
-    "emptyTitle": "Agent",
-    "emptyDescription": "向我提问关于你的论文库的任何问题。",
-    "placeholder": "问问关于你的论文… (⌘↵ 发送)",
-    "send": "发送 (⌘↵)",
+    "welcomeTitle": "欢迎使用 Verko",
+    "welcomeSubtitle": "你的个人 AI 研究助手",
+    "placeholder": "问点什么…",
+    "send": "发送",
     "stop": "停止",
     "clear": "清空对话",
-    "shortcutHint": "⌘↵ 发送 · ↵ 换行",
-    "suggestions": [
-      "总结一下我已读论文的核心贡献",
-      "我的论文库里有哪些主要主题?",
-      "找跟 transformer 架构相关的论文",
-      "给我正在读的这篇论文加笔记"
-    ],
     "tool": {
       "input": "输入",
       "output": "输出"
@@ -234,7 +227,7 @@
     "conversations": {
       "title": "对话",
       "new": "新对话",
-      "empty": "暂无对话——在下方开始输入即可。",
+      "empty": "暂无对话",
       "delete": {
         "title": "删除对话?",
         "message": "将永久删除 \"{{title}}\" 及其所有消息。"

@@ -210,19 +210,12 @@
   },
   "agent": {
     "title": "Agent",
-    "emptyTitle": "Agent",
-    "emptyDescription": "Ask anything about your research library.",
-    "placeholder": "Ask about your papers… (⌘↵ to send)",
-    "send": "Send (⌘↵)",
+    "welcomeTitle": "Welcome to Verko",
+    "welcomeSubtitle": "Your personal AI research assistant",
+    "placeholder": "Ask anything…",
+    "send": "Send",
     "stop": "Stop",
     "clear": "Clear conversation",
-    "shortcutHint": "⌘↵ send · ↵ newline",
-    "suggestions": [
-      "Summarize the key contributions of the papers I've read",
-      "What are the main themes across my library?",
-      "Find papers related to transformer architecture",
-      "Add notes on the paper I'm currently reading"
-    ],
     "tool": {
       "input": "Input",
       "output": "Output"
@@ -236,7 +229,7 @@
     "conversations": {
       "title": "Conversations",
       "new": "New chat",
-      "empty": "No conversations yet — start typing below.",
+      "empty": "No conversation yet",
       "delete": {
         "title": "Delete conversation?",
         "message": "This permanently removes \"{{title}}\" and its messages."

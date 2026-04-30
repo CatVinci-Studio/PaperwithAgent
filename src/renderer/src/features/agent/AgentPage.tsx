@@ -6,11 +6,11 @@ import { useLibraryStore } from '@/store/library'
 import { MessageBubble, StreamingBubble } from './MessageBubble'
 import { ChatInput } from './ChatInput'
 import { api } from '@/lib/ipc'
+import logoUrl from '@/assets/logo.jpg'
 import type { ChatContentPart, PaperRef } from '@shared/types'
 
 export function AgentPage() {
   const { t } = useTranslation()
-  const suggestions = (t('agent.suggestions', { returnObjects: true }) as string[]) ?? []
 
   const activeId = useAgentStore((s) => s.activeId)
   const byId = useAgentStore((s) => s.byId)
@@ -107,25 +107,19 @@ export function AgentPage() {
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto">
-          <div className="max-w-3xl mx-auto px-6 py-6">
-            {messages.length === 0 && !isStreaming && (
-              <EmptyState
-                suggestions={suggestions}
-                title={t('agent.emptyTitle')}
-                description={t('agent.emptyDescription')}
-                onPick={(s) => setInput(s)}
-              />
-            )}
-
-            <div className="space-y-5">
-              {messages.map((msg) => (
-                <MessageBubble key={msg.id} message={msg} onToggleToolCall={toggleToolCall} />
-              ))}
-              {isStreaming && <StreamingBubble text={streamingText} />}
+          {messages.length === 0 && !isStreaming ? (
+            <EmptyState />
+          ) : (
+            <div className="max-w-3xl mx-auto px-6 py-6">
+              <div className="space-y-5">
+                {messages.map((msg) => (
+                  <MessageBubble key={msg.id} message={msg} onToggleToolCall={toggleToolCall} />
+                ))}
+                {isStreaming && <StreamingBubble text={streamingText} />}
+              </div>
+              <div ref={messagesEndRef} />
             </div>
-
-            <div ref={messagesEndRef} />
-          </div>
+          )}
         </div>
 
         <ChatInput
@@ -145,33 +139,18 @@ export function AgentPage() {
   )
 }
 
-interface EmptyStateProps {
-  title: string
-  description: string
-  suggestions: string[]
-  onPick: (suggestion: string) => void
-}
-
-function EmptyState({ title, description, suggestions, onPick }: EmptyStateProps) {
+function EmptyState() {
+  const { t } = useTranslation()
   return (
-    <div className="flex flex-col items-center gap-6 pt-12">
-      <div className="w-12 h-12 rounded-[14px] bg-[var(--accent-color)]/10 border border-[var(--accent-color)]/20 flex items-center justify-center">
-        <Bot size={22} className="text-[var(--accent-color)]" />
-      </div>
+    <div className="h-full flex flex-col items-center justify-center gap-4 px-6">
+      <img src={logoUrl} alt="" className="w-16 h-16 rounded-[18px] shadow-sm" />
       <div className="text-center">
-        <p className="text-[16px] font-medium text-[var(--text-primary)] mb-1">{title}</p>
-        <p className="text-[14.5px] text-[var(--text-muted)]">{description}</p>
-      </div>
-      <div className="grid grid-cols-1 gap-2 w-full max-w-sm">
-        {suggestions.map((s) => (
-          <button
-            key={s}
-            onClick={() => onPick(s)}
-            className="text-left px-4 py-2.5 rounded-[10px] bg-[var(--bg-elevated)] border border-[var(--border-color)] text-[14px] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-focus)] transition-colors"
-          >
-            {s}
-          </button>
-        ))}
+        <p className="text-[20px] font-semibold text-[var(--text-primary)] tracking-tight">
+          {t('agent.welcomeTitle')}
+        </p>
+        <p className="text-[14px] text-[var(--text-muted)] mt-1">
+          {t('agent.welcomeSubtitle')}
+        </p>
       </div>
     </div>
   )

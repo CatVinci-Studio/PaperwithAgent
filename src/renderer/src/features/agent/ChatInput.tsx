@@ -52,7 +52,7 @@ export function ChatInput({
 }: ChatInputProps) {
   const { t } = useTranslation()
   const resolvedPlaceholder = placeholder ?? t('agent.placeholder')
-  const inputRef = useRef<HTMLTextAreaElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // @-mention picker state. `triggerPos` records the index of the `@` in the
@@ -74,19 +74,17 @@ export function ChatInput({
   const hasMentions = !!mentionedPapers && mentionedPapers.length > 0
   const canSend = !!value.trim() || hasAttachments || hasMentions
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
       e.preventDefault()
       onSend()
     }
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const next = e.target.value
     onChange(next)
     const el = e.target
-    el.style.height = 'auto'
-    el.style.height = `${Math.min(el.scrollHeight, 140)}px`
 
     // Detect @-mention trigger: the most recent `@` before the caret with
     // only word/space chars between it and the caret, and either start of
@@ -154,7 +152,7 @@ export function ChatInput({
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
-  const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+  const handlePaste = async (e: React.ClipboardEvent<HTMLInputElement>) => {
     const items = e.clipboardData?.items
     if (!items) return
     const files: File[] = []
@@ -228,16 +226,16 @@ export function ChatInput({
           )}
 
           <div className="flex gap-3 items-end">
-            <textarea
+            <input
               ref={inputRef}
+              type="text"
               value={value}
               onChange={handleChange}
               onKeyDown={handleKeyDown}
               onPaste={handlePaste}
               placeholder={resolvedPlaceholder}
-              rows={1}
-              className="flex-1 bg-transparent border-none text-[15px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] resize-none focus:outline-none leading-relaxed"
-              style={{ height: '24px', minHeight: '24px', userSelect: 'text' }}
+              className="flex-1 bg-transparent border-none text-[15px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none leading-relaxed"
+              style={{ userSelect: 'text' }}
             />
 
             <input
@@ -283,7 +281,6 @@ export function ChatInput({
             )}
           </div>
         </div>
-        <p className="text-[12.5px] text-[var(--text-dim)] text-center mt-2">{t('agent.shortcutHint')}</p>
       </div>
 
       {mention && (

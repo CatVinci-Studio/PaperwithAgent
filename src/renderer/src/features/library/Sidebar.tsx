@@ -243,18 +243,9 @@ export function Sidebar() {
         {agentOpen && (
           <div className="mx-1 mb-1 space-y-0.5">
             {conversations.length === 0 && (
-              <button
-                onClick={handleNewConversation}
-                className={cn(
-                  'w-full text-left px-2 py-1.5 rounded-[6px] transition-colors',
-                  'text-[14px] text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-sidebar-hover)]',
-                )}
-              >
-                <div className="flex items-center gap-2">
-                  <MessageSquare size={11} className="shrink-0" />
-                  {t('agent.conversations.empty')}
-                </div>
-              </button>
+              <p className="px-3 py-1.5 text-[12.5px] text-[var(--text-dim)] italic">
+                {t('agent.conversations.empty')}
+              </p>
             )}
             {conversations.map((c) => (
               <button

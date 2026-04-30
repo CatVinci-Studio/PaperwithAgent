@@ -16,7 +16,8 @@
   "titlebar": {
     "appName": "Verko",
     "askAgent": "问 Agent (⌘K)",
-    "settings": "设置 (⌘,)"
+    "settings": "设置 (⌘,)",
+    "getDesktop": "下载桌面端 →"
   },
   "settings": {
     "title": "设置",
@@ -113,7 +114,8 @@
   "welcome": {
     "title": "欢迎使用 Verko",
     "subtitle": "选择一个已有的知识库,或新建一个。知识库可以是本地的 Markdown 文件夹,也可以是 S3 兼容的对象存储。",
-    "webNote": "网页版仅支持只读访问。安装桌面应用即可编辑、使用 Agent 以及本地知识库。",
+    "subtitleWeb": "连接一个 S3 兼容存储即可开始。本地文件夹需要使用桌面端。",
+    "webNote": "网页版只读。安装桌面端可编辑、运行 Agent 以及使用本地知识库。",
     "actions": {
       "openExisting": {
         "title": "打开已有文件夹",

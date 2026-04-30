@@ -16,7 +16,8 @@
   "titlebar": {
     "appName": "Verko",
     "askAgent": "Ask Agent (⌘K)",
-    "settings": "Settings (⌘,)"
+    "settings": "Settings (⌘,)",
+    "getDesktop": "Get the desktop app →"
   },
   "settings": {
     "title": "Settings",
@@ -114,7 +115,8 @@
   "welcome": {
     "title": "Welcome to Verko",
     "subtitle": "Pick or create a paper library to get started. A library is a folder of Markdown files (local) or an S3-compatible bucket (online).",
-    "webNote": "Web build is read-only. Install the desktop app to edit, run the agent, or use local libraries.",
+    "subtitleWeb": "Connect an S3-compatible bucket to start. Local folders need the desktop app.",
+    "webNote": "Read-only on the web. Install the desktop app to edit, run the agent, or use local libraries.",
     "actions": {
       "openExisting": {
         "title": "Open existing folder",

@@ -103,19 +103,19 @@ export function WelcomeScreen() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center h-full bg-[var(--bg-base)] px-6 py-10 overflow-auto">
-      <div className="max-w-[560px] w-full space-y-6">
+    <div className="flex flex-col items-center justify-center h-full bg-[var(--bg-base)] px-6 py-8 overflow-auto">
+      <div className="max-w-[480px] w-full space-y-5">
         <div className="flex flex-col items-center gap-3 text-center">
           <img
             src={logoUrl}
             alt="Verko"
-            className="w-16 h-16 rounded-[14px] shadow-sm"
+            className="w-12 h-12 rounded-[12px] shadow-sm"
           />
-          <h1 className="text-[22px] font-semibold text-[var(--text-primary)]">
+          <h1 className="text-[20px] font-semibold text-[var(--text-primary)]">
             {t('welcome.title')}
           </h1>
-          <p className="text-[15.5px] text-[var(--text-muted)] max-w-[440px]">
-            {t('welcome.subtitle')}
+          <p className="text-[14.5px] text-[var(--text-muted)] max-w-[400px] leading-relaxed">
+            {isWeb ? t('welcome.subtitleWeb') : t('welcome.subtitle')}
           </p>
         </div>
 
@@ -157,9 +157,11 @@ export function WelcomeScreen() {
           />
         </div>
         {isWeb && (
-          <p className="text-[13.5px] text-[var(--text-muted)] text-center mt-2">
-            {t('welcome.webNote')}
-          </p>
+          <div className="flex items-start gap-2.5 px-3.5 py-2.5 rounded-[10px] border-l-2 border-[var(--accent-color)] bg-[var(--accent-color)]/5 text-[13.5px] text-[var(--text-secondary)]">
+            <span className="leading-relaxed">
+              {t('welcome.webNote')}
+            </span>
+          </div>
         )}
       </div>
     </div>

@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { SettingRow } from '@/components/ui/setting-row'
 import { SettingSection } from '@/components/ui/setting-section'
 import { SettingSegmented } from '@/components/ui/setting-segmented'
+import { SettingToggle } from '@/components/ui/setting-toggle'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 import {
@@ -77,17 +78,6 @@ function ProviderSection() {
   return (
     <SettingSection title={t('settings.provider.title')}>
       <div className="space-y-4 pt-2">
-        {/* Summary */}
-        {active && (
-          <div className="text-[15px] text-[var(--text-muted)]">
-            {t('settings.provider.current')}:{' '}
-            <span className="font-medium text-[var(--text-primary)]">
-              {definition?.name ?? active.name}
-            </span>
-            <span className="ml-1 text-[var(--text-dim)]">/ {active.model}</span>
-          </div>
-        )}
-
         {/* Pill grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {PROVIDER_DEFINITIONS.map((def) => {
@@ -123,58 +113,62 @@ function ProviderSection() {
 
             {/* Remember key toggle */}
             {definition.fields.some((f) => f.key === 'apiKey') && (
-              <label className="flex items-center gap-2 pt-1 cursor-pointer text-[14.5px] text-[var(--text-secondary)]">
-                <input
-                  type="checkbox"
+              <SettingRow
+                label={t('settings.provider.rememberKey')}
+                description={t('settings.provider.rememberKeyHint')}
+                className="py-1"
+              >
+                <SettingToggle
                   checked={rememberKey}
-                  onChange={(e) => setRememberKey(e.target.checked)}
-                  className="accent-[var(--accent-color)]"
+                  onCheckedChange={setRememberKey}
+                  ariaLabel={t('settings.provider.rememberKey')}
                 />
-                <span>{t('settings.provider.rememberKey')}</span>
-              </label>
+              </SettingRow>
             )}
+          </div>
+        )}
 
-            {/* Save | Test | status */}
-            <div className="flex items-center gap-2 pt-1">
-              <Button
-                variant="accent"
-                size="lg"
-                onClick={save}
-                disabled={saving}
-                className="rounded-full"
+        {/* Footer actions */}
+        {active && definition && (
+          <div className="flex items-center justify-end gap-2 pt-3 mt-1 border-t border-[var(--border-color)]">
+            {testResult !== null && (
+              <span
+                className={cn(
+                  'flex items-center gap-1 text-[14.5px] mr-auto',
+                  testResult ? 'text-[var(--status-read)]' : 'text-[var(--danger)]'
+                )}
               >
-                {saving ? <Loader size={11} className="animate-spin" /> : null}
-                {t('common.save')}
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={test}
-                disabled={testing || !active.hasKey}
-                className="rounded-full"
-              >
-                {testing ? <Loader size={11} className="animate-spin" /> : <Wifi size={11} />}
-                {t('settings.provider.testConnection')}
-              </Button>
-              {testResult !== null && (
-                <span
-                  className={cn(
-                    'flex items-center gap-1 text-[14.5px]',
-                    testResult ? 'text-[var(--status-read)]' : 'text-[var(--danger)]'
-                  )}
-                >
-                  {testResult ? (
-                    <>
-                      <CheckCircle size={12} /> {t('settings.provider.connected')}
-                    </>
-                  ) : (
-                    <>
-                      <XCircle size={12} /> {t('settings.provider.failed')}
-                    </>
-                  )}
-                </span>
-              )}
-            </div>
+                {testResult ? (
+                  <>
+                    <CheckCircle size={12} /> {t('settings.provider.connected')}
+                  </>
+                ) : (
+                  <>
+                    <XCircle size={12} /> {t('settings.provider.failed')}
+                  </>
+                )}
+              </span>
+            )}
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={test}
+              disabled={testing || !active.hasKey}
+              className="rounded-full"
+            >
+              {testing ? <Loader size={11} className="animate-spin" /> : <Wifi size={11} />}
+              {t('settings.provider.testConnection')}
+            </Button>
+            <Button
+              variant="accent"
+              size="lg"
+              onClick={save}
+              disabled={saving}
+              className="rounded-full"
+            >
+              {saving ? <Loader size={11} className="animate-spin" /> : null}
+              {t('common.save')}
+            </Button>
           </div>
         )}
       </div>

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, ipcMain } from 'electron'
+import { app, BrowserWindow, Menu, shell, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { registerIpcHandlers, type AppState } from './ipc/index'
@@ -20,6 +20,14 @@ export const appState: AppState = {
   }
 }
 
+// On Windows / Linux, Electron auto-creates a stub menu bar (File / Edit / …)
+// that we don't use. Drop it once at app boot. macOS keeps its system menu bar
+// because Mac apps are expected to have one (and titleBarStyle handles the
+// chrome separately).
+if (process.platform !== 'darwin') {
+  Menu.setApplicationMenu(null)
+}
+
 function createWindow(): void {
   mainWindow = new BrowserWindow({
     width: 1280,
@@ -28,6 +36,7 @@ function createWindow(): void {
     minHeight: 600,
     show: false,
     titleBarStyle: 'hiddenInset',
+    autoHideMenuBar: true,
     backgroundColor: '#0f0f0f',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),

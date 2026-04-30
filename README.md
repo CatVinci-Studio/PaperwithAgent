@@ -29,10 +29,10 @@ A desktop app (and a read-only web app) for organizing academic papers. Your lib
 
 ## Why
 
-- **Your data stays yours.** One Markdown file per paper. Open in any text editor. Version-control with Git.
-- **AI does the busywork.** Ask in natural language: *"summarize my unread NLP papers"*, *"tag the diffusion ones"*, *"import this DOI"*. The agent has direct access to your files.
+- **Your data stays yours.** A CSV plus a folder of Markdown files. Open in Excel, VS Code, anywhere. Version-control with Git.
+- **AI does the busywork.** Ask in natural language: *"summarize my unread NLP papers"*, *"tag the diffusion ones"*, *"import this arXiv paper"*. The agent reads and writes the same files you see.
 - **Bring your own model.** OpenAI, Claude, or Gemini — paste your API key, switch any time.
-- **Works online too.** A read-only web build connects directly to your S3 / R2 / B2 bucket — same UI, same agent.
+- **Works online too.** The web build connects directly to your S3 / R2 / B2 bucket — same UI, same agent.
 
 ## Install
 
@@ -61,43 +61,43 @@ A desktop app (and a read-only web app) for organizing academic papers. Your lib
 
 ```
 my-library/
+  papers.csv                       ← canonical field data: title, authors, status, …
   papers/
-    2017-vaswani-attention.md      ← YAML frontmatter + your notes
+    2017-vaswani-attention.md      ← your free-form notes (markdown only)
   attachments/
     2017-vaswani-attention.pdf
-  papers.csv                       ← index (auto-rebuilt; don't edit)
-  schema.md                        ← column definitions
+  schema.md                        ← column definitions (yours to extend)
   collections.json                 ← collection membership
+  skills/                          ← optional: your agent workflow templates
 ```
 
-Each paper:
+`papers.csv` is the source of truth for every field — open it in Excel, edit a column, the app picks up the change. Each paper's `.md` file holds only the notes body:
 
 ```markdown
----
-title: Attention Is All You Need
-authors: ["Vaswani, A.", "Shazeer, N."]
-year: 2017
-status: read
-tags: [transformers, nlp]
-rating: 5
----
+## Key insight
 
-## Notes
+Replace recurrence with self-attention...
 
-Key insight: replace recurrence with self-attention...
+## My takeaway
+
+Read the section on positional encoding twice.
 ```
 
 ## What the agent can do
 
 Out of the box:
 
-- **Search and summarize** your library
-- **Add / update** papers, including importing by DOI
+- **Search and summarize** across the whole library
+- **Add / update** papers — direct CSV edits, or import from arXiv
 - **Look at PDF pages** (with vision-capable models — figures, equations, tables)
 - **Manage collections and tags**
-- **Take notes** on a paper as you read
+- **Take notes** as you read; `@`-mention papers in chat to pin them to the current question
 
-The agent uses tools sandboxed to your active library — it can't reach files outside.
+You can extend the agent with your own **skills** — drop a markdown file in `skills/` with `name` + `description` frontmatter. The agent sees the description in its prompt and loads the body on demand.
+
+When a conversation gets long, type `/compact` to compress it; the full transcript is archived. Earlier turns get summarized so the next ones stay coherent without burning context.
+
+All file access is scoped to registered library directories — the agent literally cannot reach files outside.
 
 ## Build from source
 

@@ -1,163 +1,116 @@
-# Verko
+<p align="center">
+  <img src="docs/Logo.jpg" alt="Verko" width="120" height="120" />
+</p>
 
-**An agent-first desktop app for managing academic papers.**  
-Plain-file storage (Markdown + CSV), an embedded AI agent that can read and write your library, and a clean interface inspired by tools you already love.
+<h1 align="center">Verko</h1>
 
-[English](./README.md) · [中文](./README.zh.md)
+<p align="center">
+  <strong>Agent-first paper management.</strong><br>
+  Your papers are plain Markdown files. Your AI assistant can read them, write them, and answer questions about them.
+</p>
 
-[![CI](https://github.com/CatVinci-Studio/Verko/actions/workflows/ci.yml/badge.svg)](https://github.com/CatVinci-Studio/Verko/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
-[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey)](https://github.com/CatVinci-Studio/Verko/releases)
-[![Version](https://img.shields.io/github/v/release/CatVinci-Studio/Verko?include_prereleases)](https://github.com/CatVinci-Studio/Verko/releases)
+<p align="center">
+  <a href="https://github.com/CatVinci-Studio/Verko/releases/latest"><strong>Download</strong></a> ·
+  <a href="https://catvinci-studio.github.io/Verko/"><strong>Try in browser</strong></a> ·
+  <a href="./README.zh.md">中文</a>
+</p>
 
----
-
-## What is this?
-
-Verko is a desktop research companion. Instead of locking your data in a proprietary database, everything lives as readable files on disk — one Markdown file per paper (YAML frontmatter + notes), a derived CSV index, and a `schema.json` for custom columns.
-
-The agent sits at the center: it can search, annotate, compare, and organize your papers through natural language, with direct read/write access to your library files.
-
----
-
-## Features
-
-- **Agent-first** — ⌘K opens a direct chat. The agent reads your CSV index, individual paper notes, and writes changes back through the same file layer your UI uses.
-- **Plain-file storage** — Markdown + CSV. Open in any text editor. Version-control with Git. No lock-in.
-- **Collections** — Group papers into named collections. A paper can belong to multiple collections; notes are always shared.
-- **Custom schema** — Add typed columns (text, number, date, select, tags…) to your papers. The CSV is rebuilt automatically on every write.
-- **PDF viewer** — Attach and read PDFs inside the app.
-- **Full-text search** — In-memory MiniSearch index, updated on every library change.
-- **Multiple libraries** — Switch between library roots. Each library is a self-contained folder.
-- **Dark & light themes** — Amber accent in dark mode, cyan in light.
+<p align="center">
+  <a href="https://github.com/CatVinci-Studio/Verko/releases/latest"><img alt="version" src="https://img.shields.io/github/v/release/CatVinci-Studio/Verko"></a>
+  <img alt="platform" src="https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux%20%7C%20Web-lightgrey">
+  <a href="./LICENSE"><img alt="license" src="https://img.shields.io/badge/license-MIT-yellow"></a>
+</p>
 
 ---
 
-## Installation
+## What it is
 
-### Pre-built releases
+A desktop app (and a read-only web app) for organizing academic papers. Your library is a plain folder of Markdown files — no proprietary database, no lock-in. An AI agent of your choice reads and writes that library through the same files you see.
 
-Download the latest installer for your platform from [Releases](https://github.com/CatVinci-Studio/Verko/releases).
+## Why
 
-| Platform | File |
-|----------|------|
-| macOS (Apple Silicon / Intel) | `Verko-x.x.x.dmg` |
-| Windows | `Verko-Setup-x.x.x.exe` |
-| Linux | `Verko-x.x.x.AppImage` |
+- **Your data stays yours.** One Markdown file per paper. Open in any text editor. Version-control with Git.
+- **AI does the busywork.** Ask in natural language: *"summarize my unread NLP papers"*, *"tag the diffusion ones"*, *"import this DOI"*. The agent has direct access to your files.
+- **Bring your own model.** OpenAI, Claude, or Gemini — paste your API key, switch any time.
+- **Works online too.** A read-only web build connects directly to your S3 / R2 / B2 bucket — same UI, same agent.
 
-### Build from source
+## Install
 
-**Prerequisites:** Node.js 20+, npm 10+
+### Desktop
 
-```bash
-git clone https://github.com/CatVinci-Studio/Verko.git
-cd Verko
-npm install
-npm run dev       # Start in dev mode (Electron)
-```
+| Platform | Download |
+|---|---|
+| macOS (Apple Silicon) | `Verko-X.Y.Z-arm64.dmg` |
+| macOS (Intel) | `Verko-X.Y.Z.dmg` |
+| Windows | `Verko-Setup-X.Y.Z.exe` |
+| Linux | `Verko-X.Y.Z.AppImage` / `verko_X.Y.Z_amd64.deb` |
 
-**Production build:**
+→ Get the latest at [Releases](https://github.com/CatVinci-Studio/Verko/releases/latest).
 
-```bash
-npm run build       # Compile renderer + main process
-npm run dist:mac    # Package macOS DMG
-npm run dist:win    # Package Windows installer
-npm run dist:linux  # Package Linux AppImage
-```
+### Web
 
----
+[catvinci-studio.github.io/Verko](https://catvinci-studio.github.io/Verko/) — connect any S3-compatible bucket (AWS S3, Cloudflare R2, Backblaze B2, MinIO). Your bucket needs CORS allowed for the page origin.
 
-## Quick Start
+## Quick start
 
-1. **Open the app** — it creates a default library in `~/Verko` on first launch.
-2. **Add a paper** — click *New paper* at the bottom of the list, or use *Import DOI* to fetch metadata automatically.
-3. **Open Settings → AI Agent** — paste your API key for your preferred OpenAI-compatible provider (OpenAI, DeepSeek, Ollama, OpenRouter, LM Studio, etc.).
-4. **Press ⌘K** — ask the agent anything about your library.
+1. Launch Verko → pick **Open existing folder** or **Create new local library** (web build: **Connect S3** instead).
+2. Open **Settings → Agent**, paste an API key for OpenAI / Claude / Gemini.
+3. Press **⌘K** or click the Agent in the sidebar — ask anything about your library.
 
----
-
-## Library format
-
-Your data is always yours. A library is just a folder:
+## Your library, on disk
 
 ```
 my-library/
   papers/
-    2017-vaswani-attention.md   ← YAML frontmatter + notes body
-    2020-brown-gpt3.md
+    2017-vaswani-attention.md      ← YAML frontmatter + your notes
   attachments/
     2017-vaswani-attention.pdf
-  papers.csv                    ← Auto-rebuilt index (do not edit manually)
-  schema.json                   ← Column definitions
-  collections.json              ← Collection membership
+  papers.csv                       ← index (auto-rebuilt; don't edit)
+  schema.md                        ← column definitions
+  collections.json                 ← collection membership
 ```
 
-Each paper file looks like:
+Each paper:
 
 ```markdown
 ---
-id: 2017-vaswani-attention
-title: "Attention Is All You Need"
+title: Attention Is All You Need
 authors: ["Vaswani, A.", "Shazeer, N."]
 year: 2017
 status: read
-tags: [transformers, attention, nlp]
+tags: [transformers, nlp]
 rating: 5
 ---
 
 ## Notes
 
-The key insight is replacing recurrence with self-attention...
+Key insight: replace recurrence with self-attention...
 ```
 
----
+## What the agent can do
 
-## Agent capabilities
+Out of the box:
 
-The agent has access to tools scoped to your active library:
+- **Search and summarize** your library
+- **Add / update** papers, including importing by DOI
+- **Look at PDF pages** (with vision-capable models — figures, equations, tables)
+- **Manage collections and tags**
+- **Take notes** on a paper as you read
 
-| Tool | Description |
-|------|-------------|
-| `search_papers` | Full-text search across titles, authors, and notes |
-| `get_paper` | Read a paper's full metadata and notes |
-| `update_paper` | Patch any paper field (title, status, tags, notes…) |
-| `list_collections` | List all collections with paper counts |
-| `add_to_collection` | Add a paper to a named collection |
-| `read_file` | Read any file within the library root |
-| `write_file` | Write any file within the library root |
-| `list_files` | List files in a library subdirectory |
+The agent uses tools sandboxed to your active library — it can't reach files outside.
 
-All file operations are sandboxed to the library root — the agent cannot access files outside your library.
+## Build from source
 
----
+```bash
+git clone https://github.com/CatVinci-Studio/Verko.git
+cd Verko
+npm install
+npm run dev          # Electron dev mode
+npm run build:web    # Static web build → dist-web/
+npm run dist:mac     # or :win / :linux
+```
 
-## Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Runtime | Electron 41 |
-| Build | electron-vite 5 |
-| Frontend | React 19 + Tailwind CSS 3 |
-| UI primitives | Radix UI (shadcn/ui) |
-| State | Zustand 5 |
-| Data fetching | TanStack Query v5 |
-| Editor | CodeMirror 6 |
-| Search | MiniSearch |
-| Agent | OpenAI SDK v4 (streaming) |
-| Testing | Vitest 3 |
-| Packaging | electron-builder |
-
----
-
-## Contributing
-
-Contributions are welcome. Please read the [contributing guide](.github/CONTRIBUTING.md) before opening a PR.
-
-- Bug reports → [Bug Report](.github/ISSUE_TEMPLATE/bug_report.yml)
-- Feature requests → [Feature Request](.github/ISSUE_TEMPLATE/feature_request.yml)
-- PRs → target the `dev` branch, not `main`
-
----
+Requires Node 20+. Codebase layout: [CLAUDE.md](./CLAUDE.md).
 
 ## License
 

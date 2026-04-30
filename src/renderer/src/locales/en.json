@@ -177,7 +177,7 @@
   "library": {
     "filterPlaceholder": "Filter papers…",
     "newPaper": "New paper",
-    "importDoi": "Import DOI",
+    "importArxiv": "Import arXiv",
     "papers": "{{count}} papers",
     "papers_one": "{{count}} paper",
     "showHidden": "Show hidden columns",
@@ -187,10 +187,11 @@
       "confirmLabel": "Delete"
     },
     "importDialog": {
-      "title": "Import paper",
-      "description": "Enter a DOI (e.g. 10.1145/...) or an arXiv URL.",
-      "field": "DOI or arXiv URL",
-      "confirmLabel": "Import"
+      "title": "Import from arXiv",
+      "description": "Paste an arXiv URL or ID; we'll pull the title, authors, and year.",
+      "field": "arXiv URL or ID",
+      "confirmLabel": "Import",
+      "errorTitle": "Import failed"
     },
     "newColumn": {
       "title": "New column",
@@ -206,6 +207,7 @@
       "status": "Status",
       "tags": "Tags",
       "hide": "Hide column",
+      "showHidden": "Show hidden columns",
       "newColumn": "New column",
       "sortAsc": "Sort ascending",
       "sortDesc": "Sort descending",

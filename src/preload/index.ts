@@ -44,7 +44,7 @@ const api = {
     update:    (id: string, patch: IpcChannels['papers:update']['args'][1]) => api.invoke('papers:update', id, patch),
     delete:    (id: string)                                        => api.invoke('papers:delete', id),
     search:    (q: string, filter?: IpcChannels['papers:search']['args'][1]) => api.invoke('papers:search', q, filter),
-    importDoi: (doi: string)                                       => api.invoke('papers:importDoi', doi),
+    importArxiv: (input: string)                                   => api.invoke('papers:importArxiv', input),
     importPdf: (path: string)                                      => api.invoke('papers:importPdf', path),
   },
 

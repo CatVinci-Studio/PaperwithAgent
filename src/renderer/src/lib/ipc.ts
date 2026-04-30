@@ -39,7 +39,7 @@ export interface IApi {
     update(id: PaperId, patch: PaperPatch): Promise<void>
     delete(id: PaperId): Promise<void>
     search(q: string, filter?: Filter): Promise<SearchHit[]>
-    importDoi(doi: string): Promise<PaperId>
+    importArxiv(input: string): Promise<PaperId>
     importPdf(path: string): Promise<PaperId>
   }
   schema: {
@@ -224,7 +224,7 @@ const webStub: IApi = {
         .map(paper => ({ paper, score: 1, terms: [q] }))
       return Promise.resolve(hits)
     },
-    importDoi: () => Promise.resolve('imported-id'),
+    importArxiv: () => Promise.resolve('imported-id'),
     importPdf: () => Promise.resolve('imported-id'),
   },
   schema: {

@@ -57,10 +57,10 @@ export function registerPaperHandlers(ipc: IpcMain, getLibrary: () => Library): 
     }
   })
 
-  ipc.handle('papers:importDoi', async (_, doi: string) => {
+  ipc.handle('papers:importArxiv', async (_, input: string) => {
     try {
       const lib = getLibrary()
-      return await lib.importDoi(doi)
+      return await lib.importArxiv(input)
     } catch (e) {
       throw new Error(e instanceof Error ? e.message : String(e))
     }

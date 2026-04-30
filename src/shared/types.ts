@@ -300,7 +300,7 @@ export interface IpcChannels {
   'papers:update':       { args: [PaperId, PaperPatch];     ret: void }
   'papers:delete':       { args: [PaperId];                 ret: void }
   'papers:search':       { args: [string, Filter?];         ret: SearchHit[] }
-  'papers:importDoi':    { args: [string];                  ret: PaperId }
+  'papers:importArxiv':  { args: [string];                  ret: PaperId }
   'papers:importPdf':    { args: [string];                  ret: PaperId }
 
   // Schema (active library)

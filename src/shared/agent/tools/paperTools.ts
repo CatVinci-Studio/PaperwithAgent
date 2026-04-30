@@ -172,19 +172,20 @@ export const paperTools: ToolRegistry = {
     },
   },
 
-  import_doi: {
+  import_arxiv: {
     def: {
-      name: 'import_doi',
-      description: 'Import a paper by its DOI, fetching metadata automatically.',
+      name: 'import_arxiv',
+      description:
+        'Import a paper from arXiv. Accepts an arXiv ID (e.g. "1706.03762"), an abs URL, or a pdf URL.',
       parameters: {
         type: 'object',
-        properties: { doi: { type: 'string', description: 'DOI string, e.g. "10.1145/3290605.3300747"' } },
-        required: ['doi'],
+        properties: { input: { type: 'string', description: 'arXiv ID or URL.' } },
+        required: ['input'],
       },
     },
     async call(args, { library }) {
       try {
-        const id = await library.importDoi(args['doi'] as string)
+        const id = await library.importArxiv(args['input'] as string)
         return JSON.stringify({ success: true, id })
       } catch (e) {
         return JSON.stringify({ success: false, error: e instanceof Error ? e.message : String(e) })

@@ -68,8 +68,11 @@ export function EditableTextCell({
           setDraft(value)
           setEditing(true)
         }}
+        // inline-block keeps the editable area at content width so the
+        // surrounding cell whitespace stays clickable for the row's
+        // double-click-to-open gesture (dblclick on text would conflict).
         className={cn(
-          'block w-full cursor-text px-1 -mx-1 rounded-[4px] hover:bg-[var(--bg-elevated)] truncate',
+          'inline-block max-w-full cursor-text px-1 -mx-1 rounded-[4px] hover:bg-[var(--bg-elevated)] truncate align-middle',
           align === 'right' && 'text-right'
         )}
       >

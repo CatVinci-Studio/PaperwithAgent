@@ -159,7 +159,7 @@ export const webApi: IApi = {
       const l = await ensureLib()
       return l ? l.search(q) : []
     },
-    importDoi: notSupported, importPdf: notSupported,
+    importArxiv: notSupported, importPdf: notSupported,
   },
 
   schema: {

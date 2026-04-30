@@ -126,9 +126,9 @@ export default function App() {
               variant="ghost"
               size="icon-sm"
               title="Expand sidebar (⌘\\)"
-              className="h-7 w-7 text-[var(--text-muted)] rounded-[6px]"
+              className="h-8 w-8 text-[var(--text-muted)] rounded-[6px]"
             >
-              <PanelLeft size={13} />
+              <PanelLeft size={14} />
             </Button>
             <div className="flex-1" />
             <Button
@@ -136,9 +136,9 @@ export default function App() {
               variant="ghost"
               size="icon-sm"
               title="Settings (⌘,)"
-              className="h-7 w-7 text-[var(--text-muted)] rounded-[6px]"
+              className="h-8 w-8 text-[var(--text-muted)] rounded-[6px]"
             >
-              <Settings size={13} />
+              <Settings size={14} />
             </Button>
           </div>
         )}

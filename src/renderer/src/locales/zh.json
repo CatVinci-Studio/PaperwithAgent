@@ -176,7 +176,7 @@
   "library": {
     "filterPlaceholder": "筛选论文…",
     "newPaper": "新建论文",
-    "importDoi": "通过 DOI 导入",
+    "importArxiv": "从 arXiv 导入",
     "papers": "{{count}} 篇论文",
     "showHidden": "显示已隐藏的列",
     "deletePaper": {
@@ -185,10 +185,11 @@
       "confirmLabel": "删除"
     },
     "importDialog": {
-      "title": "导入论文",
-      "description": "输入 DOI(如 10.1145/...)或 arXiv URL。",
-      "field": "DOI 或 arXiv URL",
-      "confirmLabel": "导入"
+      "title": "从 arXiv 导入",
+      "description": "粘贴 arXiv 链接或 ID,我们会自动拉取标题、作者和年份。",
+      "field": "arXiv URL 或 ID",
+      "confirmLabel": "导入",
+      "errorTitle": "导入失败"
     },
     "newColumn": {
       "title": "新建列",
@@ -204,6 +205,7 @@
       "status": "状态",
       "tags": "标签",
       "hide": "隐藏列",
+      "showHidden": "显示隐藏的列",
       "newColumn": "新建列",
       "sortAsc": "升序排序",
       "sortDesc": "降序排序",

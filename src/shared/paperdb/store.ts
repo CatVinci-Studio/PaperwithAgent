@@ -17,7 +17,7 @@ import { parseFrontmatter, stringifyFrontmatter, normalizePaperData } from '@sha
 import { rebuildCsv } from '@shared/paperdb/csv'
 import { buildIndex, searchIndex } from '@shared/paperdb/search'
 import { generateId } from '@shared/paperdb/id'
-import { detectAndImport } from '@shared/paperdb/import'
+import { importFromArxiv } from '@shared/paperdb/import'
 
 const PAPERS_DIR    = 'papers'
 const ATTACH_DIR    = 'attachments'
@@ -474,8 +474,13 @@ export class Library {
 
   // ── Import ───────────────────────────────────────────────────────────────────
 
-  async importDoi(doi: string): Promise<PaperId> {
-    const draft = await detectAndImport(doi)
+  /**
+   * Import a paper from an arXiv ID, abs URL, or pdf URL. Fetches the
+   * abstract page from export.arxiv.org, extracts metadata, and adds it
+   * to the library.
+   */
+  async importArxiv(input: string): Promise<PaperId> {
+    const draft = await importFromArxiv(input)
     return this.add(draft)
   }
 

@@ -7,20 +7,13 @@ import {
   useReactTable,
   type SortingState,
 } from '@tanstack/react-table'
-import { Plus, Upload, Eye } from 'lucide-react'
+import { Plus, Upload } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useLibraryStore } from '@/store/library'
 import { useUIStore } from '@/store/ui'
 import { api } from '@/lib/ipc'
 import { confirmDialog, promptDialog } from '@/store/dialogs'
 import { Button } from '@/components/ui/button'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { FilterModal } from './FilterBar'
 import { PaperRow } from './PaperRow'
 import { ColumnHeader } from './ColumnHeader'
@@ -159,21 +152,26 @@ export function LibraryView() {
     }
   }
 
-  const handleImportDoi = async () => {
+  const handleImportArxiv = async () => {
     const result = await promptDialog({
       title: t('library.importDialog.title'),
       description: t('library.importDialog.description'),
       fields: [
-        { name: 'doi', label: t('library.importDialog.field'), placeholder: '10.1145/...', required: true },
+        { name: 'input', label: t('library.importDialog.field'), placeholder: '1706.03762 or arxiv.org/abs/...', required: true },
       ],
       confirmLabel: t('library.importDialog.confirmLabel'),
     })
     if (!result) return
     try {
-      await api.papers.importDoi(result.doi.trim())
+      await api.papers.importArxiv(result.input.trim())
       refreshPapers()
     } catch (e) {
-      console.error(e)
+      const msg = e instanceof Error ? e.message : String(e)
+      await confirmDialog({
+        title: t('library.importDialog.errorTitle'),
+        message: msg,
+        confirmLabel: t('common.ok'),
+      })
     }
   }
 
@@ -263,13 +261,13 @@ export function LibraryView() {
           {t('library.papers', { count: table.getRowModel().rows.length })}
         </span>
         <Button
-          onClick={handleImportDoi}
+          onClick={handleImportArxiv}
           variant="ghost"
           size="sm"
           className="text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
         >
           <Upload size={11} />
-          {t('library.importDoi')}
+          {t('library.importArxiv')}
         </Button>
       </div>
     </div>
@@ -283,41 +281,19 @@ interface TableHeaderProps {
 }
 
 function TableHeader({ table, hiddenColumns, onAddColumn }: TableHeaderProps) {
-  const { t } = useTranslation()
   return (
     <div className="sticky top-0 z-20 flex items-stretch border-b border-[var(--border-color)] bg-[var(--bg-sidebar)] shrink-0 select-none w-fit min-w-full">
       {table.getHeaderGroups().map((hg) =>
         hg.headers.map((header) => (
-          <ColumnHeader key={header.id} header={header} onAddColumn={onAddColumn} />
+          <ColumnHeader
+            key={header.id}
+            header={header}
+            onAddColumn={onAddColumn}
+            hiddenColumns={hiddenColumns}
+          />
         ))
-      )}
-
-      {hiddenColumns.length > 0 && (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              title={t('library.showHidden')}
-              className="flex items-center justify-center w-9 shrink-0 text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] transition-colors"
-            >
-              <Eye size={12} />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="min-w-[160px]">
-            {hiddenColumns.map((c) => (
-              <DropdownMenuItem key={c.id} onClick={() => c.toggleVisibility(true)}>
-                <Eye size={12} className="mr-2" />
-                {String(c.columnDef.header ?? c.id)}
-              </DropdownMenuItem>
-            ))}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={onAddColumn}>
-              <Plus size={12} className="mr-2" />
-              {t('library.header.newColumn')}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
       )}
     </div>
   )
 }
+

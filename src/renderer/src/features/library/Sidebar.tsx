@@ -323,9 +323,9 @@ export function Sidebar() {
       <div className="shrink-0 border-t border-[var(--border-color)] p-2">
         <button
           onClick={() => setSettingsOpen(true)}
-          className="w-full flex items-center gap-2 px-2 py-2 text-[15px] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] rounded-[6px] transition-colors"
+          className="w-full flex items-center gap-2 px-2 h-8 text-[15px] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] rounded-[6px] transition-colors"
         >
-          <Settings size={13} />
+          <Settings size={14} />
           Settings
         </button>
       </div>

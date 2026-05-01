@@ -180,6 +180,16 @@ export class Agent {
     }
     const messages: NormalizedMessage[] = (persisted?.messages ?? []).map(chatToNormalized)
 
+    // Heal any tool-round left dangling by a previous aborted turn. If the
+    // last assistant in history has tool_calls and we never persisted a
+    // tool response for some of them, OpenAI rejects the next call with
+    // "tool message must follow tool_calls". Synthesise stub responses
+    // for the missing ids and persist them so the round is closed.
+    const stubs = stubMissingToolResponses(messages)
+    for (const stub of stubs) {
+      await this.ports.store.append(convId, normalizedToChat(stub))
+    }
+
     const userParts: ChatContentPart[] = [{ type: 'text', text: userText }, ...(attachments ?? [])]
     const userMsg: NormalizedMessage = { role: 'user', content: userParts }
     messages.push(userMsg)
@@ -252,4 +262,45 @@ function chatToNormalized(m: ChatMessage): NormalizedMessage {
     toolCallId: m.toolCallId,
     toolName: m.toolName,
   }
+}
+
+/**
+ * Repair a torn tool round at the tail of `messages` by mutating it in
+ * place. Walks back to the most recent assistant with `toolCalls`,
+ * collects tool responses that follow it, and synthesises stub `tool`
+ * messages for any tool_call ids that lack one. Returns the stubs
+ * (already inserted) so the caller can persist them.
+ *
+ * Triggered when a previous turn was aborted mid-dispatch — without
+ * this, OpenAI rejects the next call with "tool message must follow
+ * tool_calls".
+ */
+function stubMissingToolResponses(messages: NormalizedMessage[]): NormalizedMessage[] {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i]
+    if (m.role !== 'assistant' || !m.toolCalls?.length) continue
+
+    // Collect existing tool responses sitting between this assistant
+    // and the next non-tool message.
+    const responded = new Set<string>()
+    let insertAt = i + 1
+    while (insertAt < messages.length && messages[insertAt].role === 'tool') {
+      const id = messages[insertAt].toolCallId
+      if (id) responded.add(id)
+      insertAt++
+    }
+
+    const missing = m.toolCalls.filter((tc) => !responded.has(tc.id))
+    if (missing.length === 0) return []
+
+    const stubs: NormalizedMessage[] = missing.map((tc) => ({
+      role: 'tool',
+      toolCallId: tc.id,
+      toolName: tc.name,
+      content: [{ type: 'text', text: '[Tool call aborted]' }],
+    }))
+    messages.splice(insertAt, 0, ...stubs)
+    return stubs
+  }
+  return []
 }

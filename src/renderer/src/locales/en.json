@@ -50,7 +50,14 @@
       "testConnection": "Test connection",
       "connected": "Connected",
       "failed": "Failed",
-      "keySaved": "API key saved"
+      "keySaved": "API key saved",
+      "chatgpt": {
+        "title": "Sign in with ChatGPT",
+        "description": "Use your ChatGPT subscription instead of an API key. Opens openai.com in your browser.",
+        "signIn": "Sign in",
+        "signOut": "Sign out",
+        "signedIn": "Signed in"
+      }
     },
     "libraries": {
       "switch": "Switch",

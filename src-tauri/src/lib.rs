@@ -10,6 +10,7 @@ mod fs_cmd;
 mod http_cmd;
 mod keychain;
 mod libraries_cmd;
+mod oauth_cmd;
 mod menu;
 mod paths_cmd;
 mod registry;
@@ -81,6 +82,8 @@ pub fn run() {
             dialog_cmd::dialog_open_pdf,
             // http (CORS bypass for arxiv / web_fetch)
             http_cmd::http_fetch,
+            // oauth (loopback callback for ChatGPT sign-in)
+            oauth_cmd::oauth_loopback_wait,
             // agent (keychain only)
             agent_cmd::agent_save_key,
             agent_cmd::agent_load_key,

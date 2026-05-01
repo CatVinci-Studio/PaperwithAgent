@@ -50,7 +50,14 @@
       "testConnection": "测试连接",
       "connected": "已连接",
       "failed": "失败",
-      "keySaved": "已保存 key"
+      "keySaved": "已保存 key",
+      "chatgpt": {
+        "title": "使用 ChatGPT 登录",
+        "description": "用你的 ChatGPT 订阅替代 API Key。会在浏览器中打开 openai.com 完成授权。",
+        "signIn": "登录",
+        "signOut": "退出",
+        "signedIn": "已登录"
+      }
     },
     "libraries": {
       "switch": "切换",

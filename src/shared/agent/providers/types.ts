@@ -78,4 +78,24 @@ export interface ProviderConfig {
   baseUrl?: string
   apiKey: string
   model: string
+  /**
+   * When present, the provider authenticates via OAuth tokens instead of
+   * `apiKey`. The adapter is responsible for refresh-on-expiry and
+   * URL/auth-header overrides specific to the OAuth flavour.
+   */
+  oauth?: OAuthAuth
 }
+
+export interface CodexOAuth {
+  kind: 'codex'
+  /** Initial tokens. The adapter mutates this in place when refreshed. */
+  tokens: { accessToken: string; refreshToken: string; expiresAt: number; accountId?: string }
+  /**
+   * Refresh the access token. The adapter calls this when the current
+   * one is within ~30 s of expiry. Implementations should also persist
+   * the refreshed tokens so the next session starts non-expired.
+   */
+  refresh(refreshToken: string): Promise<{ accessToken: string; refreshToken: string; expiresAt: number; accountId?: string }>
+}
+
+export type OAuthAuth = CodexOAuth

@@ -1,8 +1,8 @@
 import type { IApi } from '@/lib/ipc'
 import { ConversationStore } from '@shared/agent/conversationStore'
-import { createProvider } from '@shared/agent/providers'
 import { buildLibraryFacade } from '@/lib/libraryFacade'
 import { buildAgentFacade } from '@/lib/agentFacade'
+import { buildProviderForProfile } from '@/lib/providerBuild'
 import { IpcBackend } from './backendIpc'
 import { LibraryHost } from './libraryHost'
 import { buildDesktopDispatch } from './desktopTools'
@@ -45,15 +45,10 @@ export function makeDesktopApi(preload: IShellApi): IApi {
         if (!cfg) return null
         const profile = cfg.profiles.find((p) => p.name === cfg.defaultProfile)
         if (!profile) return null
-        const apiKey = await preload.agent.loadKey(profile.name)
-        if (!apiKey) return null
-        const provider = createProvider({
-          protocol: profile.protocol,
-          baseUrl: profile.baseUrl,
-          apiKey,
-          model: profile.model,
+        return buildProviderForProfile(profile, {
+          load: (name) => preload.agent.loadKey(name),
+          save: (name, value) => preload.agent.saveKey(name, value, true),
         })
-        return { provider, model: profile.model }
       },
       describeContext: async () => {
         const lib = await host.ensure()
@@ -118,5 +113,6 @@ export function makeDesktopApi(preload: IShellApi): IApi {
     app:           preload.app,
     window:        preload.window,
     net:           preload.net,
+    oauth:         preload.oauth,
   }
 }

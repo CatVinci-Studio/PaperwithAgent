@@ -2,6 +2,7 @@ import type { IApi } from '@/lib/ipc'
 import type { LibraryInfo, S3LibraryInfo, AgentConfig, AgentProfile } from '@shared/types'
 import { PROVIDER_DEFINITIONS } from '@shared/providers'
 import { createProvider } from '@shared/agent/providers'
+import { buildProviderForProfile } from '@/lib/providerBuild'
 import { Library } from '@shared/paperdb/store'
 import { S3Backend, type S3BackendConfig } from '@shared/paperdb/backendS3'
 import { LocalStorageBackend } from '@shared/paperdb/backendLocalStorage'
@@ -138,15 +139,18 @@ const ag = buildAgentFacade({
     async getProvider() {
       const def = PROVIDER_DEFINITIONS.find((d) => d.id === getActiveProfileId())
       if (!def) return null
-      const apiKey = loadApiKey(def.id)
-      if (!apiKey) return null
-      const provider = createProvider({
-        protocol: def.protocol,
-        baseUrl: def.defaults.baseUrl,
-        apiKey,
-        model: def.defaults.model,
-      })
-      return { provider, model: def.defaults.model }
+      return buildProviderForProfile(
+        {
+          name: def.id,
+          protocol: def.protocol,
+          baseUrl: def.defaults.baseUrl,
+          model: def.defaults.model,
+        },
+        {
+          load: (name) => loadApiKey(name),
+          save: (name, value) => { saveApiKey(name, value, true) },
+        },
+      )
     },
     describeContext: async () => {
       const l = await ensureLib()
@@ -323,5 +327,11 @@ export const webApi: IApi = {
       return { status: res.status, ok: res.ok, headers, body: await res.text() }
     },
     openExternal: async (url) => { window.open(url, '_blank', 'noopener,noreferrer') },
+  },
+  oauth: {
+    // The Codex flow's OAuth client ID is registered for `localhost:1455`,
+    // which a browser tab can't bind. A web build would need a separate
+    // OAuth client + hosted redirect page — out of scope for this build.
+    loopbackWait: () => Promise.reject(new Error('ChatGPT sign-in is only available in the desktop app.')),
   },
 }

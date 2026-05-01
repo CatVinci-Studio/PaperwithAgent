@@ -1,5 +1,9 @@
-import { CheckCircle, XCircle, Loader, Wifi } from 'lucide-react'
+import { useState } from 'react'
+import { CheckCircle, XCircle, Loader, LogIn, LogOut, Wifi } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { api } from '@/lib/ipc'
+import { signInWithChatGpt, signOutChatGpt } from '../codexLogin'
 import { setLanguage, type Language } from '@/lib/i18n'
 import { useUIStore } from '@/store/ui'
 import { Button } from '@/components/ui/button'
@@ -94,6 +98,11 @@ function ProviderSection() {
           })}
         </div>
 
+        {/* OAuth section — only when the provider supports it */}
+        {active && definition?.oauth === 'codex' && (
+          <CodexOAuthRow providerId={active.name} />
+        )}
+
         {/* Field grid (declarative from catalog) */}
         {active && definition && (
           <div className="space-y-3 pt-2 border-t border-[var(--border-color)]">
@@ -173,6 +182,94 @@ function ProviderSection() {
         )}
       </div>
     </SettingSection>
+  )
+}
+
+// ── ChatGPT OAuth row ───────────────────────────────────────────────────────
+
+function CodexOAuthRow({ providerId }: { providerId: string }) {
+  const { t } = useTranslation()
+  const queryClient = useQueryClient()
+  const [busy, setBusy] = useState<'in' | 'out' | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const { data: signedIn = false } = useQuery({
+    queryKey: ['agent', 'oauth', providerId],
+    queryFn: async () => {
+      const raw = await api.agent.loadKey(`${providerId}:oauth`)
+      return Boolean(raw && raw.length > 0)
+    },
+  })
+
+  const refresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['agent', 'oauth', providerId] })
+    queryClient.invalidateQueries({ queryKey: ['agent', 'profiles'] })
+  }
+
+  const handleSignIn = async () => {
+    setBusy('in')
+    setError(null)
+    try {
+      await signInWithChatGpt(providerId)
+      refresh()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const handleSignOut = async () => {
+    setBusy('out')
+    try {
+      await signOutChatGpt(providerId)
+      refresh()
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  return (
+    <SettingRow
+      label={t('settings.provider.chatgpt.title')}
+      description={t('settings.provider.chatgpt.description')}
+    >
+      <div className="flex items-center gap-2">
+        {error && (
+          <span className="text-[12.5px] text-[var(--danger)] mr-2 max-w-[220px] truncate" title={error}>
+            {error}
+          </span>
+        )}
+        {signedIn ? (
+          <>
+            <span className="flex items-center gap-1 text-[14.5px] text-[var(--status-read)]">
+              <CheckCircle size={12} /> {t('settings.provider.chatgpt.signedIn')}
+            </span>
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={handleSignOut}
+              disabled={busy !== null}
+              className="rounded-full"
+            >
+              {busy === 'out' ? <Loader size={11} className="animate-spin" /> : <LogOut size={11} />}
+              {t('settings.provider.chatgpt.signOut')}
+            </Button>
+          </>
+        ) : (
+          <Button
+            variant="accent"
+            size="lg"
+            onClick={handleSignIn}
+            disabled={busy !== null}
+            className="rounded-full"
+          >
+            {busy === 'in' ? <Loader size={11} className="animate-spin" /> : <LogIn size={11} />}
+            {t('settings.provider.chatgpt.signIn')}
+          </Button>
+        )}
+      </div>
+    </SettingRow>
   )
 }
 

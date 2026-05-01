@@ -33,6 +33,14 @@ export interface ProviderDefinition {
   defaults: { model: string; baseUrl: string }
   /** Fields exposed in the settings form. Rendered top-to-bottom. */
   fields: ProviderFieldDefinition[]
+  /**
+   * Optional OAuth login flow. When present, the settings UI shows a
+   * "Sign in" button alongside the API-key field; users can pick either
+   * path. Tokens are persisted in the keychain under `<id>:oauth`,
+   * separate from the API key in `<id>` so they don't clobber each
+   * other when the user swaps modes.
+   */
+  oauth?: 'codex'
 }
 
 const COMMON_FIELDS: ProviderFieldDefinition[] = [
@@ -48,6 +56,7 @@ export const PROVIDER_DEFINITIONS: ProviderDefinition[] = [
     browserSupported: true,
     defaults: { model: 'gpt-5.4-mini', baseUrl: 'https://api.openai.com/v1' },
     fields: COMMON_FIELDS,
+    oauth: 'codex',
   },
   {
     id: 'claude',

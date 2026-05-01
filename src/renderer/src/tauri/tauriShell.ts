@@ -2,7 +2,8 @@ import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { openUrl } from '@tauri-apps/plugin-opener'
-import type { HttpFetchRequest, HttpFetchResponse, IShellApi } from '@/desktop/shellApi'
+import type { IShellApi } from '@/desktop/shellApi'
+import type { SimpleRequest, SimpleResponse } from '@shared/net/fetch'
 import type {
   AgentConfig, AgentProfile, LibraryInfo, LibraryNonePayload,
   NewS3LibraryInput, ProbeResult, ProfilePatch,
@@ -158,8 +159,17 @@ export const tauriShell: IShellApi = {
   },
 
   net: {
-    fetch: (req: HttpFetchRequest) => invoke<HttpFetchResponse>('http_fetch', { req }),
+    fetch: (req: SimpleRequest) => invoke<SimpleResponse>('http_fetch', { req }),
     openExternal: (url: string) => openUrl(url),
+  },
+
+  oauth: {
+    loopbackWait: (port, path, timeoutSecs) =>
+      invoke<{ code: string; state: string }>('oauth_loopback_wait', {
+        port,
+        path,
+        timeoutSecs,
+      }),
   },
 
   app: {

@@ -2,22 +2,9 @@ import type {
   AgentConfig, AgentProfile, ChatContentPart, LibraryInfo, LibraryNonePayload,
   NewLibraryInput, NewS3LibraryInput, ProbeResult, ProfilePatch,
 } from '@shared/types'
+import type { SimpleRequest, SimpleResponse } from '@shared/net/fetch'
 
 type UnsubFn = () => void
-
-export interface HttpFetchRequest {
-  url: string
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'HEAD'
-  headers?: Record<string, string>
-  body?: string
-}
-
-export interface HttpFetchResponse {
-  status: number
-  ok: boolean
-  headers: Record<string, string>
-  body: string
-}
 
 /**
  * Narrow IO contract that the Tauri shell implements (see
@@ -67,9 +54,17 @@ export interface IShellApi {
   }
   net: {
     /** Native HTTP fetch routed through Rust — bypasses webview CORS. */
-    fetch(req: HttpFetchRequest): Promise<HttpFetchResponse>
+    fetch(req: SimpleRequest): Promise<SimpleResponse>
     /** Open URL in the user's default browser. */
     openExternal(url: string): Promise<void>
+  }
+  oauth: {
+    /**
+     * Bind a one-shot loopback HTTP listener and resolve with the OAuth
+     * `code` + `state` returned by the redirect. Desktop-only — web
+     * builds reject because a webview can't bind a TCP socket.
+     */
+    loopbackWait(port: number, path: string, timeoutSecs: number): Promise<{ code: string; state: string }>
   }
   app: {
     platform: NodeJS.Platform

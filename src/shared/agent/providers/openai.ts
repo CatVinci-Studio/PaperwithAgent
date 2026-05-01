@@ -1,5 +1,6 @@
 import OpenAI from 'openai'
 import type {
+  CodexOAuth,
   ContentPart,
   NormalizedMessage,
   ProviderConfig,
@@ -7,6 +8,9 @@ import type {
   StreamEvent,
   StreamOptions,
 } from './types'
+
+const CODEX_API_ENDPOINT = 'https://chatgpt.com/backend-api/codex/responses'
+const REFRESH_LEEWAY_MS = 30_000
 
 interface ToolCallAccum {
   id: string
@@ -18,12 +22,16 @@ export class OpenAIProtocol implements ProviderProtocol {
   private client: OpenAI
 
   constructor(public readonly config: ProviderConfig) {
+    const oauth = config.oauth?.kind === 'codex' ? config.oauth : undefined
+
     this.client = new OpenAI({
       baseURL: config.baseUrl || 'https://api.openai.com/v1',
-      apiKey: config.apiKey,
-      // Web build: the SDK refuses to run from a browser unless this is set.
-      // The user's key stays in their own browser; nothing routes through us.
+      // OAuth path: the SDK still requires *some* apiKey value at construction,
+      // even with a custom fetch overriding the Authorization header. Use a
+      // sentinel — the override below strips it before the request leaves.
+      apiKey: oauth ? 'oauth-placeholder' : config.apiKey,
       dangerouslyAllowBrowser: typeof window !== 'undefined',
+      ...(oauth ? { fetch: makeCodexFetch(oauth) } : {}),
     })
   }
 
@@ -33,6 +41,11 @@ export class OpenAIProtocol implements ProviderProtocol {
     // hidden reasoning, so a 1-token cap returns finish_reason="length"
     // with no choices) and burns quota. `models.list` is the canonical
     // "does the key work" probe — fast, free, no model assumed.
+    //
+    // OAuth path skips this — the chatgpt.com Codex endpoint doesn't
+    // expose `/v1/models`, and a successful sign-in already proves the
+    // token is good.
+    if (this.config.oauth) return true
     try {
       await this.client.models.list()
       return true
@@ -101,6 +114,47 @@ export class OpenAIProtocol implements ProviderProtocol {
     }
 
     yield { type: 'finish', reason: normalizeFinish(finishReason) }
+  }
+}
+
+/**
+ * Build a Fetch-API-compatible function that injects the Codex OAuth
+ * Authorization + ChatGPT-Account-Id headers and rewrites the URL to
+ * the Codex backend endpoint. Refreshes the access token on demand
+ * (within `REFRESH_LEEWAY_MS` of expiry) by calling back into the
+ * provider config's persistence-aware `refresh` hook.
+ */
+function makeCodexFetch(oauth: CodexOAuth): typeof fetch {
+  return async (input, init) => {
+    if (oauth.tokens.expiresAt - Date.now() < REFRESH_LEEWAY_MS) {
+      const next = await oauth.refresh(oauth.tokens.refreshToken)
+      // Mutate in place so subsequent calls in the same provider see the
+      // refreshed values (config holds a reference to this object).
+      oauth.tokens.accessToken = next.accessToken
+      oauth.tokens.refreshToken = next.refreshToken
+      oauth.tokens.expiresAt = next.expiresAt
+      if (next.accountId) oauth.tokens.accountId = next.accountId
+    }
+
+    const headers = new Headers(init?.headers ?? {})
+    headers.delete('authorization')
+    headers.set('Authorization', `Bearer ${oauth.tokens.accessToken}`)
+    if (oauth.tokens.accountId) {
+      headers.set('ChatGPT-Account-Id', oauth.tokens.accountId)
+    }
+
+    // Codex backend serves both shapes (chat completions + responses)
+    // at the same endpoint. The SDK targets `/v1/chat/completions` or
+    // `/v1/responses`; rewrite either to the Codex path.
+    const requestUrl = typeof input === 'string'
+      ? input
+      : input instanceof URL ? input.toString() : input.url
+    const parsed = new URL(requestUrl)
+    const url = parsed.pathname.includes('/chat/completions') || parsed.pathname.includes('/responses')
+      ? CODEX_API_ENDPOINT
+      : parsed.toString()
+
+    return fetch(url, { ...init, headers })
   }
 }
 

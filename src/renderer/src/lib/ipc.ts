@@ -5,7 +5,7 @@ import type {
   NewLibraryInput, NewS3LibraryInput, ProbeResult, LibraryNonePayload,
   ChatContentPart, ChatMessage, ConversationSummary, Conversation,
 } from '@shared/types'
-import type { HttpFetchRequest, HttpFetchResponse } from '@/desktop/shellApi'
+import type { SimpleRequest, SimpleResponse } from '@shared/net/fetch'
 
 type UnsubFn = () => void
 
@@ -102,9 +102,13 @@ export interface IApi {
   }
   net: {
     /** Native HTTP fetch — bypasses webview CORS on desktop; falls back to native fetch on web. */
-    fetch(req: HttpFetchRequest): Promise<HttpFetchResponse>
+    fetch(req: SimpleRequest): Promise<SimpleResponse>
     /** Open URL in user's default browser. */
     openExternal(url: string): Promise<void>
+  }
+  oauth: {
+    /** Bind a one-shot loopback listener for the OAuth redirect. Desktop-only. */
+    loopbackWait(port: number, path: string, timeoutSecs: number): Promise<{ code: string; state: string }>
   }
 }
 

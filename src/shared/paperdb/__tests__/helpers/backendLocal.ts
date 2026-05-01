@@ -2,16 +2,19 @@ import { mkdir, readFile, rm, readdir, access } from 'fs/promises'
 import { createReadStream as fsCreateReadStream } from 'fs'
 import { Readable } from 'node:stream'
 import { join, dirname, relative, sep, posix } from 'path'
-import type { StorageBackend } from '@shared/paperdb/backend'
-import { BackendError, BackendNotFoundError } from '@shared/paperdb/backend'
-import { atomicWrite } from '../atomicWrite'
+import type { StorageBackend } from '../../backend'
+import { BackendError, BackendNotFoundError } from '../../backend'
+import { atomicWrite } from './atomicWrite'
 
-/** Filesystem-backed StorageBackend. Root is an absolute path on disk. */
+/**
+ * Test-only filesystem-backed `StorageBackend`. The Rust runtime owns the
+ * production filesystem path now; this exists so shared `Library` /
+ * `schema` tests can mount a real on-disk backend in vitest's node env.
+ */
 export class LocalBackend implements StorageBackend {
   constructor(public readonly root: string) {}
 
   private resolve(relPath: string): string {
-    // Normalize POSIX-style relative paths into platform paths.
     const safe = relPath.replace(/^[\\/]+/, '')
     return join(this.root, ...safe.split('/'))
   }
@@ -81,8 +84,6 @@ export class LocalBackend implements StorageBackend {
   }
 
   createReadStream(relPath: string): ReadableStream<Uint8Array> {
-    // Adapt Node's Readable to a Web ReadableStream so the StorageBackend
-    // interface stays platform-neutral.
     return Readable.toWeb(fsCreateReadStream(this.resolve(relPath))) as ReadableStream<Uint8Array>
   }
 
@@ -94,7 +95,6 @@ export class LocalBackend implements StorageBackend {
     return `local: ${this.root}`
   }
 
-  /** Convenience helper used by manager.create/init to ensure the root exists. */
   async ensureRoot(): Promise<void> {
     await mkdir(this.root, { recursive: true })
   }

@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { mkdtemp, rm } from 'fs/promises'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import { LocalBackend } from '../paperdb/backendLocal'
-import { BackendNotFoundError } from '@shared/paperdb/backend'
+import { LocalBackend } from './helpers/backendLocal'
+import { BackendNotFoundError } from '../backend'
 
 describe('LocalBackend', () => {
   let dir: string

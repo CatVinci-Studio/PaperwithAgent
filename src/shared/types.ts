@@ -270,43 +270,6 @@ export interface LibraryNonePayload {
   message?: string
 }
 
-// ─── IPC channel map (main ↔ renderer) ───────────────────────────────────────
-
-export interface IpcChannels {
-  // Libraries (multi-library management — new entry-based API)
-  'libraries:list':     { args: [];                              ret: LibraryInfo[] }
-  'libraries:open':     { args: [string];                        ret: LibraryInfo } // id
-  'libraries:add':      { args: [NewLibraryInput];               ret: LibraryInfo }
-  'libraries:remove':   { args: [string];                        ret: void }        // id (unregisters, no delete)
-  'libraries:rename':   { args: [string, string];                ret: void }        // id, newName
-  'libraries:pickFolder': { args: [];                            ret: string | null }
-  'libraries:probeLocal': { args: [string];                      ret: ProbeResult } // path
-  'libraries:probeS3':    { args: [Omit<NewS3LibraryInput, 'kind' | 'name' | 'initialize'>]; ret: ProbeResult }
-  'libraries:hasNone':    { args: [];                            ret: boolean }
-  'libraries:exportZip':  { args: [string];                      ret: string | null } // libraryId → savedPath (null = cancelled)
-  'libraries:importZip':  { args: [];                            ret: LibraryInfo | null } // null = cancelled
-  'libraries:s3Creds':    { args: [string]; ret: { accessKeyId: string; secretAccessKey: string } | null }
-
-  // Agent — config + key store only. The loop runs in the renderer.
-  'agent:getConfig':     { args: [];                        ret: AgentConfig }
-  'agent:setProfile':    { args: [string];                  ret: void }
-  'agent:updateProfile': { args: [string, ProfilePatch];    ret: void }
-  'agent:saveKey':       { args: [string, string, boolean]; ret: void } // profile, key, remember
-  'agent:loadKey':       { args: [string];                  ret: string | null }
-  'agent:testKey':       { args: [string];                  ret: boolean }
-  'agent:getProfiles':   { args: [];                        ret: AgentProfile[] }
-
-  // Filesystem (zero-trust scoped). All paths are (rootId, relPath).
-  'fs:read':   { args: [string, string];                            ret: Uint8Array }
-  'fs:write':  { args: [string, string, Uint8Array | string];       ret: void }
-  'fs:delete': { args: [string, string];                            ret: void }
-  'fs:list':   { args: [string, string];                            ret: string[] }
-  'fs:exists': { args: [string, string];                            ret: boolean }
-
-  // Path resolution
-  'paths:libraryRoot': { args: [string]; ret: string | null }
-  'paths:userData':    { args: [];       ret: string }
-
-  // Native dialogs that return data (not paths)
-  'dialog:openPdf': { args: []; ret: { filename: string; bytes: Uint8Array } | null }
-}
+// IPC contract lives in `src/renderer/src/desktop/preloadApi.ts` (`IPreloadApi`).
+// Tauri commands implement that surface from Rust; the renderer's `makeDesktopApi`
+// wraps it into the consumer-facing `IApi`.

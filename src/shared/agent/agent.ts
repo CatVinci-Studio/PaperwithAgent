@@ -211,6 +211,19 @@ export class Agent {
       })
     }
 
+    // ConversationStore.append is read-modify-write, so concurrent calls
+    // race: assistant{tool_calls} and its tool response can both read the
+    // pre-write state and the second write clobbers the first. The model
+    // then replays a torn history (tool with no preceding tool_calls) and
+    // OpenAI/Anthropic 400. Serialise per-Agent.send so the appends fire
+    // in loop order.
+    let appendQueue: Promise<unknown> = Promise.resolve()
+    const queuedAppend = (msg: NormalizedMessage): void => {
+      appendQueue = appendQueue
+        .then(() => ports.store.append(convId!, normalizedToChat(msg)))
+        .catch((e) => console.error('[agent] persist failed:', e))
+    }
+
     void runAgentLoop({
       provider,
       systemPrompt,
@@ -220,7 +233,7 @@ export class Agent {
       temperature: ports.temperature,
       dispatchTool: (name, args) => ports.dispatchTool(name, args),
       onEvent: (ev) => this.emit(convId!, ev),
-      onMessage: (msg) => { void ports.store.append(convId!, normalizedToChat(msg)) },
+      onMessage: queuedAppend,
       abortSignal: ctrl.signal,
       // L1: silent micro compaction every turn.
       // L2: auto compaction when we cross the token threshold.

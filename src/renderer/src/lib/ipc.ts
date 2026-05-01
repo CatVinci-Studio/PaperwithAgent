@@ -110,16 +110,26 @@ declare global {
 import { webApi } from '@/web/webApi'
 import { makeDesktopApi } from '@/desktop/desktopApi'
 import type { IPreloadApi } from '@/desktop/preloadApi'
+import { tauriStubApi } from '@/tauri/tauriStubApi'
 
 declare const __WEB_BUILD__: boolean | undefined
+declare const __TAURI_BUILD__: boolean | undefined
+
+function isTauri(): boolean {
+  return typeof (window as unknown as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__ !== 'undefined'
+}
 
 /**
  * Pick the right `IApi` for the runtime:
+ *   - Tauri: `__TAURI_INTERNALS__` injected by Tauri → Tauri stub (stage 1 PoC)
  *   - Electron renderer: `window.api` is set by preload → wrap with `makeDesktopApi`
  *   - Web build: `__WEB_BUILD__` define is true → use S3-backed `webApi`
- * Anything else throws — there is no third runtime.
+ * Anything else throws — there is no fourth runtime.
  */
 function pickApi(): IApi {
+  if ((typeof __TAURI_BUILD__ !== 'undefined' && __TAURI_BUILD__) || isTauri()) {
+    return tauriStubApi
+  }
   const electronApi = (window as unknown as { api?: IPreloadApi }).api
   if (electronApi) return makeDesktopApi(electronApi)
   if (typeof __WEB_BUILD__ !== 'undefined' && __WEB_BUILD__) return webApi

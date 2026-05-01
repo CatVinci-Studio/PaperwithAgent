@@ -6,7 +6,7 @@ import { buildAgentFacade } from '@/lib/agentFacade'
 import { IpcBackend } from './backendIpc'
 import { LibraryHost } from './libraryHost'
 import { buildDesktopDispatch } from './desktopTools'
-import type { IPreloadApi } from './preloadApi'
+import type { IShellApi } from './shellApi'
 
 const CONVERSATIONS_ROOT = 'conversations'
 const TRANSCRIPTS_ROOT   = 'transcripts'
@@ -19,7 +19,7 @@ const TRANSCRIPTS_ROOT   = 'transcripts'
  * else (papers, schema, collections, agent loop, conversation persistence)
  * runs locally.
  */
-export function makeDesktopApi(preload: IPreloadApi): IApi {
+export function makeDesktopApi(preload: IShellApi): IApi {
   const host = new LibraryHost(preload)
   const convStore = new ConversationStore(new IpcBackend(preload, CONVERSATIONS_ROOT))
   const transcriptBackend = new IpcBackend(preload, TRANSCRIPTS_ROOT)

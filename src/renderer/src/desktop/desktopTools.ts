@@ -3,7 +3,7 @@ import {
   type ToolRegistry, type ToolHandler,
 } from '@shared/agent/tools'
 import type { Library } from '@shared/paperdb/store'
-import type { IPreloadApi } from './preloadApi'
+import type { IShellApi } from './shellApi'
 
 /**
  * Build the desktop tool registry. SHARED_TOOLS handle paper / collection
@@ -11,7 +11,7 @@ import type { IPreloadApi } from './preloadApi'
  * Manager tools (list_libraries / switch_library) call the libraries IPC.
  */
 export function buildDesktopDispatch(
-  api: IPreloadApi,
+  api: IShellApi,
   getLibrary: () => Library | null,
 ): { tools: ToolRegistry; dispatch: (name: string, args: Record<string, unknown>) => Promise<string> } {
   const list_libraries: ToolHandler = {

@@ -1,7 +1,7 @@
 import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
 import { getCurrentWindow } from '@tauri-apps/api/window'
-import type { IPreloadApi } from '@/desktop/preloadApi'
+import type { IShellApi } from '@/desktop/shellApi'
 import type {
   AgentConfig, AgentProfile, LibraryInfo, LibraryNonePayload,
   NewS3LibraryInput, ProbeResult, ProfilePatch,
@@ -12,8 +12,8 @@ import { S3Backend } from '@shared/paperdb/backendS3'
 import { BackendAuthError, BackendNetworkError } from '@shared/paperdb/backend'
 
 /**
- * Tauri-side `IPreloadApi`. Same shape as the Electron preload, so the
- * renderer's `makeDesktopApi` builds on top of it unchanged.
+ * Tauri-side `IShellApi` — the IO contract that `makeDesktopApi` wraps
+ * into the consumer-facing `IApi`.
  *
  * Split of responsibilities:
  *   - File IO / dialogs / library registry / OS keychain → Rust commands
@@ -54,7 +54,7 @@ function buildProfile(id: string): ProfileBase {
   }
 }
 
-export const tauriPreload: IPreloadApi = {
+export const tauriShell: IShellApi = {
   libraries: {
     list:        ()           => invoke<LibraryInfo[]>('libraries_list'),
     open:        (id)         => invoke<LibraryInfo>('libraries_open', { id }),

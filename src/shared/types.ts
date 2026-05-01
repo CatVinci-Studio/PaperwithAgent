@@ -271,6 +271,6 @@ export interface LibraryNonePayload {
   message?: string
 }
 
-// IPC contract lives in `src/renderer/src/desktop/preloadApi.ts` (`IPreloadApi`).
+// IPC contract lives in `src/renderer/src/desktop/shellApi.ts` (`IShellApi`).
 // Tauri commands implement that surface from Rust; the renderer's `makeDesktopApi`
 // wraps it into the consumer-facing `IApi`.

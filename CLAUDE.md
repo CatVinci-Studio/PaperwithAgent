@@ -41,14 +41,14 @@ src/
     presets.ts        # DEFAULT_AGENT_CONFIG derived from the catalog
 
   renderer/src/       # React frontend — owns Library + agent runtime at runtime
-    desktop/          # Desktop adapter — wraps the IPreloadApi (Tauri commands) into the full IApi
+    desktop/          # Desktop adapter — wraps the IShellApi (Tauri commands) into the full IApi
       backendIpc.ts   #   StorageBackend over fs_* Tauri commands
       libraryHost.ts  #   Owns active Library, listens for library:switched
       desktopTools.ts #   Tool registry (SHARED_TOOLS + manager tools using IPC)
-      desktopApi.ts   #   makeDesktopApi(preload) → full IApi
-      preloadApi.ts   #   IPreloadApi — the IO contract the Tauri shell implements
+      desktopApi.ts   #   makeDesktopApi(shell) → full IApi
+      shellApi.ts   #   IShellApi — the IO contract the Tauri shell implements
     tauri/
-      tauriPreload.ts #   IPreloadApi implementation: invoke() + listen() over Tauri commands
+      tauriShell.ts #   IShellApi implementation: invoke() + listen() over Tauri commands
     web/              # Web build (single S3-backed library, full agent)
       webApi.ts       #   IApi backed by S3Backend + LocalStorageBackend.
                       #   Uses the same shared Library + Agent runtime as desktop;
@@ -112,11 +112,11 @@ on first open: frontmatter is extracted into CSV and stripped from the `.md`.
 Paper IDs are `{year}-{lastname}-{titleword}` (e.g. `2017-vaswani-attention`). Generation falls back to `randomBytes` to avoid timestamp collisions on rapid adds.
 
 ## IPC Pattern
-The IPC contract is `IPreloadApi` in `src/renderer/src/desktop/preloadApi.ts`. Two implementations:
-- **Tauri** (`src/renderer/src/tauri/tauriPreload.ts`): wraps `invoke()` / `listen()` over Rust commands.
+The IPC contract is `IShellApi` in `src/renderer/src/desktop/shellApi.ts`. Two implementations:
+- **Tauri** (`src/renderer/src/tauri/tauriShell.ts`): wraps `invoke()` / `listen()` over Rust commands.
 - **Web** (`src/renderer/src/web/webApi.ts`): same shape, backed by S3Backend + localStorage / IndexedDB.
 
-Renderer code consumes `IApi` (broader surface) from `src/renderer/src/lib/ipc.ts`, where `pickApi()` detects the runtime: `__TAURI_INTERNALS__` → `makeDesktopApi(tauriPreload)`, `__WEB_BUILD__` → `webApi`.
+Renderer code consumes `IApi` (broader surface) from `src/renderer/src/lib/ipc.ts`, where `pickApi()` detects the runtime: `__TAURI_INTERNALS__` → `makeDesktopApi(tauriShell)`, `__WEB_BUILD__` → `webApi`.
 
 The IPC surface is small and primitive — file IO, keychain, dialogs. There is **no** `papers:*`, `schema:*`, `collections:*`, `agent:send`, or streaming `agent:event` IPC: those are renderer-local. `library:switched` and `library:none` are the only Rust → renderer events.
 

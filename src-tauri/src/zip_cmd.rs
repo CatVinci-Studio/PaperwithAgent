@@ -85,3 +85,81 @@ fn walk(dir: &Path, acc: &mut Vec<PathBuf>) -> std::io::Result<()> {
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn write(dir: &Path, rel: &str, body: &str) {
+        let p = dir.join(rel);
+        if let Some(parent) = p.parent() {
+            fs::create_dir_all(parent).unwrap();
+        }
+        fs::write(p, body).unwrap();
+    }
+
+    #[test]
+    fn export_then_import_roundtrip() {
+        let src = tempfile::tempdir().unwrap();
+        write(src.path(), "schema.md", "# schema\n");
+        write(src.path(), "papers.csv", "id,title\n2024-foo,Foo\n");
+        write(src.path(), "papers/2024-foo.md", "Notes for foo");
+
+        let zip_dir = tempfile::tempdir().unwrap();
+        let zip_path = zip_dir.path().join("lib.zip");
+        export_local_zip(src.path(), &zip_path).unwrap();
+        assert!(zip_path.exists());
+
+        let dst = tempfile::tempdir().unwrap();
+        let target = dst.path().join("restored");
+        import_zip(&zip_path, &target).unwrap();
+
+        assert_eq!(
+            fs::read_to_string(target.join("schema.md")).unwrap(),
+            "# schema\n",
+        );
+        assert_eq!(
+            fs::read_to_string(target.join("papers/2024-foo.md")).unwrap(),
+            "Notes for foo",
+        );
+    }
+
+    #[test]
+    fn import_refuses_non_empty_target() {
+        let src = tempfile::tempdir().unwrap();
+        write(src.path(), "schema.md", "# schema\n");
+        let zip_path = src.path().join("lib.zip");
+        export_local_zip(src.path(), &zip_path).unwrap();
+
+        let dst = tempfile::tempdir().unwrap();
+        write(dst.path(), "stranger.txt", "i was here first");
+
+        let err = import_zip(&zip_path, dst.path()).unwrap_err();
+        assert!(err.contains("not empty"), "got: {err}");
+    }
+
+    #[test]
+    fn import_rejects_archive_without_schema() {
+        let src = tempfile::tempdir().unwrap();
+        // No schema.md — only a stray file.
+        write(src.path(), "papers.csv", "id\n");
+        let zip_path = src.path().join("lib.zip");
+        export_local_zip(src.path(), &zip_path).unwrap();
+
+        let dst = tempfile::tempdir().unwrap();
+        let target = dst.path().join("restored");
+        let err = import_zip(&zip_path, &target).unwrap_err();
+        assert!(err.contains("schema.md missing"), "got: {err}");
+    }
+
+    #[test]
+    fn export_creates_parent_dirs() {
+        let src = tempfile::tempdir().unwrap();
+        write(src.path(), "schema.md", "x");
+        let dst = tempfile::tempdir().unwrap();
+        let nested = dst.path().join("a/b/c/lib.zip");
+
+        export_local_zip(src.path(), &nested).unwrap();
+        assert!(nested.exists());
+    }
+}

@@ -1,6 +1,6 @@
 {
   "name": "verko",
-  "version": "0.5.0-4",
+  "version": "0.5.0-5",
   "description": "Agent-first paper management. CSV + Markdown native storage.",
   "author": {
     "name": "CatVinci-Studio",
@@ -11,11 +11,11 @@
   "scripts": {
     "dev": "tauri dev",
     "build": "tauri build",
-    "dev:web": "vite src/renderer --config vite.renderer.config.ts",
-    "build:web": "vite build --config vite.renderer.config.ts",
+    "dev:web": "vite",
+    "build:web": "vite build",
     "tauri": "tauri",
-    "tauri:dev:vite": "vite --config vite.tauri.config.ts",
-    "tauri:build:vite": "vite build --config vite.tauri.config.ts",
+    "tauri:dev:vite": "vite --mode tauri",
+    "tauri:build:vite": "vite build --mode tauri",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
     "test": "vitest run",
     "test:watch": "vitest",

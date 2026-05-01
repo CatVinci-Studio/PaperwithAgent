@@ -7,11 +7,11 @@ type UnsubFn = () => void
 
 /**
  * Narrow IO contract that the Tauri shell implements (see
- * `src/renderer/src/tauri/tauriPreload.ts`). `desktopApi.ts` wraps this
+ * `src/renderer/src/tauri/tauriShell.ts`). `desktopApi.ts` wraps this
  * up into the full `IApi` by attaching the renderer-side Library + Agent
  * (papers / schema / collections / pdf / conversations).
  */
-export interface IPreloadApi {
+export interface IShellApi {
   libraries: {
     list(): Promise<LibraryInfo[]>
     open(id: string): Promise<LibraryInfo>

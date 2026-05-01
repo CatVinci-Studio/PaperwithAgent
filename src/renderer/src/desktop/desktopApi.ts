@@ -24,7 +24,7 @@ export function makeDesktopApi(preload: IShellApi): IApi {
   const convStore = new ConversationStore(new IpcBackend(preload, CONVERSATIONS_ROOT))
   const transcriptBackend = new IpcBackend(preload, TRANSCRIPTS_ROOT)
 
-  const { dispatch, tools } = buildDesktopDispatch(preload, () => host.current())
+  const { dispatch, isParallelSafe, tools } = buildDesktopDispatch(preload, () => host.current())
   const toolDefs = Object.values(tools).map((h) => h.def)
 
   const lib = buildLibraryFacade(() => host.ensure())
@@ -70,6 +70,7 @@ export function makeDesktopApi(preload: IShellApi): IApi {
       },
       getTools: () => toolDefs,
       dispatchTool: dispatch,
+      isParallelSafe,
       store: convStore,
       saveTranscript: async (convId, snapshot) => {
         const fname = `${convId}-${Date.now()}.json`

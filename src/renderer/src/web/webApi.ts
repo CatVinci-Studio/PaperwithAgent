@@ -174,6 +174,7 @@ const ag = buildAgentFacade({
       if (!lib) return JSON.stringify({ error: 'No active library.' })
       return dispatchFromRegistry(SHARED_TOOLS, name, args, { library: lib })
     },
+    isParallelSafe: (name) => SHARED_TOOLS[name]?.parallelSafe === true,
     store: convStore,
     saveTranscript: async (convId, snapshot) => {
       const key = `${convId}-${Date.now()}.json`

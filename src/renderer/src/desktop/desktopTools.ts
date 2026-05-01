@@ -13,8 +13,13 @@ import type { IShellApi } from './shellApi'
 export function buildDesktopDispatch(
   api: IShellApi,
   getLibrary: () => Library | null,
-): { tools: ToolRegistry; dispatch: (name: string, args: Record<string, unknown>) => Promise<string> } {
+): {
+  tools: ToolRegistry
+  dispatch: (name: string, args: Record<string, unknown>) => Promise<string>
+  isParallelSafe: (name: string) => boolean
+} {
   const list_libraries: ToolHandler = {
+    parallelSafe: true,
     def: {
       name: 'list_libraries',
       description: 'List all registered libraries with their metadata.',
@@ -67,5 +72,7 @@ export function buildDesktopDispatch(
     return dispatchFromRegistry(tools, name, args, { library: lib! })
   }
 
-  return { tools, dispatch }
+  const isParallelSafe = (name: string): boolean => tools[name]?.parallelSafe === true
+
+  return { tools, dispatch, isParallelSafe }
 }

@@ -28,6 +28,8 @@ export interface AgentPorts {
   getTools(): ToolDef[]
   /** Run a tool call locally and return the JSON-string result. */
   dispatchTool(name: string, args: Record<string, unknown>): Promise<string>
+  /** Whether `name` is safe to dispatch concurrently with other tools. */
+  isParallelSafe?(name: string): boolean
   /** Conversation persistence. */
   store: ConversationStore
   /**
@@ -232,6 +234,7 @@ export class Agent {
       maxTurns: ports.maxTurns,
       temperature: ports.temperature,
       dispatchTool: (name, args) => ports.dispatchTool(name, args),
+      isParallelSafe: ports.isParallelSafe,
       onEvent: (ev) => this.emit(convId!, ev),
       onMessage: queuedAppend,
       abortSignal: ctrl.signal,

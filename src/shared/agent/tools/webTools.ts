@@ -9,6 +9,7 @@ import { nativeFetch } from '@shared/net/fetch'
  */
 export const webTools: ToolRegistry = {
   web_fetch: {
+    parallelSafe: true,
     def: {
       name: 'web_fetch',
       description:

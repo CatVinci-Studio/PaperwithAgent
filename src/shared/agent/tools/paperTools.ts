@@ -140,6 +140,7 @@ export const paperTools: ToolRegistry = {
   },
 
   search_papers: {
+    parallelSafe: true,
     def: {
       name: 'search_papers',
       description: 'Full-text search across papers in the active library.',

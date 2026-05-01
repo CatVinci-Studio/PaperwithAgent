@@ -12,7 +12,10 @@ export function TitleBar() {
   const showWindowControls = !isMac && !isWeb  // Windows / Linux Electron only
 
   return (
-    <div className="flex items-center h-11 border-b border-[var(--border-color)] shrink-0 titlebar-drag select-none">
+    <div
+      data-tauri-drag-region
+      className="flex items-center h-11 border-b border-[var(--border-color)] shrink-0 titlebar-drag select-none"
+    >
       {/* macOS traffic-light spacer */}
       {isMac && <div className="w-20 shrink-0" />}
 
@@ -39,7 +42,7 @@ export function TitleBar() {
 function WebRightSlot() {
   const { t } = useTranslation()
   return (
-    <div className="flex items-center pr-4 no-drag shrink-0">
+    <div data-tauri-drag-region="false" className="flex items-center pr-4 no-drag shrink-0">
       <a
         href="https://github.com/CatVinci-Studio/Verko/releases"
         target="_blank"
@@ -57,7 +60,7 @@ function WindowControls() {
   useEffect(() => api.window.onMaximized(setMaximized), [])
 
   return (
-    <div className="flex items-stretch h-full no-drag shrink-0">
+    <div data-tauri-drag-region="false" className="flex items-stretch h-full no-drag shrink-0">
       <ControlButton onClick={() => api.window.minimize()} aria-label="Minimize">
         <Minus size={14} />
       </ControlButton>

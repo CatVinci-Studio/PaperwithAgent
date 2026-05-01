@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { PanelLeft, Settings } from 'lucide-react'
 import { useLibraryStore } from './store/library'
+import { useInvalidateLibrary } from './features/library/queries'
 import { useUIStore } from './store/ui'
 import { Sidebar } from './features/library/Sidebar'
 import { LibraryView } from './features/library/LibraryView'
@@ -16,7 +17,9 @@ import { api } from './lib/ipc'
 import { useAgentEvents } from './features/agent/useAgent'
 
 export default function App() {
-  const { refreshAll, status, setStatus } = useLibraryStore()
+  const status = useLibraryStore((s) => s.status)
+  const setStatus = useLibraryStore((s) => s.setStatus)
+  const invalidate = useInvalidateLibrary()
   const setActiveView = useUIStore((s) => s.setActiveView)
   const {
     sidebarCollapsed,
@@ -32,27 +35,25 @@ export default function App() {
   // Subscribe to agent IPC events at the top level
   useAgentEvents()
 
-  // Initial data load. Zustand actions are stable; mount-only is intentional.
+  // Initial library presence check. Server data is fetched lazily by query
+  // hooks once status flips to 'ready'.
   useEffect(() => {
-    (async () => {
-      const noLibrary = await api.libraries.hasNone()
-      if (noLibrary) {
-        setStatus('none', { reason: 'empty' })
-        return
-      }
-      setStatus('ready')
-      setActiveView('agent')
-      await refreshAll()
-    })().catch(() => setStatus('none', { reason: 'empty' }))
+    api.libraries.hasNone().then(
+      (none) => {
+        if (none) setStatus('none', { reason: 'empty' })
+        else { setStatus('ready'); setActiveView('agent') }
+      },
+      () => setStatus('none', { reason: 'empty' }),
+    )
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Listen for library lifecycle events from main.
+  // Listen for library lifecycle events from the shell.
   useEffect(() => {
     const unsubSwitch = api.libraries.onSwitched(() => {
       setStatus('ready')
       setActiveView('agent')
-      refreshAll()
+      invalidate.all()
     })
     const unsubNone = api.libraries.onNone((payload) => {
       setStatus('none', payload)

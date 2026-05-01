@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { PaperPatch } from '@shared/types'
 import { api } from '@/lib/ipc'
-import { useLibraryStore } from '@/store/library'
 
 export function usePaperDetail(id: string | null) {
   return useQuery({
@@ -13,15 +12,13 @@ export function usePaperDetail(id: string | null) {
 }
 
 export function useUpdatePaper() {
-  const queryClient = useQueryClient()
-  const refreshPapers = useLibraryStore(s => s.refreshPapers)
-
+  const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: PaperPatch }) =>
       api.papers.update(id, patch),
     onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: ['paper', id] })
-      refreshPapers()
+      qc.invalidateQueries({ queryKey: ['paper', id] })
+      qc.invalidateQueries({ queryKey: ['papers'] })
     },
   })
 }

@@ -2,7 +2,7 @@ import { useRef, useEffect, useState } from 'react'
 import { Bot, FileText } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAgentStore } from '@/store/agent'
-import { useLibraryStore } from '@/store/library'
+import { usePapersQuery } from '@/features/library/queries'
 import { MessageBubble, StreamingBubble } from './MessageBubble'
 import { ChatInput } from './ChatInput'
 import { expandMentionsToContent } from './expandMentions'
@@ -23,7 +23,7 @@ export function AgentPage() {
   const toggleToolCall = useAgentStore((s) => s.toggleToolCall)
   const currentPaperId = useAgentStore((s) => s.currentPaperId)
 
-  const { papers } = useLibraryStore()
+  const { data: papers = [] } = usePapersQuery()
 
   const stateKey = activeId ?? '__pending__'
   const conv = byId[stateKey]

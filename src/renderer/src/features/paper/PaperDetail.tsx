@@ -19,7 +19,7 @@ const STATUS_CYCLE: PaperStatus[] = ['unread', 'reading', 'read', 'archived']
 
 export function PaperDetail() {
   const { t } = useTranslation()
-  const { selectedId } = useLibraryStore()
+  const selectedId = useLibraryStore((s) => s.selectedId)
   const { activeDetailTab, setActiveDetailTab, setActiveView } = useUIStore()
   const { setCurrentPaperId } = useAgentStore()
 

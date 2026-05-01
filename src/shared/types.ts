@@ -140,7 +140,8 @@ export interface AgentProfile {
 /** Editable fields of a provider profile. `name` and `hasKey` are not patchable. */
 export type ProfilePatch = Partial<Pick<AgentProfile, 'baseUrl' | 'model' | 'protocol'>>
 
-/** Supported UI languages — also used to pick the system prompt template. */
+/** Supported UI languages — also injected into the system prompt as
+ *  the user-reply language ("Reply in {language}"). */
 export type Language = 'en' | 'zh'
 
 export interface AgentConfig {

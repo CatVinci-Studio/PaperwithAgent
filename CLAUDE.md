@@ -14,7 +14,7 @@ Agent-first academic paper management desktop app. Built with Tauri 2 (Rust shel
 - **Agent**: pluggable provider layer (`src/shared/agent/providers/`) speaking OpenAI / Anthropic / Gemini protocols natively; agent loop runs in the renderer; multi-conversation history persisted under `<appConfig>/conversations/<id>.json`
 - **Tests**: Vitest 4 (Node env; targets `src/shared`)
 - **Package manager**: npm
-- **i18n**: i18next + react-i18next; English + 简体中文 (`src/renderer/src/locales/{en,zh}.json`); language preference persists to localStorage and is forwarded to the agent so the system prompt swaps with the UI
+- **i18n**: i18next + react-i18next; English + 简体中文 (`src/renderer/src/locales/{en,zh}.json`); language preference persists to localStorage and is forwarded to the agent — the system prompt is single-source English with a `Reply in {language}` directive that picks the user's language at runtime
 - **Style enforcement**: `.editorconfig` (indent / EOL) + TypeScript strict mode (`noUnusedLocals`, `noUnusedParameters` on) + ESLint 10 flat config (`eslint.config.js` — JS/TS recommended + `react-hooks/{rules-of-hooks,exhaustive-deps}` + `react-refresh/only-export-components`)
 
 ## Repository Layout
@@ -30,7 +30,7 @@ src/
       loop.ts         #   runAgentLoop(provider, dispatchTool, …) — tool-agnostic
       runtime.ts      #   Agent class — owns subscribers, send orchestration, abort
       conversationStore.ts  # ConversationStore over StorageBackend (one .json per conv)
-      prompt.ts       #   buildSystemPrompt(language, ctx) — EN + ZH
+      prompt.ts       #   buildSystemPrompt(language, ctx) — single EN template + Reply-in directive
       providers/      #   openai/anthropic/gemini SDK adapters (dangerouslyAllowBrowser)
       tools/          #   Single source of truth for tools — runs wherever called from:
                       #     paperTools / collectionTools / fileTools / webTools
@@ -166,7 +166,7 @@ The renderer uses i18next:
 
 - `src/renderer/src/lib/i18n.ts` — config + `setLanguage(lang)` / `getCurrentLanguage()` helpers, persists to `localStorage('language')`. Auto-detects from `navigator.language` on first run.
 - `src/renderer/src/locales/{en,zh}.json` — flat-ish translation tree. Add new keys here; both languages must be in sync (lint/typecheck won't catch missing keys, only runtime fallback to English).
-- `src/shared/agent/prompt.ts` — `buildSystemPrompt(language, ctx)` returns the EN or ZH system-prompt template for the agent. Tool semantics are identical across languages; only the surface wording changes. The renderer-side `Agent` passes the current language when constructing each system prompt.
+- `src/shared/agent/prompt.ts` — `buildSystemPrompt(language, ctx)` returns a single English system prompt with a `Reply in {languageName}` directive at the top. Modern LLMs (GPT-4 / Claude 3.5+ / Gemini 2) follow this reliably; we used to ship parallel EN + ZH templates but they drifted between revisions and added 2× maintenance.
 - Components use `const { t } = useTranslation()` and `t('namespace.key')`. For data-driven labels (e.g. column headers, tab metadata), pass `t` into pure helpers and re-key memoization on `i18n.language` so the labels refresh when the language flips.
 
 ## Library Table

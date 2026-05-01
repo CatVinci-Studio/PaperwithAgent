@@ -6,7 +6,7 @@ Agent-first academic paper management desktop app. Built with Tauri 2 (Rust shel
 ## Tech Stack
 - **Runtime**: Tauri 2 (Rust shell) + Vite 8 (renderer + Tauri-side bundle)
 - **Frontend**: React 19, Tailwind CSS 4, shadcn/ui (Radix primitives copied into `components/ui/`)
-- **State**: Zustand 5 (`ui`, `library`, `agent`, `dialogs` stores)
+- **State**: Zustand 5 for **UI** state only — `ui`, `library` (selectedId / filter / activeCollection / status), `agent` (streaming buffer), `dialogs`. **Server data** (papers / schema / collections / libraries list) lives in TanStack Query, not zustand — see `features/library/queries.ts`. Mutation sites call `useInvalidateLibrary().papers()` etc.
 - **Data fetching**: TanStack Query v5 over the `IApi` adapter
 - **Tables**: TanStack Table v8 (headless) — drives the library paper view
 - **Editor**: CodeMirror 6 (Markdown)
@@ -41,17 +41,18 @@ src/
     presets.ts        # DEFAULT_AGENT_CONFIG derived from the catalog
 
   renderer/src/       # React frontend — owns Library + agent runtime at runtime
-    desktop/          # Desktop adapter (used by both Tauri and web stub paths)
-      backendIpc.ts   #   StorageBackend over fs.* preload calls
+    desktop/          # Desktop adapter — wraps the IPreloadApi (Tauri commands) into the full IApi
+      backendIpc.ts   #   StorageBackend over fs_* Tauri commands
       libraryHost.ts  #   Owns active Library, listens for library:switched
       desktopTools.ts #   Tool registry (SHARED_TOOLS + manager tools using IPC)
       desktopApi.ts   #   makeDesktopApi(preload) → full IApi
-      preloadApi.ts   #   Type for the narrow preload-bridged surface (the IPC contract)
+      preloadApi.ts   #   IPreloadApi — the IO contract the Tauri shell implements
     tauri/
       tauriPreload.ts #   IPreloadApi implementation: invoke() + listen() over Tauri commands
-    web/              # Web build (S3-only, single library)
-      webApi.ts       #   Same IApi shape, S3Backend + LocalStorage agent
-      webAgent.ts     #   Web-flavored agent (will fold into shared Agent in time)
+    web/              # Web build (single S3-backed library, full agent)
+      webApi.ts       #   IApi backed by S3Backend + LocalStorageBackend.
+                      #   Uses the same shared Library + Agent runtime as desktop;
+                      #   only platform-bound calls (pickFolder/exportZip) reject.
       apiKeys.ts      #   Per-provider key store (localStorage / memory)
       credentials.ts  #   S3 credential store (IndexedDB)
     store/            # Zustand stores: library, ui, agent, dialogs

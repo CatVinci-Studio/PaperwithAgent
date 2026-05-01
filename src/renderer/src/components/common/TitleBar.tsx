@@ -11,7 +11,7 @@ const isTauri = (): boolean =>
  * Tauri ignores `-webkit-app-region: drag` and on Linux/webkit2gtk the
  * `data-tauri-drag-region` attribute walk is unreliable. Drive the drag
  * explicitly on mousedown — single click drags, double click toggles
- * maximize. No-op on Electron / web.
+ * maximize. No-op on the web build (`__TAURI_INTERNALS__` absent).
  */
 function onTitlebarMouseDown(e: React.MouseEvent) {
   if (!isTauri() || e.button !== 0) return

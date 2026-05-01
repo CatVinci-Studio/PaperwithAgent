@@ -20,6 +20,7 @@ import { rebuildCsv, parseCsv } from '@shared/paperdb/csv'
 import { buildIndex, searchIndex } from '@shared/paperdb/search'
 import { generateId } from '@shared/paperdb/id'
 import { importFromArxiv } from '@shared/paperdb/arxiv'
+import { randomId } from '@shared/util/randomId'
 
 const PAPERS_DIR     = 'papers'
 const ATTACH_DIR     = 'attachments'
@@ -34,12 +35,6 @@ const collectionCsvRel = (name: string) => `${name}.csv`
 
 const decoder = new TextDecoder('utf-8')
 const decode = (bytes: Uint8Array): string => decoder.decode(bytes)
-
-function cryptoRandomId(): string {
-  const bytes = new Uint8Array(8)
-  crypto.getRandomValues(bytes)
-  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')
-}
 
 /**
  * In-memory paper library backed by a `StorageBackend` (filesystem, S3, …).
@@ -596,7 +591,7 @@ export class Library {
   async addHighlight(id: PaperId, draft: HighlightDraft): Promise<Highlight> {
     const list = await this.listHighlights(id)
     const h: Highlight = {
-      id: cryptoRandomId(),
+      id: randomId(),
       page: draft.page,
       text: draft.text,
       rects: draft.rects,

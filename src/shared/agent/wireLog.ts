@@ -1,4 +1,5 @@
 import type { NormalizedMessage, StreamEvent, ToolDef } from './providers'
+import { randomId } from '@shared/util/randomId'
 
 /**
  * In-memory ring buffer of LLM API request/response pairs. Used by the
@@ -66,7 +67,7 @@ class WireLogStore {
 
   start(input: Omit<WireLogEntry, 'id' | 'startedAt' | 'events'>): string {
     const entry: WireLogEntry = {
-      id: `wire-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      id: `wire-${Date.now()}-${randomId(4)}`,
       startedAt: Date.now(),
       events: [],
       ...input,

@@ -165,13 +165,13 @@ export async function runAgentLoop(opts: RunAgentLoopOptions): Promise<void> {
     // unsafe runs sequentially — too risky to interleave a write between
     // reads when the underlying Library uses last-write-wins on `papers.csv`.
     const allSafe = isParallelSafe != null && prepared.every((p) => isParallelSafe(p.tc.name))
-    const results: string[] = allSafe
-      ? await Promise.all(prepared.map(runOne))
-      : await (async () => {
-          const out: string[] = []
-          for (const p of prepared) out.push(await runOne(p))
-          return out
-        })()
+    let results: string[]
+    if (allSafe) {
+      results = await Promise.all(prepared.map(runOne))
+    } else {
+      results = []
+      for (const p of prepared) results.push(await runOne(p))
+    }
 
     // Append tool messages in original order — the model expects each
     // `role: 'tool'` to follow its `tool_call.id` slot in the assistant

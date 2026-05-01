@@ -6,6 +6,7 @@
 // selections register as a single entry covering the whole group.
 
 import { create } from 'zustand'
+import { randomId } from '@shared/util/randomId'
 
 interface UndoEntry {
   id: string
@@ -28,7 +29,7 @@ interface UndoStore {
 export const useUndoStore = create<UndoStore>((set, get) => ({
   entry: null,
   push: (label, undo, ttlMs = 6000) => {
-    const id = Math.random().toString(36).slice(2, 10)
+    const id = randomId(4)
     const entry: UndoEntry = { id, label, undo, expiresAt: Date.now() + ttlMs }
     set({ entry })
     setTimeout(() => {

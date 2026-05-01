@@ -2,6 +2,7 @@ import { useRef, useState, useCallback, useEffect, useMemo } from 'react'
 import { Highlighter, MessageSquare, RotateCcw, Trash2, X, ZoomIn, ZoomOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { confirmDialog } from '@/store/dialogs'
+import { randomId } from '@shared/util/randomId'
 import {
   useAddHighlight,
   useDeleteHighlight,
@@ -16,10 +17,31 @@ import type { Highlight, HighlightColor, HighlightDraft, HighlightRect } from '@
 type PdfDoc = any
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type PdfPageProxy = any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type PdfjsModule = any
 
 const COLORS: HighlightColor[] = ['yellow', 'green', 'blue', 'pink']
 const LAST_COLOR_LS = 'verko:highlight-color'
 const NEAR_VIEWPORT_PAGES = 2
+
+// One-time cached pdfjs module promise. The dynamic import is cached by the
+// bundler but we still pay a microtask per call when reaching for it from a
+// hot path; resolve once on first use, reuse the resolved module.
+let pdfjsPromise: Promise<PdfjsModule> | null = null
+function loadPdfjs(): Promise<PdfjsModule> {
+  if (!pdfjsPromise) {
+    pdfjsPromise = import('pdfjs-dist').then((m) => {
+      if (!m.GlobalWorkerOptions.workerSrc) {
+        m.GlobalWorkerOptions.workerSrc = new URL(
+          'pdfjs-dist/build/pdf.worker.min.mjs',
+          import.meta.url,
+        ).href
+      }
+      return m
+    })
+  }
+  return pdfjsPromise
+}
 
 interface PdfViewerProps {
   paperId: string
@@ -58,8 +80,12 @@ export function PdfViewer({ paperId }: PdfViewerProps) {
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const docRef = useRef<PdfDoc | null>(null)
+  /** In-flight render tasks per page — for cancellation on scale change / unmount. */
   const renderTasksRef = useRef<Map<number, { cancel: () => void }>>(new Map())
+  /** Pages whose canvas has been painted at the current scale. Cleared on scale change. */
   const renderedRef = useRef<Set<number>>(new Set())
+  /** Ref-callback target for each page wrap; replaces brittle querySelector lookups. */
+  const pageRefs = useRef<Map<number, HTMLDivElement>>(new Map())
 
   const [pages, setPages] = useState<PageMeta[]>([])
   const [scale, setScale] = useState(1.2)
@@ -71,7 +97,6 @@ export function PdfViewer({ paperId }: PdfViewerProps) {
     return COLORS.includes(saved as HighlightColor) ? (saved as HighlightColor) : 'yellow'
   })
 
-  // Highlights bucketed by page for O(1) per-page lookup during render.
   const highlightsByPage = useMemo(() => {
     const map = new Map<number, Highlight[]>()
     for (const h of highlights) {
@@ -99,26 +124,22 @@ export function PdfViewer({ paperId }: PdfViewerProps) {
     const tasks = renderTasksRef.current
     const loadPdf = async () => {
       try {
-        const pdfjs = await import('pdfjs-dist')
-        if (!pdfjs.GlobalWorkerOptions.workerSrc) {
-          pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-            'pdfjs-dist/build/pdf.worker.min.mjs',
-            import.meta.url,
-          ).href
-        }
+        const pdfjs = await loadPdfjs()
         const url = `file://${pdfPath}`
         const pdfDoc: PdfDoc = await pdfjs.getDocument({ url }).promise
         if (cancelled.v) return
         docRef.current = pdfDoc
 
-        // Pre-fetch each page's intrinsic size so placeholders reserve scroll space
-        // before any canvas exists. This avoids layout jumps as canvases load in.
-        const metas: PageMeta[] = []
-        for (let p = 1; p <= pdfDoc.numPages; p++) {
-          const page: PdfPageProxy = await pdfDoc.getPage(p)
-          const vp = page.getViewport({ scale: 1 })
-          metas.push({ index: p, width: vp.width, height: vp.height })
-        }
+        // Pre-fetch every page's intrinsic size in parallel so the placeholder
+        // wraps reserve scroll space before any canvas exists. For long PDFs
+        // (1000+ pages) this is bounded by pdfjs's internal worker concurrency.
+        const metas = await Promise.all(
+          Array.from({ length: pdfDoc.numPages }, async (_, i) => {
+            const page: PdfPageProxy = await pdfDoc.getPage(i + 1)
+            const vp = page.getViewport({ scale: 1 })
+            return { index: i + 1, width: vp.width, height: vp.height }
+          }),
+        )
         if (cancelled.v) return
         renderedRef.current.clear()
         setPages(metas)
@@ -135,26 +156,17 @@ export function PdfViewer({ paperId }: PdfViewerProps) {
     }
   }, [pdfPath])
 
-  // Re-render visible pages when scale changes.
-  useEffect(() => {
-    if (!docRef.current) return
-    for (const t of renderTasksRef.current.values()) t.cancel()
-    renderTasksRef.current.clear()
-    renderedRef.current.clear()
-    // Force re-evaluate visibility — IntersectionObserver re-fires on layout change.
-  }, [scale])
-
   // ── Page render (async, cancellable) ───────────────────────────────────────
 
   const renderPage = useCallback(async (pageIndex: number, sc: number) => {
     if (renderedRef.current.has(pageIndex)) return
     const doc = docRef.current
-    const wrap = document.querySelector<HTMLDivElement>(`[data-pdf-page="${pageIndex}"]`)
+    const wrap = pageRefs.current.get(pageIndex)
     if (!doc || !wrap) return
     renderedRef.current.add(pageIndex)
 
     try {
-      const pdfjs = await import('pdfjs-dist')
+      const pdfjs = await loadPdfjs()
       const page: PdfPageProxy = await doc.getPage(pageIndex)
       const viewport = page.getViewport({ scale: sc })
 
@@ -172,10 +184,12 @@ export function PdfViewer({ paperId }: PdfViewerProps) {
       const ctx = canvas.getContext('2d')!
       const task = page.render({ canvasContext: ctx, viewport })
       renderTasksRef.current.set(pageIndex, task)
-      await task.promise
-      renderTasksRef.current.delete(pageIndex)
+      try {
+        await task.promise
+      } finally {
+        renderTasksRef.current.delete(pageIndex)
+      }
 
-      // Text layer
       let textLayer = wrap.querySelector<HTMLDivElement>('div.pdf-text-layer')
       if (!textLayer) {
         textLayer = document.createElement('div')
@@ -188,8 +202,7 @@ export function PdfViewer({ paperId }: PdfViewerProps) {
       textLayer.style.height = `${viewport.height}px`
 
       const textContent = await page.getTextContent()
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const PdfTextLayer = (pdfjs as any).TextLayer
+      const PdfTextLayer = pdfjs.TextLayer
       if (PdfTextLayer) {
         const layer = new PdfTextLayer({
           textContentSource: textContent,
@@ -206,18 +219,27 @@ export function PdfViewer({ paperId }: PdfViewerProps) {
   }, [])
 
   // ── Virtual rendering: only paint pages near the viewport ───────────────────
+  //
+  // This effect also covers scale changes — we cancel in-flight tasks, clear
+  // the rendered-set, then build a fresh observer. The observer fires
+  // initial entries for currently-intersecting elements, which kicks off a
+  // re-render at the new scale.
 
   useEffect(() => {
     if (pages.length === 0) return
     const root = scrollRef.current
     if (!root) return
+
+    for (const t of renderTasksRef.current.values()) t.cancel()
+    renderTasksRef.current.clear()
+    renderedRef.current.clear()
+
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (!entry.isIntersecting) continue
           const idx = Number((entry.target as HTMLElement).dataset.pdfPage)
           if (!idx) continue
-          // Render the visible page + the next few so scrolling isn't jumpy.
           for (let p = idx; p <= Math.min(pages.length, idx + NEAR_VIEWPORT_PAGES); p++) {
             void renderPage(p, scale)
           }
@@ -225,8 +247,7 @@ export function PdfViewer({ paperId }: PdfViewerProps) {
       },
       { root, rootMargin: '200px 0px' },
     )
-    const wraps = root.querySelectorAll<HTMLElement>('[data-pdf-page]')
-    wraps.forEach((w) => observer.observe(w))
+    for (const wrap of pageRefs.current.values()) observer.observe(wrap)
     return () => observer.disconnect()
   }, [pages, scale, renderPage])
 
@@ -246,53 +267,59 @@ export function PdfViewer({ paperId }: PdfViewerProps) {
       return
     }
 
-    // Group rects by which page wrap they belong to. The browser returns rects
-    // in document order across pages, so we just walk and bucket.
-    const wraps = Array.from(root.querySelectorAll<HTMLElement>('[data-pdf-page]'))
-    const wrapBoxes = wraps.map((w) => ({ el: w, page: Number(w.dataset.pdfPage), box: w.getBoundingClientRect() }))
+    const clientRects = Array.from(range.getClientRects())
+    if (clientRects.length === 0) {
+      setSelection(null)
+      return
+    }
 
-    const segments = new Map<number, { rects: HighlightRect[]; box: DOMRect }>()
-    for (const r of Array.from(range.getClientRects())) {
+    // Cache page wrap bounds so we don't re-measure once per rect.
+    const wrapBoxes = Array.from(pageRefs.current.entries())
+      .map(([page, el]) => ({ page, box: el.getBoundingClientRect() }))
+
+    const segments = new Map<number, HighlightRect[]>()
+    for (const r of clientRects) {
       if (r.width < 1 || r.height < 1) continue
       const cy = r.top + r.height / 2
       const cx = r.left + r.width / 2
-      const wrap = wrapBoxes.find((wb) => cx >= wb.box.left && cx <= wb.box.right && cy >= wb.box.top && cy <= wb.box.bottom)
+      const wrap = wrapBoxes.find((wb) =>
+        cx >= wb.box.left && cx <= wb.box.right && cy >= wb.box.top && cy <= wb.box.bottom,
+      )
       if (!wrap) continue
-      const seg = segments.get(wrap.page) ?? { rects: [], box: wrap.box }
-      seg.rects.push({
+      const list = segments.get(wrap.page) ?? []
+      list.push({
         x: (r.left   - wrap.box.left) / wrap.box.width,
         y: (r.top    - wrap.box.top)  / wrap.box.height,
         w: r.width  / wrap.box.width,
         h: r.height / wrap.box.height,
       })
-      segments.set(wrap.page, seg)
+      segments.set(wrap.page, list)
     }
     if (segments.size === 0) {
       setSelection(null)
       return
     }
 
-    // Approximate per-page text by slicing the full selection text by the
-    // page's character ratio. This isn't exact but good enough for storage —
-    // the model only needs the gist, and the agent always sees the joined text.
+    // Per-rect text isn't recoverable from `Range.getClientRects` without
+    // re-querying each glyph. Approximate by slicing the joined text in
+    // proportion to each page's rect count — close enough for storage and
+    // for the agent's `list_highlights` consumer.
     const fullText = sel.toString()
-    const lastClient = Array.from(range.getClientRects()).pop()!
-
+    const lastClient = clientRects[clientRects.length - 1]
     const segmentsArray = Array.from(segments.entries())
       .sort(([a], [b]) => a - b)
-      .map(([page, seg]) => ({ page, text: '', rects: seg.rects }))
+      .map(([page, rects]) => ({ page, text: '', rects }))
+
     if (segmentsArray.length === 1) {
       segmentsArray[0].text = fullText
     } else {
       const totalRects = segmentsArray.reduce((n, s) => n + s.rects.length, 0)
       let consumed = 0
       for (const s of segmentsArray) {
-        const share = s.rects.length / totalRects
-        const take = Math.round(fullText.length * share)
+        const take = Math.round(fullText.length * (s.rects.length / totalRects))
         s.text = fullText.slice(consumed, consumed + take)
         consumed += take
       }
-      // Patch any remainder onto the last page.
       if (consumed < fullText.length) {
         segmentsArray[segmentsArray.length - 1].text += fullText.slice(consumed)
       }
@@ -316,7 +343,7 @@ export function PdfViewer({ paperId }: PdfViewerProps) {
   const onHighlight = async (chosenColor: HighlightColor) => {
     if (!selection) return
     pickColor(chosenColor)
-    const groupId = selection.segments.length > 1 ? `g-${Date.now().toString(36)}` : undefined
+    const groupId = selection.segments.length > 1 ? `g-${randomId(4)}` : undefined
     const drafts: HighlightDraft[] = selection.segments.map((s) => ({
       page: s.page,
       text: s.text,
@@ -352,7 +379,6 @@ export function PdfViewer({ paperId }: PdfViewerProps) {
     })
     if (!ok) return
     setNotePopover(null)
-    // For grouped (cross-page) highlights, delete every member of the group.
     const targets = h.groupId
       ? highlights.filter((x) => x.groupId === h.groupId)
       : [h]
@@ -360,7 +386,6 @@ export function PdfViewer({ paperId }: PdfViewerProps) {
     pushUndo(
       targets.length > 1 ? `${targets.length} highlights` : '1 highlight',
       async () => {
-        const groupId = h.groupId
         for (const t of targets) {
           await addHighlight.mutateAsync({
             page: t.page,
@@ -368,7 +393,7 @@ export function PdfViewer({ paperId }: PdfViewerProps) {
             rects: t.rects,
             ...(t.color != null ? { color: t.color } : {}),
             ...(t.note != null ? { note: t.note } : {}),
-            ...(groupId != null ? { groupId } : {}),
+            ...(t.groupId != null ? { groupId: t.groupId } : {}),
           })
         }
       },
@@ -378,18 +403,21 @@ export function PdfViewer({ paperId }: PdfViewerProps) {
   const onSaveNote = async (h: Highlight, note: string, nextColor?: HighlightColor) => {
     const patch: { note?: string; color?: HighlightColor } = {}
     if (note.trim()) patch.note = note.trim()
-    else if (h.note != null) patch.note = ''  // explicit clear
+    else if (h.note != null) patch.note = ''
     if (nextColor && nextColor !== (h.color ?? 'yellow')) patch.color = nextColor
     if (Object.keys(patch).length === 0) { setNotePopover(null); return }
     await updateHighlight.mutateAsync({ highlightId: h.id, patch })
     setNotePopover(null)
   }
 
+  const setPageRef = useCallback((index: number, el: HTMLDivElement | null) => {
+    if (el) pageRefs.current.set(index, el)
+    else pageRefs.current.delete(index)
+  }, [])
+
   // ── Render ──────────────────────────────────────────────────────────────────
 
-  if (isLoading) {
-    return <Centered text="Loading PDF path…" muted />
-  }
+  if (isLoading) return <Centered text="Loading PDF path…" muted />
   if (!pdfPath) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-3">
@@ -400,13 +428,10 @@ export function PdfViewer({ paperId }: PdfViewerProps) {
       </div>
     )
   }
-  if (error) {
-    return <Centered text={error} danger />
-  }
+  if (error) return <Centered text={error} danger />
 
   return (
     <div className="flex flex-col h-full">
-      {/* Toolbar */}
       <div className="flex items-center gap-2 px-3 py-1.5 border-b border-[var(--bg-active)] shrink-0">
         <span className="text-[13.5px] text-[var(--text-secondary)] tabular-nums">
           {pages.length} page{pages.length === 1 ? '' : 's'}
@@ -445,16 +470,15 @@ export function PdfViewer({ paperId }: PdfViewerProps) {
         </Button>
       </div>
 
-      {/* Continuous-scroll page list */}
       <div ref={scrollRef} className="flex-1 overflow-auto bg-[var(--bg-base)] flex flex-col items-center pt-4 relative">
         {pages.map((p) => (
           <div
             key={p.index}
             data-pdf-page={p.index}
+            ref={(el) => setPageRef(p.index, el)}
             className="pdf-page-wrap"
             style={{ width: p.width * scale, height: p.height * scale }}
           >
-            {/* Highlight overlay */}
             <div className="pdf-highlight-layer">
               {(highlightsByPage.get(p.index) ?? []).flatMap((h) =>
                 h.rects.map((r, i) => (
@@ -481,24 +505,14 @@ export function PdfViewer({ paperId }: PdfViewerProps) {
           </div>
         ))}
 
-        {/* Selection toolbar */}
         {selection && (
           <div
             className="fixed z-50 flex items-center gap-2 px-2.5 py-1.5 rounded-full bg-[var(--bg-elevated)] border border-[var(--border-color)] shadow-lg"
             style={{ left: selection.anchor.left + 4, top: selection.anchor.top + 4 }}
-            onMouseDown={(e) => e.preventDefault()  /* keep selection alive */}
+            onMouseDown={(e) => e.preventDefault()}
           >
             <Highlighter size={12} className="text-[var(--text-muted)]" />
-            {COLORS.map((c) => (
-              <button
-                key={c}
-                className="pdf-color-swatch"
-                data-color={c}
-                data-active={c === color}
-                onClick={() => onHighlight(c)}
-                title={`Highlight (${c})`}
-              />
-            ))}
+            <ColorSwatches active={color} onPick={onHighlight} />
             <Button
               variant="ghost" size="icon-sm" className="h-7 w-7 text-[var(--text-muted)]"
               onClick={() => { setSelection(null); window.getSelection()?.removeAllRanges() }}
@@ -509,7 +523,6 @@ export function PdfViewer({ paperId }: PdfViewerProps) {
           </div>
         )}
 
-        {/* Highlight popover (note + color + delete) */}
         {notePopover && (
           <NoteEditor
             key={notePopover.highlight.id}
@@ -539,6 +552,23 @@ function Centered({ text, muted, danger }: { text: string; muted?: boolean; dang
   )
 }
 
+function ColorSwatches({ active, onPick }: { active: HighlightColor; onPick: (c: HighlightColor) => void }) {
+  return (
+    <>
+      {COLORS.map((c) => (
+        <button
+          key={c}
+          className="pdf-color-swatch"
+          data-color={c}
+          data-active={c === active}
+          onClick={() => onPick(c)}
+          title={c}
+        />
+      ))}
+    </>
+  )
+}
+
 interface NoteEditorProps {
   highlight: Highlight
   anchor: { left: number; top: number }
@@ -551,7 +581,6 @@ function NoteEditor({ highlight, anchor, onSave, onDelete, onCancel }: NoteEdito
   const [note, setNote] = useState(highlight.note ?? '')
   const [chosenColor, setChosenColor] = useState<HighlightColor>(highlight.color ?? 'yellow')
 
-  // Position above the click if there isn't enough room below.
   const style = useMemo(() => {
     const popoverHeight = 180
     const top = anchor.top + popoverHeight > window.innerHeight
@@ -583,16 +612,7 @@ function NoteEditor({ highlight, anchor, onSave, onDelete, onCancel }: NoteEdito
         }}
       />
       <div className="flex items-center gap-2">
-        {COLORS.map((c) => (
-          <button
-            key={c}
-            className="pdf-color-swatch"
-            data-color={c}
-            data-active={c === chosenColor}
-            onClick={() => setChosenColor(c)}
-            title={c}
-          />
-        ))}
+        <ColorSwatches active={chosenColor} onPick={setChosenColor} />
         <div className="flex-1" />
         <Button variant="ghost" size="sm" className="h-7 text-[var(--danger)]" onClick={onDelete}>
           <Trash2 size={11} />

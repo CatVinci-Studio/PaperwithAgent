@@ -109,6 +109,37 @@ export interface SearchHit {
   terms: string[]
 }
 
+// ─── Highlights ──────────────────────────────────────────────────────────────
+
+export interface HighlightRect {
+  /** percent (0..1) of page width — resolution-independent so it survives zoom changes */
+  x: number
+  y: number
+  w: number
+  h: number
+}
+
+export interface Highlight {
+  id: string
+  /** 1-based page number */
+  page: number
+  /** Selected text content. Stored so agent tools can read highlights without parsing the PDF. */
+  text: string
+  /** Bounding rects (one per visual line) in page-percent coordinates. */
+  rects: HighlightRect[]
+  /** ISO timestamp */
+  createdAt: string
+  /** Optional user note */
+  note?: string
+}
+
+export interface HighlightDraft {
+  page: number
+  text: string
+  rects: HighlightRect[]
+  note?: string
+}
+
 // ─── Agent ───────────────────────────────────────────────────────────────────
 
 export interface AgentTextEvent       { type: 'text';        delta: string }

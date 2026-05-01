@@ -4,6 +4,7 @@ import type {
   AgentProfile, ProfilePatch, Language, LibraryInfo, CollectionInfo,
   NewLibraryInput, NewS3LibraryInput, ProbeResult, LibraryNonePayload,
   ChatContentPart, ChatMessage, ConversationSummary, Conversation,
+  Highlight, HighlightDraft,
 } from '@shared/types'
 import type { SimpleRequest, SimpleResponse } from '@shared/net/fetch'
 
@@ -79,6 +80,11 @@ export interface IApi {
   }
   pdf: {
     getPath(id: PaperId): Promise<string | null>
+  }
+  highlights: {
+    list(paperId: PaperId): Promise<Highlight[]>
+    add(paperId: PaperId, draft: HighlightDraft): Promise<Highlight>
+    delete(paperId: PaperId, highlightId: string): Promise<void>
   }
   fs: {
     read(rootId: string, rel: string): Promise<Uint8Array>

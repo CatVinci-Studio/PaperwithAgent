@@ -144,3 +144,41 @@ describe('Library schema', () => {
     expect(schema.columns.find(c => c.name === 'custom_field')).toBeUndefined()
   })
 })
+
+describe('Library highlights', () => {
+  it('returns an empty list when no highlights file exists', async () => {
+    const id = await lib.add({ title: 'A', tags: [] })
+    const list = await lib.listHighlights(id)
+    expect(list).toEqual([])
+  })
+
+  it('persists, lists, and deletes highlights', async () => {
+    const id = await lib.add({ title: 'A', tags: [] })
+    const h1 = await lib.addHighlight(id, {
+      page: 1, text: 'first', rects: [{ x: 0.1, y: 0.1, w: 0.2, h: 0.02 }],
+    })
+    const h2 = await lib.addHighlight(id, {
+      page: 2, text: 'second', rects: [{ x: 0.2, y: 0.3, w: 0.3, h: 0.02 }],
+    })
+    expect(h1.id).not.toBe(h2.id)
+
+    const after = await lib.listHighlights(id)
+    expect(after).toHaveLength(2)
+    expect(after.map((h) => h.text)).toEqual(['first', 'second'])
+
+    await lib.deleteHighlight(id, h1.id)
+    const left = await lib.listHighlights(id)
+    expect(left).toHaveLength(1)
+    expect(left[0].id).toBe(h2.id)
+  })
+
+  it('removes the file when the last highlight is deleted', async () => {
+    const id = await lib.add({ title: 'A', tags: [] })
+    const h = await lib.addHighlight(id, {
+      page: 1, text: 'only', rects: [{ x: 0, y: 0, w: 0.1, h: 0.01 }],
+    })
+    await lib.deleteHighlight(id, h.id)
+    const { access } = await import('fs/promises')
+    await expect(access(join(tmpDir, 'highlights', `${id}.json`))).rejects.toBeTruthy()
+  })
+})

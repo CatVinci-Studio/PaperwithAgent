@@ -101,6 +101,7 @@ A library is just a folder:
   papers.csv          # CANONICAL field data (title, authors, status, custom cols…)
   papers/<id>.md      # Notes body only — no frontmatter
   attachments/<id>.pdf
+  highlights/<id>.json # PDF highlights (page, text, rects in 0..1 page-percent coords)
   schema.md           # Column definitions (YAML frontmatter + notes body)
   collections.json    # Collection membership
   <Name>.csv          # Per-collection projection (auto-rebuilt)

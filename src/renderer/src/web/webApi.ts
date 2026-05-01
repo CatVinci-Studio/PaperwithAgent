@@ -297,6 +297,7 @@ export const webApi: IApi = {
   agent: ag.agent,
   conversations: ag.conversations,
   pdf,
+  highlights: libFacade.highlights,
   fs: {
     read:   () => Promise.reject(new Error('fs is desktop-only')),
     write:  () => Promise.reject(new Error('fs is desktop-only')),

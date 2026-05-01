@@ -14,6 +14,7 @@ import { webTools } from './webTools'
 import { pdfTools } from './pdfTools'
 import { documentTools } from './documentTools'
 import { skillTools } from './skillTools'
+import { highlightTools } from './highlightTools'
 import { compactTool } from './compactTool'
 import type { ToolContext, ToolRegistry } from './types'
 import { dispatchFromRegistry } from './types'
@@ -29,6 +30,7 @@ export const SHARED_TOOLS: ToolRegistry = {
   ...pdfTools,
   ...documentTools,
   ...skillTools,
+  ...highlightTools,
   ...compactTool,
 }
 

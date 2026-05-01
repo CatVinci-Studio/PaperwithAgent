@@ -11,7 +11,9 @@ type LibraryGetter = () => Library | Promise<Library | null> | null
  * `getLibrary` may be sync or async; we await it on every call so platforms
  * can defer construction until the first request.
  */
-export function buildLibraryFacade(getLibrary: LibraryGetter): Pick<IApi, 'papers' | 'schema' | 'collections' | 'pdf'> {
+export function buildLibraryFacade(
+  getLibrary: LibraryGetter,
+): Pick<IApi, 'papers' | 'schema' | 'collections' | 'pdf' | 'highlights'> {
   const lib = async (): Promise<Library | null> => {
     const result = getLibrary()
     return result instanceof Promise ? result : result
@@ -51,6 +53,11 @@ export function buildLibraryFacade(getLibrary: LibraryGetter): Pick<IApi, 'paper
     },
     pdf: {
       getPath: async (id) => (await lib())?.pdfPath(id) ?? null,
+    },
+    highlights: {
+      list:   async (id)              => (await lib())?.listHighlights(id) ?? [],
+      add:    async (id, draft)       => (await need()).addHighlight(id, draft),
+      delete: async (id, highlightId) => (await need()).deleteHighlight(id, highlightId),
     },
   }
 }

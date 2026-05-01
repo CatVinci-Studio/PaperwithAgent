@@ -295,8 +295,51 @@ body {
 .select-text, .select-text * { user-select: text; }
 
 /* ── PDF viewer ─────────────────────────────────────────────────────────────── */
+.pdf-page-wrap {
+  position: relative;
+  display: inline-block;
+  margin: 0 auto 12px;
+}
 .pdf-page-canvas {
   display: block;
-  margin: 0 auto 12px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+}
+/* pdfjs writes positioned <span>s into this layer. Glyphs are transparent —
+   we want users to be able to drag-select but not see double text. */
+.pdf-text-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  opacity: 1;
+  line-height: 1;
+  --highlight-bg-color: transparent;
+}
+.pdf-text-layer > span,
+.pdf-text-layer > br {
+  color: transparent;
+  position: absolute;
+  white-space: pre;
+  cursor: text;
+  transform-origin: 0% 0%;
+}
+.pdf-text-layer ::selection {
+  background: rgba(255, 233, 157, 0.4);
+}
+/* Highlight overlay sits between canvas and text layer so selection still
+   works on top of existing highlights. */
+.pdf-highlight-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.pdf-highlight-rect {
+  position: absolute;
+  background: rgba(255, 233, 157, 0.35);
+  border-radius: 1px;
+  pointer-events: auto;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.pdf-highlight-rect:hover {
+  background: rgba(255, 233, 157, 0.55);
 }

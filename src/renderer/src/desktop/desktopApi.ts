@@ -107,6 +107,7 @@ export function makeDesktopApi(preload: IShellApi): IApi {
     schema:        lib.schema,
     collections:   lib.collections,
     pdf:           lib.pdf,
+    highlights:    lib.highlights,
     agent:         ag.agent,
     conversations: ag.conversations,
     fs:            preload.fs,

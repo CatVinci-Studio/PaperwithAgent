@@ -10,6 +10,8 @@ import type {
   Filter,
   SearchHit,
   CollectionInfo,
+  Highlight,
+  HighlightDraft,
 } from '@shared/types'
 import type { StorageBackend } from '@shared/paperdb/backend'
 import { loadSchema, saveSchema } from '@shared/paperdb/schema'
@@ -19,17 +21,25 @@ import { buildIndex, searchIndex } from '@shared/paperdb/search'
 import { generateId } from '@shared/paperdb/id'
 import { importFromArxiv } from '@shared/paperdb/arxiv'
 
-const PAPERS_DIR    = 'papers'
-const ATTACH_DIR    = 'attachments'
-const CSV_REL       = 'papers.csv'
+const PAPERS_DIR     = 'papers'
+const ATTACH_DIR     = 'attachments'
+const HIGHLIGHTS_DIR = 'highlights'
+const CSV_REL        = 'papers.csv'
 const COLLECTIONS_REL = 'collections.json'
 
-const paperRel    = (id: PaperId) => `${PAPERS_DIR}/${id}.md`
-const attachRel   = (id: PaperId) => `${ATTACH_DIR}/${id}.pdf`
+const paperRel       = (id: PaperId) => `${PAPERS_DIR}/${id}.md`
+const attachRel      = (id: PaperId) => `${ATTACH_DIR}/${id}.pdf`
+const highlightRel   = (id: PaperId) => `${HIGHLIGHTS_DIR}/${id}.json`
 const collectionCsvRel = (name: string) => `${name}.csv`
 
 const decoder = new TextDecoder('utf-8')
 const decode = (bytes: Uint8Array): string => decoder.decode(bytes)
+
+function cryptoRandomId(): string {
+  const bytes = new Uint8Array(8)
+  crypto.getRandomValues(bytes)
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')
+}
 
 /**
  * In-memory paper library backed by a `StorageBackend` (filesystem, S3, …).
@@ -566,6 +576,47 @@ export class Library {
   pdfStream(id: PaperId): ReadableStream<Uint8Array> | null {
     if (!this.hasPdfCache.has(id)) return null
     return this.backend.createReadStream(attachRel(id))
+  }
+
+  // ── Highlights ───────────────────────────────────────────────────────────────
+  // Stored at `highlights/<paperId>.json` as a JSON array. Coordinates are
+  // page-percent (0..1) so they survive zoom changes. Missing file = no
+  // highlights yet — never an error.
+
+  async listHighlights(id: PaperId): Promise<Highlight[]> {
+    try {
+      const bytes = await this.backend.readFile(highlightRel(id))
+      const parsed = JSON.parse(decode(bytes)) as Highlight[]
+      return Array.isArray(parsed) ? parsed : []
+    } catch {
+      return []
+    }
+  }
+
+  async addHighlight(id: PaperId, draft: HighlightDraft): Promise<Highlight> {
+    const list = await this.listHighlights(id)
+    const h: Highlight = {
+      id: cryptoRandomId(),
+      page: draft.page,
+      text: draft.text,
+      rects: draft.rects,
+      createdAt: new Date().toISOString(),
+      ...(draft.note != null ? { note: draft.note } : {}),
+    }
+    list.push(h)
+    await this.backend.writeFile(highlightRel(id), JSON.stringify(list, null, 2))
+    return h
+  }
+
+  async deleteHighlight(id: PaperId, highlightId: string): Promise<void> {
+    const list = await this.listHighlights(id)
+    const next = list.filter((h) => h.id !== highlightId)
+    if (next.length === list.length) return
+    if (next.length === 0) {
+      try { await this.backend.deleteFile(highlightRel(id)) } catch { /* fine */ }
+      return
+    }
+    await this.backend.writeFile(highlightRel(id), JSON.stringify(next, null, 2))
   }
 
   // ── Skills ───────────────────────────────────────────────────────────────────

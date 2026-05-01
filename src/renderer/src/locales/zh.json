@@ -34,6 +34,7 @@
     "title": "设置",
     "tabs": {
       "general": "通用",
+      "provider": "模型",
       "schema": "字段",
       "library": "知识库",
       "debug": "调试日志"

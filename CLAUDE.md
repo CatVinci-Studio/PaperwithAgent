@@ -81,11 +81,11 @@ src-tauri/            # Rust shell — zero-trust IO shim (~1.2k lines)
     libraries_cmd.rs  #   libraries_* commands; emits library:switched / library:none
     zip_cmd.rs        #   library export/import zip
     menu.rs           #   macOS native menu (predefined roles only)
-  capabilities/       # Tauri permissions (window + dialog + opener + updater + process)
-  tauri.conf.json     # Window/build/bundle + plugins.updater (endpoint + pubkey)
+  capabilities/       # Tauri permissions (window + dialog + opener)
+  tauri.conf.json     # Window/build/bundle config
 ```
 
-Plugins wired in `lib.rs`: `tauri-plugin-dialog`, `tauri-plugin-opener` (external links), `tauri-plugin-updater` (auto-update), `tauri-plugin-process` (relaunch after update).
+Plugins wired in `lib.rs`: `tauri-plugin-dialog`, `tauri-plugin-opener` (external links).
 
 **Single source of truth for everything except IO.** Library, agent loop,
 all tools, providers, prompts, conversation persistence, OAuth flow (PKCE / token
@@ -193,12 +193,13 @@ The OpenAI provider has two auth modes — API key (the existing field) and a "S
 
 Tokens persist in the keychain under `oauthKey(providerId)` (= `${id}:oauth`), parallel to the API-key slot. `providerBuild.ts` picks OAuth tokens first when both are configured. `OpenAIProtocol` detects `config.oauth` and overrides the SDK's `fetch` with `makeCodexFetch` — Bearer header + `ChatGPT-Account-Id` + URL rewrite to the Codex backend, with serialized refresh-on-expiry (concurrent calls share one in-flight refresh promise so refresh-token rotation can't race).
 
-## Auto-update
-`tauri-plugin-updater` + `tauri-plugin-process` handle the desktop update path. On startup the renderer calls `useStartupUpdateCheck` once (per session — "Later" sets a `sessionStorage` flag that suppresses re-prompts until next launch). When an update is found, `UpdateDialog` offers "Install & restart" or "Later". Web build short-circuits via `isTauri()`.
+## Updates
+No in-app auto-update. Users update by downloading a new build from GitHub releases. The Tauri updater plugin was removed because its "download and launch new EXE" code path was triggering Defender ML heuristics (`Trojan:Win32/Wacatac` etc.) on unsigned Windows builds and getting binaries quarantined.
 
-The plugin is **stable-channel only** for now — its JS API doesn't expose runtime endpoint overrides, so dev-channel subscribers would need a small custom Rust command building a per-call updater. Not yet wired.
+## Windows packaging
+Three Windows artifacts per release: NSIS `.exe` installer, WiX `.msi` installer, and a portable zip (`Verko_<version>_x64-portable.zip`) containing just `verko.exe`. Portable mode requires WebView2 Runtime on the user machine (default on Win10 21H2+ / Win11). The portable zip is built by a Windows-only step in `release.yml` that runs after `tauri-action` and uploads to the same release via `gh release upload`.
 
-Releases must be signed: the workflow forwards `TAURI_SIGNING_PRIVATE_KEY` + `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` repo secrets to `tauri-action`, which produces `latest.json`. The matching public key lives in `tauri.conf.json` under `plugins.updater.pubkey`. Lose the private key → existing installs can never receive another update; they'd have to be reinstalled.
+The release binary is unsigned (no Authenticode cert). Mitigations baked in to lower Defender FP rate: `reqwest` uses `native-tls` (Schannel) instead of rustls, no brotli/gzip features; `[profile.release]` strips + LTOs the binary; `tauri.conf.json` populates `publisher`/`copyright`/`shortDescription` so the EXE has full Windows version resource fields.
 
 ## Window chrome
 `tauri.conf.json` sets `decorations: false` and the renderer draws its own titlebar in `components/common/TitleBar.tsx`. macOS gets a native menu via `src-tauri/src/menu.rs` (predefined system roles only — no custom Verko commands; the renderer owns its own keyboard shortcuts). Window dragging is wired explicitly: a `mousedown` handler on the titlebar calls `getCurrentWindow().startDragging()` because Tauri ignores `-webkit-app-region: drag` and the `data-tauri-drag-region` attribute walk is unreliable on webkit2gtk.

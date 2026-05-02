@@ -15,8 +15,6 @@ import { WelcomeScreen } from './features/onboarding/WelcomeScreen'
 import { Button } from './components/ui/button'
 import { api } from './lib/ipc'
 import { useAgentEvents } from './features/agent/useAgent'
-import { UpdateDialog } from './features/update/UpdateDialog'
-import { useStartupUpdateCheck, useUpdater } from './features/update/useUpdater'
 
 export default function App() {
   const status = useLibraryStore((s) => s.status)
@@ -36,9 +34,6 @@ export default function App() {
 
   // Subscribe to agent IPC events at the top level
   useAgentEvents()
-
-  const updater = useUpdater()
-  useStartupUpdateCheck(updater.check)
 
   // Initial library presence check. Server data is fetched lazily by query
   // hooks once status flips to 'ready'.
@@ -130,7 +125,6 @@ export default function App() {
         </div>
         <DialogHost />
         <SettingsModal />
-        <UpdateDialog state={updater.state} onInstall={updater.installAndRestart} onDismiss={updater.dismiss} />
       </div>
     )
   }
@@ -185,7 +179,6 @@ export default function App() {
       <CommandPalette />
       <SettingsModal />
       <DialogHost />
-      <UpdateDialog state={updater.state} onInstall={updater.installAndRestart} onDismiss={updater.dismiss} />
     </div>
   )
 }

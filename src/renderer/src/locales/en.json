@@ -14,22 +14,6 @@
     "appName": "Verko",
     "getDesktop": "Get the desktop app →"
   },
-  "update": {
-    "title": "Updates",
-    "checkNow": "Check for updates",
-    "check": "Check",
-    "checking": "Checking…",
-    "upToDate": "You are on the latest version.",
-    "statusAvailable": "Update available: v{{version}}",
-    "dialog": {
-      "title": "A new version of Verko is available",
-      "version": "Version {{version}}",
-      "downloading": "Downloading update…",
-      "later": "Later",
-      "install": "Install & restart",
-      "restarting": "Restarting…"
-    }
-  },
   "settings": {
     "title": "Settings",
     "tabs": {

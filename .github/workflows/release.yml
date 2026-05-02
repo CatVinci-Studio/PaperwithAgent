@@ -74,12 +74,6 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Updater signing — required by tauri-plugin-updater. The
-          # private key + password are repo secrets generated once via
-          # `npm run tauri signer generate`; the matching public key
-          # lives in src-tauri/tauri.conf.json under plugins.updater.pubkey.
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: ${{ github.ref_name }}
@@ -88,3 +82,21 @@ jobs:
           # publish as a GitHub prerelease; stable tags as a full release.
           prerelease: ${{ contains(github.ref_name, '-') }}
           args: ${{ matrix.args }}
+
+      # Portable Windows zip: ship the unpacked verko.exe alongside the NSIS
+      # installer. No installer = no Defender SmartScreen "unknown publisher"
+      # prompt, and no per-machine state. Requires WebView2 Runtime on the
+      # user's machine (default on Win10 21H2+ / Win11).
+      - name: Package Windows portable zip
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $tag = '${{ github.ref_name }}'
+          $version = $tag.TrimStart('v')
+          $exe = 'src-tauri/target/release/verko.exe'
+          if (-not (Test-Path $exe)) { throw "missing $exe" }
+          $zip = "Verko_${version}_x64-portable.zip"
+          Compress-Archive -Path $exe -DestinationPath $zip -Force
+          gh release upload $tag $zip --clobber

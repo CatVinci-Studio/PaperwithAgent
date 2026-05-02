@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Verko",
-  "version": "0.5.0-dev.4",
+  "version": "0.5.0-dev.5",
   "identifier": "studio.catvinci.verko",
   "build": {
     "frontendDist": "../dist-tauri",
@@ -34,6 +34,10 @@
       "appimage",
       "rpm"
     ],
+    "publisher": "CatVinci-Studio",
+    "copyright": "Copyright © 2026 CatVinci-Studio",
+    "shortDescription": "Agent-first academic paper management.",
+    "longDescription": "Verko is an agent-first academic paper management desktop app with CSV + Markdown native storage.",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -48,18 +52,6 @@
       },
       "wix": {
         "language": "en-US"
-      }
-    },
-    "createUpdaterArtifacts": true
-  },
-  "plugins": {
-    "updater": {
-      "endpoints": [
-        "https://github.com/CatVinci-Studio/Verko/releases/latest/download/latest.json"
-      ],
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDU5NTI2NDExRDMxRDlFQzcKUldUSG5oM1RFV1JTV1Y5MGZENVhrK04xQzVhZTBxdktaWGtoSm5sLytzMWVXcWdsZVdTSFljWmwK",
-      "windows": {
-        "installMode": "passive"
       }
     }
   }
